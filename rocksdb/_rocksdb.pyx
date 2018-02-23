@@ -1762,11 +1762,14 @@ cdef class DB(object):
             if handle.name == name:
                 return handle.weakref
 
-    def put(self, key, value, sync=False, disable_wal=False):
+    def put(self, key, value, sync=False, disable_wal=False, ignore_missing_column_families=False, no_slowdown=False, low_pri=False):
         cdef Status st
         cdef options.WriteOptions opts
         opts.sync = sync
         opts.disableWAL = disable_wal
+        opts.ignore_missing_column_families = ignore_missing_column_families
+        opts.no_slowdown = no_slowdown
+        opts.low_pri = low_pri
 
         if isinstance(key, tuple):
             column_family, key = key
@@ -1783,11 +1786,14 @@ cdef class DB(object):
             st = self.db.Put(opts, cf_handle, c_key, c_value)
         check_status(st)
 
-    def delete(self, key, sync=False, disable_wal=False):
+    def delete(self, key, sync=False, disable_wal=False, ignore_missing_column_families=False, no_slowdown=False, low_pri=False):
         cdef Status st
         cdef options.WriteOptions opts
         opts.sync = sync
         opts.disableWAL = disable_wal
+        opts.ignore_missing_column_families = ignore_missing_column_families
+        opts.no_slowdown = no_slowdown
+        opts.low_pri = low_pri
 
         if isinstance(key, tuple):
             column_family, key = key
@@ -1803,11 +1809,14 @@ cdef class DB(object):
             st = self.db.Delete(opts, cf_handle, c_key)
         check_status(st)
 
-    def merge(self, key, value, sync=False, disable_wal=False):
+    def merge(self, key, value, sync=False, disable_wal=False, ignore_missing_column_families=False, no_slowdown=False, low_pri=False):
         cdef Status st
         cdef options.WriteOptions opts
         opts.sync = sync
         opts.disableWAL = disable_wal
+        opts.ignore_missing_column_families = ignore_missing_column_families
+        opts.no_slowdown = no_slowdown
+        opts.low_pri = low_pri
 
         if isinstance(key, tuple):
             column_family, key = key
@@ -1824,11 +1833,14 @@ cdef class DB(object):
             st = self.db.Merge(opts, cf_handle, c_key, c_value)
         check_status(st)
 
-    def write(self, WriteBatch batch, sync=False, disable_wal=False):
+    def write(self, WriteBatch batch, sync=False, disable_wal=False, ignore_missing_column_families=False, no_slowdown=False, low_pri=False):
         cdef Status st
         cdef options.WriteOptions opts
         opts.sync = sync
         opts.disableWAL = disable_wal
+        opts.ignore_missing_column_families = ignore_missing_column_families
+        opts.no_slowdown = no_slowdown
+        opts.low_pri = low_pri
 
         with nogil:
             st = self.db.Write(opts, batch.batch)

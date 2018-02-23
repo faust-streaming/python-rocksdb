@@ -16,7 +16,7 @@ Database object
                                Exception.
 
 
-    .. py:method:: put(key, value, sync=False, disable_wal=False)
+    .. py:method:: put(key, value, sync=False, disable_wal=False, ignore_missing_column_families=False, no_slowdown=False, low_pri=False)
 
         Set the database entry for "key" to "value".
 
@@ -42,16 +42,35 @@ Database object
             If ``True``, writes will not first go to the write ahead log,
             and the write may got lost after a crash.
 
-    .. py:method:: delete(key, sync=False, disable_wal=False)
+        :param bool ignore_missing_column_families:
+            If ``True`` and if user is trying to write to column families that don't exist
+            (they were dropped),  ignore the write (don't return an error). If there
+            are multiple writes in a WriteBatch, other writes will succeed.
+
+        :param bool no_slowdown:
+            If ``True`` and we need to wait or sleep for the write request, fails
+            immediately with Status::Incomplete().
+
+        :param bool low_pri:
+            If ``True``, this write request is of lower priority if compaction is
+            behind. In this case, no_slowdown = true, the request will be cancelled
+            immediately with Status::Incomplete() returned. Otherwise, it will be
+            slowed down. The slowdown value is determined by RocksDB to guarantee
+            it introduces minimum impacts to high priority writes.
+
+    .. py:method:: delete(key, sync=False, disable_wal=False, ignore_missing_column_families=False, no_slowdown=False, low_pri=False)
 
         Remove the database entry for "key".
 
         :param bytes key: Name to delete
         :param sync: See :py:meth:`rocksdb.DB.put`
         :param disable_wal: See :py:meth:`rocksdb.DB.put`
+        :param ignore_missing_column_families: See :py:meth:`rocksdb.DB.put`
+        :param no_slowdown: See :py:meth:`rocksdb.DB.put`
+        :param low_pri: See :py:meth:`rocksdb.DB.put`
         :raises rocksdb.errors.NotFound: If the key did not exists
 
-    .. py:method:: merge(key, value, sync=False, disable_wal=False)
+    .. py:method:: merge(key, value, sync=False, disable_wal=False, ignore_missing_column_families=False, no_slowdown=False, low_pri=False)
 
         Merge the database entry for "key" with "value".
         The semantics of this operation is determined by the user provided
@@ -64,13 +83,16 @@ Database object
             no :py:attr:`rocksdb.Options.merge_operator` was set at creation
 
 
-    .. py:method:: write(batch, sync=False, disable_wal=False)
+    .. py:method:: write(batch, sync=False, disable_wal=False, ignore_missing_column_families=False, no_slowdown=False, low_pri=False)
 
         Apply the specified updates to the database.
 
         :param rocksdb.WriteBatch batch: Batch to apply
         :param sync: See :py:meth:`rocksdb.DB.put`
         :param disable_wal: See :py:meth:`rocksdb.DB.put`
+        :param ignore_missing_column_families: See :py:meth:`rocksdb.DB.put`
+        :param no_slowdown: See :py:meth:`rocksdb.DB.put`
+        :param low_pri: See :py:meth:`rocksdb.DB.put`
 
     .. py:method:: get(key, verify_checksums=False, fill_cache=True, snapshot=None, read_tier="all")
 

@@ -274,6 +274,14 @@ class TestDB(TestHelper):
 
         self.db.compact_range()
 
+    def test_write_ignore_missing_column_families(self):
+        self.db.put(b"a", b"1", ignore_missing_column_families=True)
+
+    def test_write_no_slowdown(self):
+        self.db.put(b"a", b"1", no_slowdown=True)
+
+    def test_write_low_pri(self):
+        self.db.put(b"a", b"1", low_pri=True)
 
 class AssocCounter(rocksdb.interfaces.AssociativeMergeOperator):
     def merge(self, key, existing_value, value):

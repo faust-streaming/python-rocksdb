@@ -164,6 +164,9 @@ cdef extern from "rocksdb/options.h" namespace "rocksdb":
     cdef cppclass WriteOptions:
         cpp_bool sync
         cpp_bool disableWAL
+        cpp_bool ignore_missing_column_families
+        cpp_bool no_slowdown
+        cpp_bool low_pri
 
     cdef cppclass ReadOptions:
         cpp_bool verify_checksums
