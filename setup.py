@@ -12,6 +12,7 @@ from setuptools import setup, Extension, find_packages
 from setuptools.command.build_ext import build_ext
 from setuptools.command.test import test as TestCommand
 from shutil import copyfile, copymode
+import glob
 
 
 class CMakeExtension(Extension):
@@ -44,9 +45,9 @@ class CMakeBuild(build_ext):
         cmake_args = ['-DCMAKE_LIBRARY_OUTPUT_DIRECTORY=' + extdir,
                       '-DPYTHON_EXECUTABLE=' + sys.executable]
 
-        #  cfg = 'Debug' if self.debug else 'Release'
-        #  build_args = ['--config', cfg]
-        build_args = []
+        cfg = 'Debug' if self.debug else 'Release'
+        build_args = ['--config', cfg]
+        #  build_args = []
 
         if platform.system() == "Windows":
             cmake_args += ['-DCMAKE_LIBRARY_OUTPUT_DIRECTORY_{}={}'.format(
@@ -56,8 +57,8 @@ class CMakeBuild(build_ext):
                 cmake_args += ['-A', 'x64']
             build_args += ['--', '/m']
         else:
-            #  cmake_args += ['-DCMAKE_BUILD_TYPE=' + cfg]
-            cmake_args = []
+            cmake_args += ['-DCMAKE_BUILD_TYPE=' + cfg]
+            #  cmake_args = []
             build_args += ['--', '-j4']
 
         #  env = os.environ.copy()
@@ -70,12 +71,22 @@ class CMakeBuild(build_ext):
                               #  cwd=self.build_temp, env=env)
         subprocess.check_call(['cmake', ext.sourcedir] + cmake_args,
                               cwd=self.build_temp)
+        print (cmake_args)
         subprocess.check_call(['cmake', '--build', '.'] + build_args,
                               cwd=self.build_temp)
         # Copy *_test file to tests directory
-        test_bin = os.path.join(self.build_temp, 'python_cpp_example_test')
-        self.copy_test_file(test_bin)
-        print()  # Add an empty line for cleaner output
+        #  test_bin = os.path.join(self.build_temp, 'python_cpp_example_test')
+        #  self.copy_test_file(test_bin)
+        #  print()  # Add an empty line for cleaner output
+        build_dir = os.path.join(self.build_lib, 'pyrocksdb')
+
+        libs = glob.glob(os.path.join(build_dir, '*.so'))
+        dst = 'tests'
+        for lib in libs:
+            copyfile(lib, os.path.join(dst, os.path.basename(lib)))
+            copymode(lib, os.path.join(dst, os.path.basename(lib)))
+
+
 
     def copy_test_file(self, src_file):
         '''
@@ -97,15 +108,16 @@ class CMakeBuild(build_ext):
         copymode(src_file, dest_file)
 
 setup(
-    name='python_cpp_example',
-    version='0.2',
-    author='Benjamin Jack',
-    author_email='benjamin.r.jack@gmail.com',
-    description='A hybrid Python/C++ test project',
+    name='python-rocksdb',
+    version='1.0',
+    author='Ming Hsuan Tu',
+    author_email='qrnnis2623891@gmail.com',
+    description='python bindings to rocksdb',
     long_description='',
     packages=find_packages('src'),
     package_dir={'':'src'},
-    ext_modules=[CMakeExtension('python_cpp_example/python_cpp_example')],
+
+    ext_modules=[CMakeExtension('pyrocksdb/pyrocksdb')],
     cmdclass=dict(build_ext=CMakeBuild),
     tests_require=['pytest'],
     setup_requires=['pytest-runner'],

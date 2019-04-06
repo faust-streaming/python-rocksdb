@@ -1,44 +1,47 @@
-# python_cpp_example
+pyrocksdb
+=========
 
-This repository contains an example Python module which wraps C++ code. The code presented here was designed to meet four requirements:
+Python bindings for RocksDB.
 
-1. Python bindings for C++ code (using [`pybind11`](http://pybind11.readthedocs.io/en/stable/index.html) and built with [CMake](http://cmake.org))
-2. Unit tests for C++ code (using [`catch`](http://catch-lib.net))
-3. Unit tests for Python code (using `unittest`)
-4. A `setuptools` setup.py script for building, installation, and testing
+This project is under development, and more features are coming soon.
 
-Please see the [blog post that accompanies this repository](http://www.benjack.io/2018/02/02/python-cpp-revisited.html) for more information.
+Quick Install
+-------------
 
-**NOTE**: If you'd like to see the version of the repository that corresponds to my [original June 2017 blog post](http://www.benjack.io/2017/06/12/python-cpp-tests.html), go to [this release](https://github.com/benjaminjack/python_cpp_example/tree/v0.1). However, I no longer recommend using the repository structure from this old release.
+Quick install for debian/ubuntu like linux distributions.
 
-# Installation
 
-To build and install `python_cpp_example`, clone or download this repository and then, from within the repository, run:
-
-```bash
-python3 ./setup.py install
+```
+git clone https://github.com/twmht/python-rocksdb.git --recursive -b pybind11
+cd python-rocksdb
+python setup.py install
 ```
 
-or
+Quick Usage Guide
+-----------------
 
-```bash
-pip3 install .
+```python
+import pyrocksdb
+db = pyrocksdb.DB()
+opts = pyrocksdb.Options()
+# for multi-thread
+opts.IncreaseParallelism()
+opts.OptimizeLevelStyleCompaction()
+opts.create_if_missing = True
+s = db.open(opts, '/path/to/db')
+assert(s.ok())
+# put
+opts = pyrocksdb.WriteOptions()
+s = db.put(opts, "key1", "value1")
+assert (s.ok())
+# get
+opts = pyrocksdb.ReadOptions()
+blob = db.get(opts, "key1")
+print (blob.data) # value1
+print (blob.status.ok()) # true
+#delete
+opts = pyrocksdb.WriteOptions()
+s = db.delete(opts, "key1")
+assert(s.ok())
+db.close()
 ```
-
-# Tests
-
-To execute all unit tests, run the following command:
-
-```bash
-python3 ./setup.py test
-```
-
-# Requirements
-
-- Python 2 or 3
-- CMake 2.8.12 or higher
-- A modern compiler with C++11 support
-
-# Acknowledgements
-
-Much of the code in this repository was adapted from the [`pybind11` tutorial](http://pybind11.readthedocs.io/en/stable/basics.html) and the [`pybind11` example CMake repository](https://github.com/pybind/cmake_example).

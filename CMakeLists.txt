@@ -1,24 +1,17 @@
 cmake_minimum_required(VERSION 2.8.12)
 project(python_cpp_example)
 
-
-SET(SOURCE_DIR "src/python_cpp_example")
-# Tell cmake that headers are in alse in source_dir
+SET(SOURCE_DIR "src/pyrocksdb")
 include_directories(${SOURCE_DIR})
-SET(SOURCES "${SOURCE_DIR}/math.cpp")
-
-SET(TEST_DIR "tests")
-SET(TESTS ${SOURCES}
-    "${TEST_DIR}/test_main.cpp"
-    "${TEST_DIR}/test_math.cpp")
-
-# Generate a test executable
-include_directories(lib/catch/include)
-add_executable("${PROJECT_NAME}_test" ${TESTS})
-
-# Generate python module
 add_subdirectory(lib/pybind11)
-pybind11_add_module(python_cpp_example ${SOURCES} "${SOURCE_DIR}/bindings.cpp")
 
-SET ( CMAKE_CXX_FLAGS "-fPIC")
+SET ( WITH_TESTS OFF CACHE BOOL "BUILD ROCKSDB WITH TEST" FORCE)
+SET ( WITH_SNAPPY ON CACHE BOOL "BUILD ROCKSDB WITH SNAPPY" FORCE)
+SET ( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC")
+SET (USE_RTTI ON)
 add_subdirectory(lib/rocksdb)
+
+SET ( CMAKE_CXX_FLAGS "-std=c++11")
+include_directories(lib/rocksdb/include)
+pybind11_add_module(pyrocksdb ${SOURCE_DIR}/pyrocksdb.cpp ${SOURCE_DIR}/db.cpp ${SOURCE_DIR}/options.cpp ${SOURCE_DIR}/slice.cpp ${SOURCE_DIR}/status.cpp ${SOURCE_DIR}/write_batch.cpp ${SOURCE_DIR}/iterator.cpp)
+target_link_libraries(pyrocksdb PRIVATE rocksdb)
