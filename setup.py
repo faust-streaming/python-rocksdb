@@ -44,8 +44,9 @@ class CMakeBuild(build_ext):
         cmake_args = ['-DCMAKE_LIBRARY_OUTPUT_DIRECTORY=' + extdir,
                       '-DPYTHON_EXECUTABLE=' + sys.executable]
 
-        cfg = 'Debug' if self.debug else 'Release'
-        build_args = ['--config', cfg]
+        #  cfg = 'Debug' if self.debug else 'Release'
+        #  build_args = ['--config', cfg]
+        build_args = []
 
         if platform.system() == "Windows":
             cmake_args += ['-DCMAKE_LIBRARY_OUTPUT_DIRECTORY_{}={}'.format(
@@ -55,17 +56,20 @@ class CMakeBuild(build_ext):
                 cmake_args += ['-A', 'x64']
             build_args += ['--', '/m']
         else:
-            cmake_args += ['-DCMAKE_BUILD_TYPE=' + cfg]
-            build_args += ['--', '-j2']
+            #  cmake_args += ['-DCMAKE_BUILD_TYPE=' + cfg]
+            cmake_args = []
+            build_args += ['--', '-j4']
 
-        env = os.environ.copy()
-        env['CXXFLAGS'] = '{} -DVERSION_INFO=\\"{}\\"'.format(
-            env.get('CXXFLAGS', ''),
-            self.distribution.get_version())
+        #  env = os.environ.copy()
+        #  env['CXXFLAGS'] = '{} -DVERSION_INFO=\\"{}\\"'.format(
+            #  env.get('CXXFLAGS', ''),
+            #  self.distribution.get_version())
         if not os.path.exists(self.build_temp):
             os.makedirs(self.build_temp)
+        #  subprocess.check_call(['cmake', ext.sourcedir] + cmake_args,
+                              #  cwd=self.build_temp, env=env)
         subprocess.check_call(['cmake', ext.sourcedir] + cmake_args,
-                              cwd=self.build_temp, env=env)
+                              cwd=self.build_temp)
         subprocess.check_call(['cmake', '--build', '.'] + build_args,
                               cwd=self.build_temp)
         # Copy *_test file to tests directory
@@ -103,6 +107,8 @@ setup(
     package_dir={'':'src'},
     ext_modules=[CMakeExtension('python_cpp_example/python_cpp_example')],
     cmdclass=dict(build_ext=CMakeBuild),
-    test_suite='tests',
+    tests_require=['pytest'],
+    setup_requires=['pytest-runner'],
+    #  test_suite='tests',
     zip_safe=False,
 )

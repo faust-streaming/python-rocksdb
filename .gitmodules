@@ -4,3 +4,6 @@
 [submodule "catch"]
 	path = lib/catch
 	url = https://github.com/philsquared/Catch.git
+[submodule "lib/rocksdb"]
+	path = lib/rocksdb
+	url = https://github.com/facebook/rocksdb.git
