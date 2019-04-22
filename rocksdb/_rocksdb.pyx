@@ -1258,6 +1258,9 @@ cdef class Options(ColumnFamilyOptions):
         for key, value in kwargs.items():
             setattr(self, key, value)
 
+    def IncreaseParallelism(self, int total_threads=16):
+        self.opts.IncreaseParallelism(total_threads)
+
     property create_if_missing:
         def __get__(self):
             return self.opts.create_if_missing
@@ -1671,11 +1674,8 @@ cdef class DB(object):
         self.opts.in_use = True
 
     def __dealloc__(self):
-        self.close()
-        
-    def close(self):
         cdef ColumnFamilyOptions copts
-        if not self.db == NULL:
+        if self.db != NULL:
             # We have to make sure we delete the handles so rocksdb doesn't
             # assert when we delete the db
             self.cf_handles.clear()
@@ -1683,12 +1683,13 @@ cdef class DB(object):
                 if copts:
                     copts.in_use = False
             self.cf_options.clear()
-
+    
             with nogil:
                 del self.db
 
-        if self.opts is not None:
-            self.opts.in_use = False
+            if self.opts is not None:
+                self.opts.in_use = False
+
 
     @property
     def column_families(self):
