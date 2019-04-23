@@ -6,6 +6,7 @@
 #include <rocksdb/iterator.h>
 #include <rocksdb/slice.h>
 #include <rocksdb/write_batch.h>
+#include <rocksdb/table.h>
 
 using namespace rocksdb;
 

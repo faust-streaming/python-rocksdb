@@ -19,6 +19,11 @@ def db():
     yield db
     db.close()
 
+def test_option():
+    opts = pyrocksdb.Options()
+    assert opts.create_if_missing == False
+    assert opts.error_if_exists == False
+
 
 def test_put_get(db):
     opts = pyrocksdb.WriteOptions()
