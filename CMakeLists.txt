@@ -13,5 +13,5 @@ add_subdirectory(lib/rocksdb)
 
 SET ( CMAKE_CXX_FLAGS "-std=c++11")
 include_directories(lib/rocksdb/include)
-pybind11_add_module(pyrocksdb ${SOURCE_DIR}/pyrocksdb.cpp ${SOURCE_DIR}/db.cpp ${SOURCE_DIR}/options.cpp ${SOURCE_DIR}/slice.cpp ${SOURCE_DIR}/status.cpp ${SOURCE_DIR}/write_batch.cpp ${SOURCE_DIR}/iterator.cpp)
+pybind11_add_module(pyrocksdb ${SOURCE_DIR}/pyrocksdb.cpp ${SOURCE_DIR}/db.cpp ${SOURCE_DIR}/options.cpp ${SOURCE_DIR}/slice.cpp ${SOURCE_DIR}/status.cpp ${SOURCE_DIR}/write_batch.cpp ${SOURCE_DIR}/iterator.cpp ${SOURCE_DIR}/filter_policy.cpp)
 target_link_libraries(pyrocksdb PRIVATE rocksdb)

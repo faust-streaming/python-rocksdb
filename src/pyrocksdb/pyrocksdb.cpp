@@ -23,7 +23,6 @@ Status py_DB::Open(const Options& options, const std::string& name) {
     throw std::invalid_argument("db has been opened");
   }
   Status st =  DB::Open(options, name, &db_ptr);
-  std::cout << st.ToString() << std::endl;
   return st;
 }
 Status py_DB::Put(const WriteOptions& options, const std::string& key,
@@ -32,6 +31,13 @@ Status py_DB::Put(const WriteOptions& options, const std::string& key,
     throw std::invalid_argument("db has been closed");
   }
   return db_ptr->Put(options, key, value);
+}
+
+Status py_DB::Write(const WriteOptions& options, WriteBatch& updates) {
+  if (db_ptr == nullptr) {
+    throw std::invalid_argument("db has been closed");
+  }
+  return db_ptr->Write(options, &updates);
 }
 
 Blob py_DB::Get(const ReadOptions& options, const std::string& key) {
@@ -65,6 +71,7 @@ void init_slice(py::module &);
 void init_status(py::module &);
 void init_write_batch(py::module &);
 void init_iterator(py::module &);
+void init_filter_policy(py::module &);
 
 PYBIND11_MODULE(pyrocksdb, m) {
     // optional module docstring
@@ -75,6 +82,7 @@ PYBIND11_MODULE(pyrocksdb, m) {
   init_status(m);
   init_write_batch(m);
   init_iterator(m);
+  init_filter_policy(m);
   py::class_<Blob>(m, "Blob")
     .def(py::init<>())
     .def_readwrite("status", &Blob::st)

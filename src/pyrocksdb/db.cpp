@@ -8,6 +8,7 @@ void init_db(py::module & m) {
     .def(py::init<>())
     .def("open", &py_DB::Open)
     .def("put", &py_DB::Put)
+    .def("write", &py_DB::Write)
     .def("get", &py_DB::Get)
     .def("delete", &py_DB::Delete)
     .def("close", &py_DB::Close)

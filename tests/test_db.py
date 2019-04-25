@@ -83,3 +83,19 @@ def test_iterator(db):
     assert not it.valid()
     it.seek_for_prev('key4')
     assert it.valid()
+
+def test_write_batch(db):
+    update = pyrocksdb.WriteBatch()
+
+    update.put('key1', 'value1')
+    update.put('key2', 'value2')
+    update.delete('key1')
+    opts = pyrocksdb.WriteOptions()
+    s = db.write(opts, update)
+    assert s.ok()
+    opts = pyrocksdb.ReadOptions()
+    blob = db.get(opts, 'key1')
+    assert blob.status.is_not_found()
+    blob = db.get(opts, 'key2')
+    assert blob.status.ok()
+    assert blob.data == 'value2'

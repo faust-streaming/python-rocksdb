@@ -7,6 +7,8 @@
 #include <rocksdb/slice.h>
 #include <rocksdb/write_batch.h>
 #include <rocksdb/table.h>
+#include <rocksdb/filter_policy.h>
+#include <rocksdb/cache.h>
 
 using namespace rocksdb;
 
@@ -23,6 +25,7 @@ class py_DB {
     Status Put(const WriteOptions& options, const std::string& key,
                      const std::string& value);
     Blob Get(const ReadOptions& options, const std::string& key);
+    Status Write(const WriteOptions& options, WriteBatch& updates);
     Status Delete(const WriteOptions& options, const std::string& key);
     void Close();
     std::unique_ptr<Iterator> NewIterator(const ReadOptions& options);
