@@ -1,0 +1,173 @@
+
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta charset="utf-8" />
+    <title>Welcome to python-rocksdb’s documentation! &#8212; python-rocksdb 0.6.7 documentation</title>
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="_static/language_data.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Installing" href="installation.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="welcome-to-python-rocksdb-s-documentation">
+<h1>Welcome to python-rocksdb’s documentation!<a class="headerlink" href="#welcome-to-python-rocksdb-s-documentation" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="overview">
+<h2>Overview<a class="headerlink" href="#overview" title="Permalink to this headline">¶</a></h2>
+<p>Python bindings to the C++ interface of <a class="reference external" href="http://rocksdb.org/">http://rocksdb.org/</a> using pybind11:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">pyrocksdb</span>
+<span class="n">db</span> <span class="o">=</span> <span class="n">pyrocksdb</span><span class="o">.</span><span class="n">DB</span><span class="p">()</span>
+<span class="n">opts</span> <span class="o">=</span> <span class="n">pyrocksdb</span><span class="o">.</span><span class="n">Options</span><span class="p">()</span>
+<span class="c1"># for multi-thread</span>
+<span class="n">opts</span><span class="o">.</span><span class="n">IncreaseParallelism</span><span class="p">()</span>
+<span class="n">opts</span><span class="o">.</span><span class="n">OptimizeLevelStyleCompaction</span><span class="p">()</span>
+<span class="n">opts</span><span class="o">.</span><span class="n">create_if_missing</span> <span class="o">=</span> <span class="kc">True</span>
+<span class="n">s</span> <span class="o">=</span> <span class="n">db</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">opts</span><span class="p">,</span> <span class="s1">&#39;/path/to/db&#39;</span><span class="p">)</span>
+<span class="k">assert</span><span class="p">(</span><span class="n">s</span><span class="o">.</span><span class="n">ok</span><span class="p">())</span>
+<span class="c1"># put</span>
+<span class="n">opts</span> <span class="o">=</span> <span class="n">pyrocksdb</span><span class="o">.</span><span class="n">WriteOptions</span><span class="p">()</span>
+<span class="n">s</span> <span class="o">=</span> <span class="n">db</span><span class="o">.</span><span class="n">put</span><span class="p">(</span><span class="n">opts</span><span class="p">,</span> <span class="s2">&quot;key1&quot;</span><span class="p">,</span> <span class="s2">&quot;value1&quot;</span><span class="p">)</span>
+<span class="k">assert</span> <span class="p">(</span><span class="n">s</span><span class="o">.</span><span class="n">ok</span><span class="p">())</span>
+<span class="c1"># get</span>
+<span class="n">opts</span> <span class="o">=</span> <span class="n">pyrocksdb</span><span class="o">.</span><span class="n">ReadOptions</span><span class="p">()</span>
+<span class="n">blob</span> <span class="o">=</span> <span class="n">db</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">opts</span><span class="p">,</span> <span class="s2">&quot;key1&quot;</span><span class="p">)</span>
+<span class="nb">print</span> <span class="p">(</span><span class="n">blob</span><span class="o">.</span><span class="n">data</span><span class="p">)</span> <span class="c1"># value1</span>
+<span class="nb">print</span> <span class="p">(</span><span class="n">blob</span><span class="o">.</span><span class="n">status</span><span class="o">.</span><span class="n">ok</span><span class="p">())</span> <span class="c1"># true</span>
+<span class="c1">#delete</span>
+<span class="n">opts</span> <span class="o">=</span> <span class="n">pyrocksdb</span><span class="o">.</span><span class="n">WriteOptions</span><span class="p">()</span>
+<span class="n">s</span> <span class="o">=</span> <span class="n">db</span><span class="o">.</span><span class="n">delete</span><span class="p">(</span><span class="n">opts</span><span class="p">,</span> <span class="s2">&quot;key1&quot;</span><span class="p">)</span>
+<span class="k">assert</span><span class="p">(</span><span class="n">s</span><span class="o">.</span><span class="n">ok</span><span class="p">())</span>
+<span class="n">db</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>Tested with python3.7</p>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="installation.html">Instructions how to install</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="installation.html#with-distro-package-and-pypi">With distro package and pypi</a></li>
+<li class="toctree-l2"><a class="reference internal" href="installation.html#from-source">From source</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="tutorial/index.html">Tutorial</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="tutorial/index.html#wrtie-batch">Wrtie Batch</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorial/index.html#iteration">Iteration</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="changelog.html">Changelog</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="changelog.html#version-0-5">Version 0.5</a></li>
+<li class="toctree-l2"><a class="reference internal" href="changelog.html#version-0-4">Version 0.4</a></li>
+<li class="toctree-l2"><a class="reference internal" href="changelog.html#version-0-3">Version 0.3</a></li>
+<li class="toctree-l2"><a class="reference internal" href="changelog.html#version-0-2">Version 0.2</a></li>
+<li class="toctree-l2"><a class="reference internal" href="changelog.html#version-0-1">Version 0.1</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</div>
+<div class="section" id="contributing">
+<h2>Contributing<a class="headerlink" href="#contributing" title="Permalink to this headline">¶</a></h2>
+<p>Source can be found on <a class="reference external" href="https://github.com/twmht/python-rocksdb/tree/pybind11">github</a>.
+Feel free to fork and send pull-requests or create issues on the
+<a class="reference external" href="https://github.com/twmht/python-rocksdb/issues">github issue tracker</a></p>
+</div>
+</div>
+<div class="section" id="indices-and-tables">
+<h1>Indices and tables<a class="headerlink" href="#indices-and-tables" title="Permalink to this headline">¶</a></h1>
+<ul class="simple">
+<li><p><a class="reference internal" href="genindex.html"><span class="std std-ref">Index</span></a></p></li>
+<li><p><a class="reference internal" href="py-modindex.html"><span class="std std-ref">Module Index</span></a></p></li>
+<li><p><a class="reference internal" href="search.html"><span class="std std-ref">Search Page</span></a></p></li>
+</ul>
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="#">python-rocksdb</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="installation.html">Instructions how to install</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tutorial/index.html">Tutorial</a></li>
+<li class="toctree-l1"><a class="reference internal" href="changelog.html">Changelog</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="#">Documentation overview</a><ul>
+      <li>Next: <a href="installation.html" title="next chapter">Installing</a></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2014, sh.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 2.0.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="_sources/index.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

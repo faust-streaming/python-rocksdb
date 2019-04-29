@@ -1,0 +1,239 @@
+
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta charset="utf-8" />
+    <title>Changelog &#8212; python-rocksdb 0.6.7 documentation</title>
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="_static/language_data.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="prev" title="Basic Usage of python-rocksdb" href="tutorial/index.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="changelog">
+<h1>Changelog<a class="headerlink" href="#changelog" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="version-0-5">
+<h2>Version 0.5<a class="headerlink" href="#version-0-5" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="version-0-4">
+<h2>Version 0.4<a class="headerlink" href="#version-0-4" title="Permalink to this headline">¶</a></h2>
+<p>This version works with RocksDB v3.12.</p>
+<ul class="simple">
+<li><p>Added <code class="xref py py-func docutils literal notranslate"><span class="pre">repair_db()</span></code>.</p></li>
+<li><p>Added <code class="xref py py-meth docutils literal notranslate"><span class="pre">rocksdb.Options.row_cache()</span></code></p></li>
+<li><p>Publish to pypi.</p></li>
+</ul>
+<div class="section" id="backward-incompatible-changes">
+<h3>Backward Incompatible Changes:<a class="headerlink" href="#backward-incompatible-changes" title="Permalink to this headline">¶</a></h3>
+<ul>
+<li><p>Changed API of <code class="xref py py-meth docutils literal notranslate"><span class="pre">rocksdb.DB.compact_range()</span></code>.</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>Only allow keyword arguments.</p></li>
+<li><p>Changed <code class="docutils literal notranslate"><span class="pre">reduce_level</span></code> to <code class="docutils literal notranslate"><span class="pre">change_level</span></code>.</p></li>
+<li><p>Add new argument called <code class="docutils literal notranslate"><span class="pre">bottommost_level_compaction</span></code>.</p></li>
+</ul>
+</div></blockquote>
+</li>
+</ul>
+</div>
+</div>
+<div class="section" id="version-0-3">
+<h2>Version 0.3<a class="headerlink" href="#version-0-3" title="Permalink to this headline">¶</a></h2>
+<p>This version works with RocksDB version v3.11.</p>
+<div class="section" id="id1">
+<h3>Backward Incompatible Changes:<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h3>
+<p><strong>Prefix Seeks:</strong></p>
+<p>According to this page <a class="reference external" href="https://github.com/facebook/rocksdb/wiki/Prefix-Seek-API-Changes">https://github.com/facebook/rocksdb/wiki/Prefix-Seek-API-Changes</a>,
+all the prefix related parameters on <code class="docutils literal notranslate"><span class="pre">ReadOptions</span></code> are removed.
+Rocksdb realizes now if <code class="docutils literal notranslate"><span class="pre">Options.prefix_extractor</span></code> is set and uses then
+prefix-seeks automatically. This means the following changes on pyrocksdb.</p>
+<ul class="simple">
+<li><p>DB.iterkeys, DB.itervalues, DB.iteritems have <em>no</em> <code class="docutils literal notranslate"><span class="pre">prefix</span></code> parameter anymore.</p></li>
+<li><p>DB.get, DB.multi_get, DB.key_may_exist, DB.iterkeys, DB.itervalues, DB.iteritems
+have <em>no</em> <code class="docutils literal notranslate"><span class="pre">prefix_seek</span></code> parameter anymore.</p></li>
+</ul>
+<p>Which means all the iterators walk now always to the <em>end</em> of the database.
+So if you need to stay within a prefix, write your own code to ensure that.
+For DB.iterkeys and DB.iteritems <code class="docutils literal notranslate"><span class="pre">itertools.takewhile</span></code> is a possible solution.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">itertools</span> <span class="k">import</span> <span class="n">takewhile</span>
+
+<span class="n">it</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">db</span><span class="o">.</span><span class="n">iterkeys</span><span class="p">()</span>
+<span class="n">it</span><span class="o">.</span><span class="n">seek</span><span class="p">(</span><span class="sa">b</span><span class="s1">&#39;00002&#39;</span><span class="p">)</span>
+<span class="nb">print</span> <span class="nb">list</span><span class="p">(</span><span class="n">takewhile</span><span class="p">(</span><span class="k">lambda</span> <span class="n">key</span><span class="p">:</span> <span class="n">key</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="sa">b</span><span class="s1">&#39;00002&#39;</span><span class="p">),</span> <span class="n">it</span><span class="p">))</span>
+
+<span class="n">it</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">db</span><span class="o">.</span><span class="n">iteritems</span><span class="p">()</span>
+<span class="n">it</span><span class="o">.</span><span class="n">seek</span><span class="p">(</span><span class="sa">b</span><span class="s1">&#39;00002&#39;</span><span class="p">)</span>
+<span class="nb">print</span> <span class="nb">dict</span><span class="p">(</span><span class="n">takewhile</span><span class="p">(</span><span class="k">lambda</span> <span class="n">item</span><span class="p">:</span> <span class="n">item</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="sa">b</span><span class="s1">&#39;00002&#39;</span><span class="p">),</span> <span class="n">it</span><span class="p">))</span>
+</pre></div>
+</div>
+<p><strong>SST Table Builders:</strong></p>
+<ul class="simple">
+<li><p>Removed <code class="docutils literal notranslate"><span class="pre">NewTotalOrderPlainTableFactory</span></code>, because rocksdb drops it too.</p></li>
+</ul>
+<p><strong>Changed Options:</strong></p>
+<p>In newer versions of rocksdb a bunch of options were moved or removed.</p>
+<ul class="simple">
+<li><p>Rename <code class="docutils literal notranslate"><span class="pre">bloom_bits_per_prefix</span></code> of <code class="xref py py-class docutils literal notranslate"><span class="pre">rocksdb.PlainTableFactory</span></code> to <code class="docutils literal notranslate"><span class="pre">bloom_bits_per_key</span></code></p></li>
+<li><p>Removed <code class="docutils literal notranslate"><span class="pre">Options.db_stats_log_interval</span></code>.</p></li>
+<li><p>Removed <code class="docutils literal notranslate"><span class="pre">Options.disable_seek_compaction</span></code></p></li>
+<li><p>Moved <code class="docutils literal notranslate"><span class="pre">Options.no_block_cache</span></code> to <code class="docutils literal notranslate"><span class="pre">BlockBasedTableFactory</span></code></p></li>
+<li><p>Moved <code class="docutils literal notranslate"><span class="pre">Options.block_size</span></code> to <code class="docutils literal notranslate"><span class="pre">BlockBasedTableFactory</span></code></p></li>
+<li><p>Moved <code class="docutils literal notranslate"><span class="pre">Options.block_size_deviation</span></code> to <code class="docutils literal notranslate"><span class="pre">BlockBasedTableFactory</span></code></p></li>
+<li><p>Moved <code class="docutils literal notranslate"><span class="pre">Options.block_restart_interval</span></code> to <code class="docutils literal notranslate"><span class="pre">BlockBasedTableFactory</span></code></p></li>
+<li><p>Moved <code class="docutils literal notranslate"><span class="pre">Options.whole_key_filtering</span></code> to <code class="docutils literal notranslate"><span class="pre">BlockBasedTableFactory</span></code></p></li>
+<li><p>Removed <code class="docutils literal notranslate"><span class="pre">Options.table_cache_remove_scan_count_limit</span></code></p></li>
+<li><p>Removed rm_scan_count_limit from <code class="docutils literal notranslate"><span class="pre">LRUCache</span></code></p></li>
+</ul>
+</div>
+<div class="section" id="new">
+<h3>New:<a class="headerlink" href="#new" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li><p>Make CompactRange available: <code class="xref py py-meth docutils literal notranslate"><span class="pre">rocksdb.DB.compact_range()</span></code></p></li>
+<li><p>Add init options to <code class="xref py py-class docutils literal notranslate"><span class="pre">rocksdb.BlockBasedTableFactory</span></code></p></li>
+<li><p>Add more option to <code class="xref py py-class docutils literal notranslate"><span class="pre">rocksdb.PlainTableFactory</span></code></p></li>
+<li><p>Add <code class="xref py py-class docutils literal notranslate"><span class="pre">rocksdb.WriteBatchIterator</span></code></p></li>
+<li><p>add <code class="xref py py-attr docutils literal notranslate"><span class="pre">rocksdb.CompressionType.lz4_compression</span></code></p></li>
+<li><p>add <code class="xref py py-attr docutils literal notranslate"><span class="pre">rocksdb.CompressionType.lz4hc_compression</span></code></p></li>
+</ul>
+</div>
+</div>
+<div class="section" id="version-0-2">
+<h2>Version 0.2<a class="headerlink" href="#version-0-2" title="Permalink to this headline">¶</a></h2>
+<p>This version works with RocksDB version 2.8.fb. Now you have access to the more
+advanced options of rocksdb. Like changing the memtable or SST representation.
+It is also possible now to enable <em>Universal Style Compaction</em>.</p>
+<ul class="simple">
+<li><p>Fixed <a class="reference external" href="https://github.com/stephan-hof/pyrocksdb/pull/3">issue 3</a>.
+Which fixed the change of prefix_extractor from raw-pointer to smart-pointer.</p></li>
+<li><p>Support the new <code class="xref py py-attr docutils literal notranslate"><span class="pre">rocksdb.Options.verify_checksums_in_compaction</span></code> option.</p></li>
+<li><p>Add <code class="xref py py-attr docutils literal notranslate"><span class="pre">rocksdb.Options.table_factory</span></code> option. So you could use the new
+‘PlainTableFactories’ which are optimized for in-memory-databases.</p>
+<ul>
+<li><p><a class="reference external" href="https://github.com/facebook/rocksdb/wiki/PlainTable-Format">https://github.com/facebook/rocksdb/wiki/PlainTable-Format</a></p></li>
+<li><p><a class="reference external" href="https://github.com/facebook/rocksdb/wiki/How-to-persist-in-memory-RocksDB-database%3F">https://github.com/facebook/rocksdb/wiki/How-to-persist-in-memory-RocksDB-database%3F</a></p></li>
+</ul>
+</li>
+<li><p>Add <code class="xref py py-attr docutils literal notranslate"><span class="pre">rocksdb.Options.memtable_factory</span></code> option.</p></li>
+<li><p>Add options <code class="xref py py-attr docutils literal notranslate"><span class="pre">rocksdb.Options.compaction_style</span></code> and
+<code class="xref py py-attr docutils literal notranslate"><span class="pre">rocksdb.Options.compaction_options_universal</span></code> to change the
+compaction style.</p></li>
+<li><p>Update documentation to the new default values</p>
+<ul>
+<li><p>allow_mmap_reads=true</p></li>
+<li><p>allow_mmap_writes=false</p></li>
+<li><p>max_background_flushes=1</p></li>
+<li><p>max_open_files=5000</p></li>
+<li><p>paranoid_checks=true</p></li>
+<li><p>disable_seek_compaction=true</p></li>
+<li><p>level0_stop_writes_trigger=24</p></li>
+<li><p>level0_slowdown_writes_trigger=20</p></li>
+</ul>
+</li>
+<li><p>Document new property names for <code class="xref py py-meth docutils literal notranslate"><span class="pre">rocksdb.DB.get_property()</span></code>.</p></li>
+</ul>
+</div>
+<div class="section" id="version-0-1">
+<h2>Version 0.1<a class="headerlink" href="#version-0-1" title="Permalink to this headline">¶</a></h2>
+<p>Initial version. Works with rocksdb version 2.7.fb.</p>
+</div>
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="index.html">python-rocksdb</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="installation.html">Instructions how to install</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tutorial/index.html">Tutorial</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Changelog</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#version-0-5">Version 0.5</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#version-0-4">Version 0.4</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#version-0-3">Version 0.3</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#version-0-2">Version 0.2</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#version-0-1">Version 0.1</a></li>
+</ul>
+</li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="tutorial/index.html" title="previous chapter">Basic Usage of python-rocksdb</a></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2014, sh.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 2.0.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="_sources/changelog.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>
