@@ -2,19 +2,6 @@ Installing
 ==========
 .. highlight:: bash
 
-
-With distro package and pypi
-****************************
-
-This requires librocksdb-dev>=5.0
-
-.. code-block:: bash
-
-    apt-get install python-virtualenv python-dev librocksdb-dev
-    virtualenv venv
-    source venv/bin/activate
-    pip install python-rocksdb
-
 From source
 ***********
 
