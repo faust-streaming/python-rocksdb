@@ -5,6 +5,8 @@ Python bindings for RocksDB.
 
 This project is under development, and more features are coming soon.
 
+For any other usage, please follow https://twmht.github.io/python-rocksdb/index.html 
+
 Quick Install
 -------------
 

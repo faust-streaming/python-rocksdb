@@ -30,28 +30,23 @@ Python bindings to the C++ interface of http://rocksdb.org/ using pybind11::
     db.close()
 
 
-Tested with python2.7 and python3.4 and RocksDB version 5.3.0
+Tested with python3.7
 
 .. toctree::
     :maxdepth: 2
 
     Instructions how to install <installation>
     Tutorial <tutorial/index>
-    API <api/index>
     Changelog <changelog>
 
 
 Contributing
 ------------
 
-Source can be found on `github <https://github.com/stephan-hof/pyrocksdb>`_.
+Source can be found on `github <https://github.com/twmht/python-rocksdb/tree/pybind11>`_.
 Feel free to fork and send pull-requests or create issues on the
-`github issue tracker <https://github.com/stephan-hof/pyrocksdb/issues>`_
+`github issue tracker <https://github.com/twmht/python-rocksdb/issues>`_
 
-RoadMap/TODO
-------------
-
-No plans so far. Please submit wishes to the github issues.
 
 Indices and tables
 ==================
