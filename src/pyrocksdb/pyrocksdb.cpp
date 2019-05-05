@@ -72,6 +72,7 @@ void init_status(py::module &);
 void init_write_batch(py::module &);
 void init_iterator(py::module &);
 void init_filter_policy(py::module &);
+void init_merge_operator(py::module &);
 
 PYBIND11_MODULE(pyrocksdb, m) {
     // optional module docstring
@@ -83,6 +84,7 @@ PYBIND11_MODULE(pyrocksdb, m) {
   init_write_batch(m);
   init_iterator(m);
   init_filter_policy(m);
+  init_merge_operator(m);
   py::class_<Blob>(m, "Blob")
     .def(py::init<>())
     .def_readwrite("status", &Blob::st)

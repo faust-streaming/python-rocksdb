@@ -26,7 +26,8 @@ void init_option(py::module & m) {
     .def(py::init<>())
     .def("OptimizeLevelStyleCompaction", &rocksdb::ColumnFamilyOptions::OptimizeLevelStyleCompaction, py::arg("memtable_memory_budget")=512L * 1024L * 1024L, py::return_value_policy::reference_internal)
     .def_readwrite("write_buffer_size", &rocksdb::ColumnFamilyOptions::write_buffer_size)
-    .def_readwrite("table_factory", &rocksdb::ColumnFamilyOptions::table_factory);
+    .def_readwrite("table_factory", &rocksdb::ColumnFamilyOptions::table_factory)
+    .def_readwrite("sync", &rocksdb::ColumnFamilyOptions::merge_operator);
 
   py::class_<rocksdb::Options, rocksdb::DBOptions, rocksdb::ColumnFamilyOptions>(m, "Options")
     .def(py::init<>());

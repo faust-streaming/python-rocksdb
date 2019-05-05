@@ -9,6 +9,7 @@
 #include <rocksdb/table.h>
 #include <rocksdb/filter_policy.h>
 #include <rocksdb/cache.h>
+#include <merge_operators.h>
 
 using namespace rocksdb;
 
