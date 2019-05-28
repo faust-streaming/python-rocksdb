@@ -47,16 +47,16 @@
 <span class="k">assert</span><span class="p">(</span><span class="n">s</span><span class="o">.</span><span class="n">ok</span><span class="p">())</span>
 <span class="c1"># put</span>
 <span class="n">opts</span> <span class="o">=</span> <span class="n">pyrocksdb</span><span class="o">.</span><span class="n">WriteOptions</span><span class="p">()</span>
-<span class="n">s</span> <span class="o">=</span> <span class="n">db</span><span class="o">.</span><span class="n">put</span><span class="p">(</span><span class="n">opts</span><span class="p">,</span> <span class="s2">&quot;key1&quot;</span><span class="p">,</span> <span class="s2">&quot;value1&quot;</span><span class="p">)</span>
+<span class="n">s</span> <span class="o">=</span> <span class="n">db</span><span class="o">.</span><span class="n">put</span><span class="p">(</span><span class="n">opts</span><span class="p">,</span> <span class="sa">b</span><span class="s2">&quot;key1&quot;</span><span class="p">,</span> <span class="sa">b</span><span class="s2">&quot;value1&quot;</span><span class="p">)</span>
 <span class="k">assert</span> <span class="p">(</span><span class="n">s</span><span class="o">.</span><span class="n">ok</span><span class="p">())</span>
 <span class="c1"># get</span>
 <span class="n">opts</span> <span class="o">=</span> <span class="n">pyrocksdb</span><span class="o">.</span><span class="n">ReadOptions</span><span class="p">()</span>
-<span class="n">blob</span> <span class="o">=</span> <span class="n">db</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">opts</span><span class="p">,</span> <span class="s2">&quot;key1&quot;</span><span class="p">)</span>
-<span class="nb">print</span> <span class="p">(</span><span class="n">blob</span><span class="o">.</span><span class="n">data</span><span class="p">)</span> <span class="c1"># value1</span>
+<span class="n">blob</span> <span class="o">=</span> <span class="n">db</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">opts</span><span class="p">,</span> <span class="sa">b</span><span class="s2">&quot;key1&quot;</span><span class="p">)</span>
+<span class="nb">print</span> <span class="p">(</span><span class="n">blob</span><span class="o">.</span><span class="n">data</span><span class="p">)</span> <span class="c1"># b&quot;value1&quot;</span>
 <span class="nb">print</span> <span class="p">(</span><span class="n">blob</span><span class="o">.</span><span class="n">status</span><span class="o">.</span><span class="n">ok</span><span class="p">())</span> <span class="c1"># true</span>
 <span class="c1">#delete</span>
 <span class="n">opts</span> <span class="o">=</span> <span class="n">pyrocksdb</span><span class="o">.</span><span class="n">WriteOptions</span><span class="p">()</span>
-<span class="n">s</span> <span class="o">=</span> <span class="n">db</span><span class="o">.</span><span class="n">delete</span><span class="p">(</span><span class="n">opts</span><span class="p">,</span> <span class="s2">&quot;key1&quot;</span><span class="p">)</span>
+<span class="n">s</span> <span class="o">=</span> <span class="n">db</span><span class="o">.</span><span class="n">delete</span><span class="p">(</span><span class="n">opts</span><span class="p">,</span> <span class="sa">b</span><span class="s2">&quot;key1&quot;</span><span class="p">)</span>
 <span class="k">assert</span><span class="p">(</span><span class="n">s</span><span class="o">.</span><span class="n">ok</span><span class="p">())</span>
 <span class="n">db</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
 </pre></div>

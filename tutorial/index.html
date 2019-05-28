@@ -41,9 +41,9 @@ apply them in a single operation</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">update</span> <span class="o">=</span> <span class="n">pyrocksdb</span><span class="o">.</span><span class="n">WriteBatch</span><span class="p">()</span>
 
 <span class="c1"># collect the operations</span>
-<span class="n">update</span><span class="o">.</span><span class="n">put</span><span class="p">(</span><span class="s1">&#39;key1&#39;</span><span class="p">,</span> <span class="s1">&#39;value1&#39;</span><span class="p">)</span>
-<span class="n">update</span><span class="o">.</span><span class="n">put</span><span class="p">(</span><span class="s1">&#39;key2&#39;</span><span class="p">,</span> <span class="s1">&#39;value2&#39;</span><span class="p">)</span>
-<span class="n">update</span><span class="o">.</span><span class="n">delete</span><span class="p">(</span><span class="s1">&#39;key1&#39;</span><span class="p">)</span>
+<span class="n">update</span><span class="o">.</span><span class="n">put</span><span class="p">(</span><span class="sa">b</span><span class="s1">&#39;key1&#39;</span><span class="p">,</span> <span class="sa">b</span><span class="s1">&#39;value1&#39;</span><span class="p">)</span>
+<span class="n">update</span><span class="o">.</span><span class="n">put</span><span class="p">(</span><span class="sa">b</span><span class="s1">&#39;key2&#39;</span><span class="p">,</span> <span class="sa">b</span><span class="s1">&#39;value2&#39;</span><span class="p">)</span>
+<span class="n">update</span><span class="o">.</span><span class="n">delete</span><span class="p">(</span><span class="sa">b</span><span class="s1">&#39;key1&#39;</span><span class="p">)</span>
 
 <span class="n">opts</span> <span class="o">=</span> <span class="n">pyrocksdb</span><span class="o">.</span><span class="n">WriteOptions</span><span class="p">()</span>
 <span class="c1"># Apply these operatios in a single operation</span>
@@ -51,11 +51,11 @@ apply them in a single operation</p>
 
 <span class="k">assert</span> <span class="n">s</span><span class="o">.</span><span class="n">ok</span><span class="p">()</span>
 <span class="n">opts</span> <span class="o">=</span> <span class="n">pyrocksdb</span><span class="o">.</span><span class="n">ReadOptions</span><span class="p">()</span>
-<span class="n">blob</span> <span class="o">=</span> <span class="n">db</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">opts</span><span class="p">,</span> <span class="s1">&#39;key1&#39;</span><span class="p">)</span>
+<span class="n">blob</span> <span class="o">=</span> <span class="n">db</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">opts</span><span class="p">,</span> <span class="sa">b</span><span class="s1">&#39;key1&#39;</span><span class="p">)</span>
 <span class="k">assert</span> <span class="n">blob</span><span class="o">.</span><span class="n">status</span><span class="o">.</span><span class="n">is_not_found</span><span class="p">()</span>
-<span class="n">blob</span> <span class="o">=</span> <span class="n">db</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">opts</span><span class="p">,</span> <span class="s1">&#39;key2&#39;</span><span class="p">)</span>
+<span class="n">blob</span> <span class="o">=</span> <span class="n">db</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">opts</span><span class="p">,</span> <span class="sa">b</span><span class="s1">&#39;key2&#39;</span><span class="p">)</span>
 <span class="k">assert</span> <span class="n">blob</span><span class="o">.</span><span class="n">status</span><span class="o">.</span><span class="n">ok</span><span class="p">()</span>
-<span class="k">assert</span> <span class="n">blob</span><span class="o">.</span><span class="n">data</span> <span class="o">==</span> <span class="s1">&#39;value2&#39;</span>
+<span class="k">assert</span> <span class="n">blob</span><span class="o">.</span><span class="n">data</span> <span class="o">==</span> <span class="sa">b</span><span class="s1">&#39;value2&#39;</span>
 
 <span class="n">db</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
 </pre></div>
@@ -66,38 +66,37 @@ apply them in a single operation</p>
 <p>Iterators behave slightly different than expected. Per default they are not
 valid. So you have to call one of its seek methods first</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">opts</span> <span class="o">=</span> <span class="n">pyrocksdb</span><span class="o">.</span><span class="n">WriteOptions</span><span class="p">()</span>
-<span class="n">s</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;key1&#39;</span><span class="p">:</span> <span class="s1">&#39;value1&#39;</span><span class="p">,</span> <span class="s1">&#39;key2&#39;</span><span class="p">:</span> <span class="s1">&#39;value2&#39;</span><span class="p">,</span> <span class="s1">&#39;key3&#39;</span><span class="p">:</span> <span class="s1">&#39;value3&#39;</span><span class="p">}</span>
+<span class="n">s</span> <span class="o">=</span> <span class="p">{</span><span class="sa">b</span><span class="s1">&#39;key1&#39;</span><span class="p">:</span> <span class="sa">b</span><span class="s1">&#39;value1&#39;</span><span class="p">,</span> <span class="sa">b</span><span class="s1">&#39;key2&#39;</span><span class="p">:</span> <span class="sa">b</span><span class="s1">&#39;value2&#39;</span><span class="p">,</span> <span class="sa">b</span><span class="s1">&#39;key3&#39;</span><span class="p">:</span> <span class="sa">b</span><span class="s1">&#39;value3&#39;</span><span class="p">}</span>
 <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">s</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
     <span class="n">db</span><span class="o">.</span><span class="n">put</span><span class="p">(</span><span class="n">opts</span><span class="p">,</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span><span class="p">)</span>
 
 <span class="n">opts</span> <span class="o">=</span> <span class="n">pyrocksdb</span><span class="o">.</span><span class="n">ReadOptions</span><span class="p">()</span>
 <span class="n">it</span> <span class="o">=</span> <span class="n">db</span><span class="o">.</span><span class="n">iterator</span><span class="p">(</span><span class="n">opts</span><span class="p">)</span>
-<span class="c1"># call this first</span>
 <span class="n">it</span><span class="o">.</span><span class="n">seek_to_first</span><span class="p">()</span>
 <span class="k">assert</span> <span class="n">it</span><span class="o">.</span><span class="n">status</span><span class="p">()</span><span class="o">.</span><span class="n">ok</span><span class="p">()</span>
 <span class="k">assert</span> <span class="n">it</span><span class="o">.</span><span class="n">valid</span><span class="p">()</span>
 <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">s</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-    <span class="k">assert</span> <span class="n">it</span><span class="o">.</span><span class="n">key</span><span class="p">()</span><span class="o">.</span><span class="n">data</span><span class="p">()</span> <span class="o">==</span> <span class="n">k</span>
-    <span class="k">assert</span> <span class="n">it</span><span class="o">.</span><span class="n">value</span><span class="p">()</span><span class="o">.</span><span class="n">data</span><span class="p">()</span> <span class="o">==</span> <span class="n">v</span>
+    <span class="k">assert</span> <span class="n">it</span><span class="o">.</span><span class="n">key</span><span class="p">()</span> <span class="o">==</span> <span class="n">k</span>
+    <span class="k">assert</span> <span class="n">it</span><span class="o">.</span><span class="n">value</span><span class="p">()</span> <span class="o">==</span> <span class="n">v</span>
     <span class="n">it</span><span class="o">.</span><span class="n">next</span><span class="p">()</span>
 
 <span class="k">assert</span> <span class="ow">not</span> <span class="n">it</span><span class="o">.</span><span class="n">valid</span><span class="p">()</span>
 
-<span class="n">it</span><span class="o">.</span><span class="n">seek</span><span class="p">(</span><span class="s1">&#39;key1&#39;</span><span class="p">)</span>
+<span class="n">it</span><span class="o">.</span><span class="n">seek</span><span class="p">(</span><span class="sa">b</span><span class="s1">&#39;key1&#39;</span><span class="p">)</span>
 <span class="k">assert</span> <span class="n">it</span><span class="o">.</span><span class="n">valid</span><span class="p">()</span>
-<span class="k">assert</span> <span class="n">it</span><span class="o">.</span><span class="n">key</span><span class="p">()</span><span class="o">.</span><span class="n">data</span><span class="p">()</span> <span class="o">==</span> <span class="s1">&#39;key1&#39;</span>
-<span class="k">assert</span> <span class="n">it</span><span class="o">.</span><span class="n">value</span><span class="p">()</span><span class="o">.</span><span class="n">data</span><span class="p">()</span> <span class="o">==</span> <span class="s1">&#39;value1&#39;</span>
-<span class="n">it</span><span class="o">.</span><span class="n">seek</span><span class="p">(</span><span class="s1">&#39;key2&#39;</span><span class="p">)</span>
+<span class="k">assert</span> <span class="n">it</span><span class="o">.</span><span class="n">key</span><span class="p">()</span> <span class="o">==</span> <span class="sa">b</span><span class="s1">&#39;key1&#39;</span>
+<span class="k">assert</span> <span class="n">it</span><span class="o">.</span><span class="n">value</span><span class="p">()</span> <span class="o">==</span> <span class="sa">b</span><span class="s1">&#39;value1&#39;</span>
+<span class="n">it</span><span class="o">.</span><span class="n">seek</span><span class="p">(</span><span class="sa">b</span><span class="s1">&#39;key2&#39;</span><span class="p">)</span>
 <span class="k">assert</span> <span class="n">it</span><span class="o">.</span><span class="n">valid</span><span class="p">()</span>
-<span class="k">assert</span> <span class="n">it</span><span class="o">.</span><span class="n">key</span><span class="p">()</span><span class="o">.</span><span class="n">data</span><span class="p">()</span> <span class="o">==</span> <span class="s1">&#39;key2&#39;</span>
-<span class="k">assert</span> <span class="n">it</span><span class="o">.</span><span class="n">value</span><span class="p">()</span><span class="o">.</span><span class="n">data</span><span class="p">()</span> <span class="o">==</span> <span class="s1">&#39;value2&#39;</span>
+<span class="k">assert</span> <span class="n">it</span><span class="o">.</span><span class="n">key</span><span class="p">()</span> <span class="o">==</span> <span class="sa">b</span><span class="s1">&#39;key2&#39;</span>
+<span class="k">assert</span> <span class="n">it</span><span class="o">.</span><span class="n">value</span><span class="p">()</span> <span class="o">==</span> <span class="sa">b</span><span class="s1">&#39;value2&#39;</span>
 
-<span class="n">it</span><span class="o">.</span><span class="n">seek</span><span class="p">(</span><span class="s1">&#39;key4&#39;</span><span class="p">)</span>
+<span class="n">it</span><span class="o">.</span><span class="n">seek</span><span class="p">(</span><span class="sa">b</span><span class="s1">&#39;key4&#39;</span><span class="p">)</span>
 <span class="k">assert</span> <span class="ow">not</span> <span class="n">it</span><span class="o">.</span><span class="n">valid</span><span class="p">()</span>
 
-<span class="n">it</span><span class="o">.</span><span class="n">seek_for_prev</span><span class="p">(</span><span class="s1">&#39;key0&#39;</span><span class="p">)</span>
+<span class="n">it</span><span class="o">.</span><span class="n">seek_for_prev</span><span class="p">(</span><span class="sa">b</span><span class="s1">&#39;key0&#39;</span><span class="p">)</span>
 <span class="k">assert</span> <span class="ow">not</span> <span class="n">it</span><span class="o">.</span><span class="n">valid</span><span class="p">()</span>
-<span class="n">it</span><span class="o">.</span><span class="n">seek_for_prev</span><span class="p">(</span><span class="s1">&#39;key4&#39;</span><span class="p">)</span>
+<span class="n">it</span><span class="o">.</span><span class="n">seek_for_prev</span><span class="p">(</span><span class="sa">b</span><span class="s1">&#39;key4&#39;</span><span class="p">)</span>
 <span class="k">assert</span> <span class="n">it</span><span class="o">.</span><span class="n">valid</span><span class="p">()</span>
 </pre></div>
 </div>
