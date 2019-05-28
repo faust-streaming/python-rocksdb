@@ -2,8 +2,16 @@ import pyrocksdb
 import tempfile
 import pytest
 
-#  s = pyrocksdb.Slice(b'key1')
-#  print (type(s.data()))
+#  class Cat(pyrocksdb.Animal):
+    #  def go(self, n_times):
+        #  print ('aaa')
+        #  return "meow! " * n_times
+
+#  c = Cat()
+#  pyrocksdb.call_go(c)
+
+#  a = pyrocksdb.Animal()
+#  a.vvv()
 
 
 @pytest.fixture
@@ -27,31 +35,31 @@ def test_option():
 
 def test_put_get(db):
     opts = pyrocksdb.WriteOptions()
-    s = db.put(opts, "key1", "value1")
+    s = db.put(opts, b"key1", b"value1")
     assert s.ok()
     opts = pyrocksdb.ReadOptions()
-    blob = db.get(opts, "key1")
+    blob = db.get(opts, b"key1")
     assert blob.status.ok()
-    assert blob.data == 'value1'
+    assert blob.data == b'value1'
 
 def test_delete(db):
     opts = pyrocksdb.WriteOptions()
-    s = db.put(opts, "key1", "value1")
+    s = db.put(opts, b"key1", b"value1")
     assert s.ok()
     opts = pyrocksdb.ReadOptions()
-    blob = db.get(opts, "key1")
+    blob = db.get(opts, b"key1")
     assert blob.status.ok()
-    assert blob.data == 'value1'
+    assert blob.data == b'value1'
     opts = pyrocksdb.WriteOptions()
-    s = db.delete(opts, "key1")
+    s = db.delete(opts, b"key1")
     assert s.ok()
     opts = pyrocksdb.ReadOptions()
-    blob = db.get(opts, "key1")
+    blob = db.get(opts, b"key1")
     assert not blob.status.ok()
 
 def test_iterator(db):
     opts = pyrocksdb.WriteOptions()
-    s = {'key1': 'value1', 'key2': 'value2', 'key3': 'value3'}
+    s = {b'key1': b'value1', b'key2': b'value2', b'key3': b'value3'}
     for k, v in s.items():
         db.put(opts, k, v)
 
@@ -61,41 +69,80 @@ def test_iterator(db):
     assert it.status().ok()
     assert it.valid()
     for k, v in s.items():
-        assert it.key().data() == k
-        assert it.value().data() == v
+        assert it.key() == k
+        assert it.value() == v
         it.next()
 
     assert not it.valid()
 
-    it.seek('key1')
+    it.seek(b'key1')
     assert it.valid()
-    assert it.key().data() == 'key1'
-    assert it.value().data() == 'value1'
-    it.seek('key2')
+    assert it.key() == b'key1'
+    assert it.value() == b'value1'
+    it.seek(b'key2')
     assert it.valid()
-    assert it.key().data() == 'key2'
-    assert it.value().data() == 'value2'
+    assert it.key() == b'key2'
+    assert it.value() == b'value2'
 
-    it.seek('key4')
+    it.seek(b'key4')
     assert not it.valid()
 
-    it.seek_for_prev('key0')
+    it.seek_for_prev(b'key0')
     assert not it.valid()
-    it.seek_for_prev('key4')
+    it.seek_for_prev(b'key4')
     assert it.valid()
 
 def test_write_batch(db):
     update = pyrocksdb.WriteBatch()
 
-    update.put('key1', 'value1')
-    update.put('key2', 'value2')
-    update.delete('key1')
+    update.put(b'key1', b'value1')
+    update.put(b'key2', b'value2')
+    update.delete(b'key1')
     opts = pyrocksdb.WriteOptions()
     s = db.write(opts, update)
     assert s.ok()
     opts = pyrocksdb.ReadOptions()
-    blob = db.get(opts, 'key1')
+    blob = db.get(opts, b'key1')
     assert blob.status.is_not_found()
-    blob = db.get(opts, 'key2')
+    blob = db.get(opts, b'key2')
     assert blob.status.ok()
-    assert blob.data == 'value2'
+    assert blob.data == b'value2'
+
+def test_transaction_db():
+    opts = pyrocksdb.Options()
+    opts.create_if_missing = True
+    txn_db_opts = pyrocksdb.TransactionDBOptions()
+    tmp = tempfile.TemporaryDirectory()
+    db = pyrocksdb.transaction_db()
+    s = db.open(opts, txn_db_opts, tmp.name)
+    assert(s.ok())
+    wopts = pyrocksdb.WriteOptions()
+    txn = db.begin_transaction(wopts)
+    assert(txn)
+    ropts = pyrocksdb.ReadOptions()
+    blob = txn.get(ropts, b'key1')
+    assert(blob.status.is_not_found())
+    del txn
+
+    txn = db.begin_transaction(wopts)
+    s = txn.put(b'key1', b'value1')
+    assert(s.ok())
+    s = txn.put(b'key2', b'value2')
+    assert(s.ok())
+    blob = txn.get(ropts, b'key1')
+    assert(blob.status.ok())
+    assert(blob.data == b'value1')
+
+    # the data won't be written unitl the commit
+    blob = db.get(ropts, b'key1')
+    assert(blob.status.is_not_found())
+
+    s = db.put(wopts, b'key3', b'value3')
+    assert(s.ok())
+
+    s = db.put(wopts, b'key1', b'value1')
+    assert(not s.ok())
+
+    s = txn.commit()
+    assert(s.ok())
+    del txn

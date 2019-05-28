@@ -16,16 +16,16 @@ Python bindings to the C++ interface of http://rocksdb.org/ using pybind11::
     assert(s.ok())
     # put
     opts = pyrocksdb.WriteOptions()
-    s = db.put(opts, "key1", "value1")
+    s = db.put(opts, b"key1", b"value1")
     assert (s.ok())
     # get
     opts = pyrocksdb.ReadOptions()
-    blob = db.get(opts, "key1")
-    print (blob.data) # value1
+    blob = db.get(opts, b"key1")
+    print (blob.data) # b"value1"
     print (blob.status.ok()) # true
     #delete
     opts = pyrocksdb.WriteOptions()
-    s = db.delete(opts, "key1")
+    s = db.delete(opts, b"key1")
     assert(s.ok())
     db.close()
 

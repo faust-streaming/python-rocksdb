@@ -38,6 +38,12 @@ void init_option(py::module & m) {
   py::class_<rocksdb::ReadOptions>(m, "ReadOptions")
     .def(py::init<>());
 
+  py::class_<rocksdb::TransactionDBOptions>(m, "TransactionDBOptions")
+    .def(py::init<>());
+
+  py::class_<rocksdb::TransactionOptions>(m, "TransactionOptions")
+    .def(py::init<>());
+
   py::class_<rocksdb::LRUCacheOptions>(m, "LRUCacheOptions")
     .def(py::init<>())
     .def_readwrite("capacity", &rocksdb::LRUCacheOptions::capacity)

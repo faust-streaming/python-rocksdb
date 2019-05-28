@@ -1,5 +1,6 @@
 #pragma once
 
+#include <pybind11/pybind11.h>
 #include <rocksdb/db.h>
 #include <rocksdb/status.h>
 #include <rocksdb/options.h>
@@ -9,14 +10,76 @@
 #include <rocksdb/table.h>
 #include <rocksdb/filter_policy.h>
 #include <rocksdb/cache.h>
+#include <rocksdb/snapshot.h>
 #include <merge_operators.h>
+#include <rocksdb/utilities/transaction_db.h>
+#include <rocksdb/utilities/transaction.h>
+#include <rocksdb/utilities/write_batch_with_index.h>
 
 using namespace rocksdb;
 
-struct Blob {
+namespace py = pybind11;
+
+
+class IteratorWrapper {
   public:
-    Status st;
+    IteratorWrapper(Iterator *iterator): iterator(iterator) {
+      
+    }
+    ~IteratorWrapper() {
+      
+    }
+
+    bool Valid() {
+      return iterator->Valid();
+    }
+
+    void SeekToFirst() {
+      iterator->SeekToFirst();
+    }
+
+    void SeekToLast() {
+      iterator->SeekToLast();
+    }
+
+    void Seek(const std::string & target) {
+      iterator->Seek(target);
+    }
+
+    void SeekForPrev(const std::string & target) {
+      iterator->SeekForPrev(target);
+    }
+
+    void Next() {
+      iterator->Next();
+    }
+
+    void Prev() {
+      iterator->Prev();
+    }
+
+    py::bytes key() const {
+      return py::bytes(iterator->key().ToString());
+    }
+
+    py::bytes value() const {
+      return py::bytes(iterator->value().ToString());
+    }
+
+    Status status() const {
+      return iterator->status();
+    }
+  private:
+  std::unique_ptr<Iterator> iterator;
+};
+
+class Blob {
+  public:
+    Status status;
     std::string data;
+    py::bytes get_data() {
+      return py::bytes(data);
+    }
 };
 
 class py_DB {
@@ -25,11 +88,11 @@ class py_DB {
     Status Open(const Options& options, const std::string& name);
     Status Put(const WriteOptions& options, const std::string& key,
                      const std::string& value);
-    Blob Get(const ReadOptions& options, const std::string& key);
+    std::unique_ptr<Blob> Get(const ReadOptions& options, const std::string& key);
     Status Write(const WriteOptions& options, WriteBatch& updates);
     Status Delete(const WriteOptions& options, const std::string& key);
     void Close();
-    std::unique_ptr<Iterator> NewIterator(const ReadOptions& options);
+    std::unique_ptr<IteratorWrapper> NewIterator(const ReadOptions& options);
     //FIXME: python gc
     ~py_DB();
   private:
