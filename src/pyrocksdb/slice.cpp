@@ -5,7 +5,7 @@
 namespace py = pybind11;
 
 void init_slice(py::module & m) {
-  py::class_<Slice>(m, "Slice")
-    .def(py::init<const std::string&>());
+  // py::class_<Slice>(m, "Slice")
+    // .def(py::init<const std::string&>());
     // .def("data", []() {return py::bytes(Slice::data());});
 }

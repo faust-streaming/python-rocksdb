@@ -36,13 +36,15 @@ void init_option(py::module & m) {
     .def(py::init<>());
 
   py::class_<rocksdb::ReadOptions>(m, "ReadOptions")
-    .def(py::init<>());
+    .def(py::init<>())
+    .def_readwrite("snapshot", &ReadOptions::snapshot);
 
   py::class_<rocksdb::TransactionDBOptions>(m, "TransactionDBOptions")
     .def(py::init<>());
 
   py::class_<rocksdb::TransactionOptions>(m, "TransactionOptions")
-    .def(py::init<>());
+    .def(py::init<>())
+    .def_readwrite("set_snapshot", &TransactionOptions::set_snapshot);
 
   py::class_<rocksdb::LRUCacheOptions>(m, "LRUCacheOptions")
     .def(py::init<>())

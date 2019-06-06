@@ -12,6 +12,9 @@ py_DB::~py_DB() {
   }
 }
 void py_DB::Close() {
+  if (db_ptr == nullptr) {
+    throw std::invalid_argument("db has been closed");
+  }
   delete db_ptr;
   db_ptr = nullptr;
 }

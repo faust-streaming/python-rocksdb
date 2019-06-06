@@ -11,10 +11,12 @@
 #include <rocksdb/filter_policy.h>
 #include <rocksdb/cache.h>
 #include <rocksdb/snapshot.h>
-#include <merge_operators.h>
+#include <utilities/merge_operators.h>
 #include <rocksdb/utilities/transaction_db.h>
 #include <rocksdb/utilities/transaction.h>
 #include <rocksdb/utilities/write_batch_with_index.h>
+// #include <db/dbformat.h>
+// #include <db/snapshot_impl.h>
 
 using namespace rocksdb;
 
