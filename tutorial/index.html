@@ -34,6 +34,81 @@
             
   <div class="section" id="basic-usage-of-python-rocksdb">
 <h1>Basic Usage of python-rocksdb<a class="headerlink" href="#basic-usage-of-python-rocksdb" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="column-family">
+<h2>Column Family<a class="headerlink" href="#column-family" title="Permalink to this headline">¶</a></h2>
+<p>python-rocksdb also supports column family</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">db</span> <span class="o">=</span> <span class="n">pyrocksdb</span><span class="o">.</span><span class="n">DB</span><span class="p">()</span>
+<span class="n">opts</span> <span class="o">=</span> <span class="n">pyrocksdb</span><span class="o">.</span><span class="n">Options</span><span class="p">()</span>
+<span class="n">opts</span><span class="o">.</span><span class="n">create_if_missing</span> <span class="o">=</span> <span class="kc">True</span>
+<span class="n">s</span> <span class="o">=</span> <span class="n">db</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">opts</span><span class="p">,</span> <span class="s1">&#39;path/to/db&#39;</span><span class="p">)</span>
+<span class="c1"># create new column family</span>
+<span class="n">copts</span> <span class="o">=</span> <span class="n">pyrocksdb</span><span class="o">.</span><span class="n">ColumnFamilyOptions</span><span class="p">()</span>
+<span class="n">s</span><span class="p">,</span> <span class="n">cf</span> <span class="o">=</span> <span class="n">db</span><span class="o">.</span><span class="n">create_column_family</span><span class="p">(</span><span class="n">copts</span><span class="p">,</span> <span class="s2">&quot;new_cf&quot;</span><span class="p">)</span>
+<span class="k">del</span> <span class="n">cf</span>
+<span class="n">db</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+<span class="c1"># open db with the column families</span>
+<span class="n">cfd1</span> <span class="o">=</span> <span class="n">pyrocksdb</span><span class="o">.</span><span class="n">ColumnFamilyDescriptor</span><span class="p">(</span><span class="n">pyrocksdb</span><span class="o">.</span><span class="n">DefaultColumnFamilyName</span><span class="p">,</span> <span class="n">pyrocksdb</span><span class="o">.</span><span class="n">ColumnFamilyOptions</span><span class="p">())</span>
+<span class="n">cfd2</span> <span class="o">=</span> <span class="n">pyrocksdb</span><span class="o">.</span><span class="n">ColumnFamilyDescriptor</span><span class="p">(</span><span class="s2">&quot;new_cf&quot;</span><span class="p">,</span> <span class="n">pyrocksdb</span><span class="o">.</span><span class="n">ColumnFamilyOptions</span><span class="p">())</span>
+<span class="n">cfds</span> <span class="o">=</span> <span class="n">pyrocksdb</span><span class="o">.</span><span class="n">VectorColumnFamilyDescriptor</span><span class="p">()</span>
+<span class="n">cfds</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">cfd1</span><span class="p">)</span>
+<span class="n">cfds</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">cfd2</span><span class="p">)</span>
+<span class="n">db_opts</span> <span class="o">=</span> <span class="n">pyrocksdb</span><span class="o">.</span><span class="n">DBOptions</span><span class="p">()</span>
+<span class="c1"># column family handles</span>
+<span class="n">s</span><span class="p">,</span> <span class="n">cfhs</span> <span class="o">=</span> <span class="n">db</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">db_opts</span><span class="p">,</span> <span class="s1">&#39;path/to/db&#39;</span><span class="p">,</span> <span class="n">cfds</span><span class="p">)</span>
+<span class="k">assert</span><span class="p">(</span><span class="n">s</span><span class="o">.</span><span class="n">ok</span><span class="p">())</span>
+<span class="k">assert</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">cfhs</span><span class="p">)</span> <span class="o">==</span> <span class="mi">2</span><span class="p">)</span>
+<span class="k">assert</span><span class="p">(</span><span class="n">cfhs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">get_name</span><span class="p">()</span> <span class="o">==</span> <span class="n">pyrocksdb</span><span class="o">.</span><span class="n">DefaultColumnFamilyName</span><span class="p">)</span>
+<span class="k">assert</span><span class="p">(</span><span class="n">cfhs</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">get_name</span><span class="p">()</span> <span class="o">==</span><span class="s1">&#39;new_cf&#39;</span><span class="p">)</span>
+
+<span class="n">wopts</span> <span class="o">=</span> <span class="n">pyrocksdb</span><span class="o">.</span><span class="n">WriteOptions</span><span class="p">()</span>
+<span class="n">ropts</span> <span class="o">=</span> <span class="n">pyrocksdb</span><span class="o">.</span><span class="n">ReadOptions</span><span class="p">()</span>
+<span class="n">s</span> <span class="o">=</span> <span class="n">db</span><span class="o">.</span><span class="n">put</span><span class="p">(</span><span class="n">wopts</span><span class="p">,</span> <span class="n">cfhs</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="sa">b</span><span class="s1">&#39;key&#39;</span><span class="p">,</span> <span class="sa">b</span><span class="s1">&#39;value&#39;</span><span class="p">)</span>
+<span class="k">assert</span><span class="p">(</span><span class="n">s</span><span class="o">.</span><span class="n">ok</span><span class="p">())</span>
+<span class="n">b</span> <span class="o">=</span> <span class="n">db</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">ropts</span><span class="p">,</span> <span class="n">cfhs</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="sa">b</span><span class="s1">&#39;key&#39;</span><span class="p">)</span>
+<span class="k">assert</span><span class="p">(</span><span class="n">b</span><span class="o">.</span><span class="n">status</span><span class="o">.</span><span class="n">ok</span><span class="p">())</span>
+<span class="k">assert</span><span class="p">(</span><span class="n">b</span><span class="o">.</span><span class="n">data</span> <span class="o">==</span> <span class="sa">b</span><span class="s1">&#39;value&#39;</span><span class="p">)</span>
+<span class="n">b</span> <span class="o">=</span> <span class="n">db</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">ropts</span><span class="p">,</span> <span class="n">cfhs</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="sa">b</span><span class="s1">&#39;key&#39;</span><span class="p">)</span>
+<span class="k">assert</span><span class="p">(</span><span class="n">b</span><span class="o">.</span><span class="n">status</span><span class="o">.</span><span class="n">is_not_found</span><span class="p">())</span>
+
+<span class="n">s</span> <span class="o">=</span> <span class="n">db</span><span class="o">.</span><span class="n">put</span><span class="p">(</span><span class="n">wopts</span><span class="p">,</span> <span class="n">cfhs</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="sa">b</span><span class="s1">&#39;key&#39;</span><span class="p">,</span> <span class="sa">b</span><span class="s1">&#39;value2&#39;</span><span class="p">)</span>
+<span class="k">assert</span><span class="p">(</span><span class="n">s</span><span class="o">.</span><span class="n">ok</span><span class="p">())</span>
+<span class="n">b</span> <span class="o">=</span> <span class="n">db</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">ropts</span><span class="p">,</span> <span class="n">cfhs</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="sa">b</span><span class="s1">&#39;key&#39;</span><span class="p">)</span>
+<span class="k">assert</span><span class="p">(</span><span class="n">b</span><span class="o">.</span><span class="n">status</span><span class="o">.</span><span class="n">ok</span><span class="p">())</span>
+<span class="k">assert</span><span class="p">(</span><span class="n">b</span><span class="o">.</span><span class="n">data</span> <span class="o">==</span> <span class="sa">b</span><span class="s1">&#39;value2&#39;</span><span class="p">)</span>
+
+<span class="n">b</span> <span class="o">=</span> <span class="n">db</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">ropts</span><span class="p">,</span> <span class="n">cfhs</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="sa">b</span><span class="s1">&#39;key&#39;</span><span class="p">)</span>
+<span class="k">assert</span><span class="p">(</span><span class="n">b</span><span class="o">.</span><span class="n">status</span><span class="o">.</span><span class="n">ok</span><span class="p">())</span>
+<span class="k">assert</span><span class="p">(</span><span class="n">b</span><span class="o">.</span><span class="n">data</span> <span class="o">==</span> <span class="sa">b</span><span class="s1">&#39;value&#39;</span><span class="p">)</span>
+
+<span class="n">s</span> <span class="o">=</span> <span class="n">db</span><span class="o">.</span><span class="n">delete</span><span class="p">(</span><span class="n">wopts</span><span class="p">,</span> <span class="n">cfhs</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="sa">b</span><span class="s1">&#39;key&#39;</span><span class="p">)</span>
+<span class="k">assert</span><span class="p">(</span><span class="n">s</span><span class="o">.</span><span class="n">ok</span><span class="p">())</span>
+<span class="n">b</span> <span class="o">=</span> <span class="n">db</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">ropts</span><span class="p">,</span> <span class="n">cfhs</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="sa">b</span><span class="s1">&#39;key&#39;</span><span class="p">)</span>
+<span class="k">assert</span><span class="p">(</span><span class="n">b</span><span class="o">.</span><span class="n">status</span><span class="o">.</span><span class="n">is_not_found</span><span class="p">())</span>
+
+<span class="n">s</span> <span class="o">=</span> <span class="n">db</span><span class="o">.</span><span class="n">delete</span><span class="p">(</span><span class="n">wopts</span><span class="p">,</span> <span class="n">cfhs</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="sa">b</span><span class="s1">&#39;key&#39;</span><span class="p">)</span>
+<span class="k">assert</span><span class="p">(</span><span class="n">s</span><span class="o">.</span><span class="n">ok</span><span class="p">())</span>
+<span class="n">b</span> <span class="o">=</span> <span class="n">db</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">ropts</span><span class="p">,</span> <span class="n">cfhs</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="sa">b</span><span class="s1">&#39;key&#39;</span><span class="p">)</span>
+<span class="k">assert</span><span class="p">(</span><span class="n">b</span><span class="o">.</span><span class="n">status</span><span class="o">.</span><span class="n">is_not_found</span><span class="p">())</span>
+
+<span class="c1"># write batch</span>
+<span class="n">update</span> <span class="o">=</span> <span class="n">pyrocksdb</span><span class="o">.</span><span class="n">WriteBatch</span><span class="p">()</span>
+<span class="n">update</span><span class="o">.</span><span class="n">put</span><span class="p">(</span><span class="n">cfhs</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="sa">b</span><span class="s1">&#39;key1&#39;</span><span class="p">,</span> <span class="sa">b</span><span class="s1">&#39;value1&#39;</span><span class="p">)</span>
+<span class="n">update</span><span class="o">.</span><span class="n">put</span><span class="p">(</span><span class="n">cfhs</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="sa">b</span><span class="s1">&#39;key2&#39;</span><span class="p">,</span> <span class="sa">b</span><span class="s1">&#39;value2&#39;</span><span class="p">)</span>
+<span class="n">update</span><span class="o">.</span><span class="n">delete</span><span class="p">(</span><span class="n">cfhs</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="s1">&#39;key1&#39;</span><span class="p">)</span>
+<span class="n">s</span> <span class="o">=</span> <span class="n">db</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">wopts</span><span class="p">,</span> <span class="n">update</span><span class="p">)</span>
+<span class="k">assert</span><span class="p">(</span><span class="n">s</span><span class="o">.</span><span class="n">ok</span><span class="p">())</span>
+<span class="n">b</span> <span class="o">=</span> <span class="n">db</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">ropts</span><span class="p">,</span> <span class="n">cfhs</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="sa">b</span><span class="s1">&#39;key1&#39;</span><span class="p">)</span>
+<span class="k">assert</span><span class="p">(</span><span class="n">b</span><span class="o">.</span><span class="n">status</span><span class="o">.</span><span class="n">is_not_found</span><span class="p">())</span>
+<span class="n">b</span> <span class="o">=</span> <span class="n">db</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">ropts</span><span class="p">,</span> <span class="n">cfhs</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="sa">b</span><span class="s1">&#39;key2&#39;</span><span class="p">)</span>
+<span class="k">assert</span><span class="p">(</span><span class="n">b</span><span class="o">.</span><span class="n">status</span><span class="o">.</span><span class="n">ok</span><span class="p">())</span>
+<span class="k">assert</span><span class="p">(</span><span class="n">b</span><span class="o">.</span><span class="n">data</span> <span class="o">==</span> <span class="sa">b</span><span class="s1">&#39;value2&#39;</span><span class="p">)</span>
+
+<span class="k">for</span> <span class="n">cfh</span> <span class="ow">in</span> <span class="n">cfhs</span><span class="p">:</span>
+    <span class="k">del</span> <span class="n">cfh</span>
+<span class="n">db</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
 <div class="section" id="wrtie-batch">
 <h2>Wrtie Batch<a class="headerlink" href="#wrtie-batch" title="Permalink to this headline">¶</a></h2>
 <p>It is also possible to gather modifications and
@@ -123,6 +198,7 @@ valid. So you have to call one of its seek methods first</p>
 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="../installation.html">Instructions how to install</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Tutorial</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#column-family">Column Family</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#wrtie-batch">Wrtie Batch</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#iteration">Iteration</a></li>
 </ul>
