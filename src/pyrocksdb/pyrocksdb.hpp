@@ -84,19 +84,70 @@ class Blob {
     }
 };
 
+class py_ColumnFamilyHandle:  public ColumnFamilyHandle {
+
+  const std::string & GetName() const override {
+    PYBIND11_OVERLOAD_PURE(
+        const std::string &,
+        rocksdb::ColumnFamilyHandle,
+        GetName
+    );
+  }
+
+  uint32_t GetID() const override {
+    PYBIND11_OVERLOAD_PURE(
+        uint32_t,
+        rocksdb::ColumnFamilyHandle,
+        GetID
+    );
+  }
+
+  Status GetDescriptor(ColumnFamilyDescriptor* desc) override {
+    PYBIND11_OVERLOAD_PURE(
+        Status,
+        rocksdb::ColumnFamilyHandle,
+        GetDescriptor
+    );
+  }
+  const Comparator* GetComparator() const override {
+    PYBIND11_OVERLOAD_PURE(
+        Comparator*,
+        rocksdb::ColumnFamilyHandle,
+        GetComparator
+    );
+  }
+};
+
+
 class py_DB {
   public:
     py_DB();
     Status Open(const Options& options, const std::string& name);
+    py::tuple Open(const DBOptions& db_options, const std::string& name, const std::vector<ColumnFamilyDescriptor>& column_families);
+
+    Status Put(const WriteOptions& options,
+                     ColumnFamilyHandle* column_family, const std::string& key, const std::string& value);
+
+
     Status Put(const WriteOptions& options, const std::string& key,
                      const std::string& value);
+
     std::unique_ptr<Blob> Get(const ReadOptions& options, const std::string& key);
+    std::unique_ptr<Blob> Get(const ReadOptions& options,
+                            ColumnFamilyHandle* column_family, const std::string& key);
+                            
     Status Write(const WriteOptions& options, WriteBatch& updates);
     Status Delete(const WriteOptions& options, const std::string& key);
+    Status Delete(const WriteOptions& options,
+                        ColumnFamilyHandle* column_family,
+                        const std::string& key);
+
     void Close();
+    py::tuple CreateColumnFamily(const ColumnFamilyOptions& options, const std::string& column_family_name);
     std::unique_ptr<IteratorWrapper> NewIterator(const ReadOptions& options);
     //FIXME: python gc
     ~py_DB();
+    const std::string default_column_familiy_name();
   private:
     DB* db_ptr;
 };

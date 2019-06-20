@@ -4,7 +4,7 @@
 namespace py = pybind11;
 
 void init_option(py::module & m) {
-  py::class_<rocksdb::DBOptions>(m, "DBOptions")
+  py::class_<DBOptions, std::unique_ptr<DBOptions>>(m, "DBOptions")
     .def(py::init<>())
     .def("IncreaseParallelism", &rocksdb::DBOptions::IncreaseParallelism, py::arg("total_threads")=16, py::return_value_policy::reference_internal)
     .def_readwrite("create_if_missing", &rocksdb::DBOptions::create_if_missing)
