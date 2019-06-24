@@ -1,0 +1,28 @@
+pyrocksdb.AdvancedColumnFamilyOptions
+=====================================
+
+.. currentmodule:: pyrocksdb
+
+.. autoclass:: AdvancedColumnFamilyOptions
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~AdvancedColumnFamilyOptions.__init__
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~AdvancedColumnFamilyOptions.max_write_buffer_number
+   
+   

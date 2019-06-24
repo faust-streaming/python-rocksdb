@@ -1,0 +1,22 @@
+pyrocksdb.ColumnFamilyDescriptor
+================================
+
+.. currentmodule:: pyrocksdb
+
+.. autoclass:: ColumnFamilyDescriptor
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~ColumnFamilyDescriptor.__init__
+   
+   
+
+   
+   
+   

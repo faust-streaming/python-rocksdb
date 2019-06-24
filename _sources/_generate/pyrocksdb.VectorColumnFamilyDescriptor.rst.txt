@@ -1,0 +1,26 @@
+pyrocksdb.VectorColumnFamilyDescriptor
+======================================
+
+.. currentmodule:: pyrocksdb
+
+.. autoclass:: VectorColumnFamilyDescriptor
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~VectorColumnFamilyDescriptor.__init__
+      ~VectorColumnFamilyDescriptor.append
+      ~VectorColumnFamilyDescriptor.extend
+      ~VectorColumnFamilyDescriptor.insert
+      ~VectorColumnFamilyDescriptor.pop
+   
+   
+
+   
+   
+   

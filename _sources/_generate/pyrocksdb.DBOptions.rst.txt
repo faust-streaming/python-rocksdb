@@ -1,0 +1,36 @@
+pyrocksdb.DBOptions
+===================
+
+.. currentmodule:: pyrocksdb
+
+.. autoclass:: DBOptions
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~DBOptions.IncreaseParallelism
+      ~DBOptions.__init__
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~DBOptions.create_if_missing
+      ~DBOptions.error_if_exists
+      ~DBOptions.max_file_opening_threads
+      ~DBOptions.max_open_files
+      ~DBOptions.max_total_wal_size
+      ~DBOptions.paranoid_checks
+      ~DBOptions.statistics
+      ~DBOptions.use_fsync
+   
+   

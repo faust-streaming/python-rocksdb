@@ -1,0 +1,32 @@
+pyrocksdb.LRUCacheOptions
+=========================
+
+.. currentmodule:: pyrocksdb
+
+.. autoclass:: LRUCacheOptions
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~LRUCacheOptions.__init__
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~LRUCacheOptions.capacity
+      ~LRUCacheOptions.high_pri_pool_ratio
+      ~LRUCacheOptions.memory_allocator
+      ~LRUCacheOptions.num_shard_bits
+      ~LRUCacheOptions.strict_capacity_limit
+   
+   

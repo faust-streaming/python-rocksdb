@@ -1,0 +1,23 @@
+pyrocksdb.ColumnFamilyHandle
+============================
+
+.. currentmodule:: pyrocksdb
+
+.. autoclass:: ColumnFamilyHandle
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~ColumnFamilyHandle.__init__
+      ~ColumnFamilyHandle.get_name
+   
+   
+
+   
+   
+   

@@ -1,0 +1,24 @@
+pyrocksdb.WriteBatch
+====================
+
+.. currentmodule:: pyrocksdb
+
+.. autoclass:: WriteBatch
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~WriteBatch.__init__
+      ~WriteBatch.delete
+      ~WriteBatch.put
+   
+   
+
+   
+   
+   

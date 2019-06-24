@@ -1,0 +1,31 @@
+pyrocksdb.transaction\_wrapper
+==============================
+
+.. currentmodule:: pyrocksdb
+
+.. autoclass:: transaction_wrapper
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~transaction_wrapper.clear_snapshot
+      ~transaction_wrapper.commit
+      ~transaction_wrapper.get
+      ~transaction_wrapper.get_for_update
+      ~transaction_wrapper.get_snapshot
+      ~transaction_wrapper.put
+      ~transaction_wrapper.rollback
+      ~transaction_wrapper.rollback_to_savepoint
+      ~transaction_wrapper.set_savepoint
+      ~transaction_wrapper.set_snapshot
+   
+   
+
+   
+   
+   

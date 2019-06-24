@@ -1,0 +1,22 @@
+pyrocksdb.TransactionDBOptions
+==============================
+
+.. currentmodule:: pyrocksdb
+
+.. autoclass:: TransactionDBOptions
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~TransactionDBOptions.__init__
+   
+   
+
+   
+   
+   

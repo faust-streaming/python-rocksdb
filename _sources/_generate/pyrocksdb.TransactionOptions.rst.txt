@@ -1,0 +1,28 @@
+pyrocksdb.TransactionOptions
+============================
+
+.. currentmodule:: pyrocksdb
+
+.. autoclass:: TransactionOptions
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~TransactionOptions.__init__
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~TransactionOptions.set_snapshot
+   
+   

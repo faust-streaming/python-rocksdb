@@ -1,0 +1,63 @@
+pyrocksdb.Status
+================
+
+.. currentmodule:: pyrocksdb
+
+.. autoclass:: Status
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~Status.__init__
+      ~Status.code
+      ~Status.is_aborted
+      ~Status.is_busy
+      ~Status.is_compaction_too_large
+      ~Status.is_corruption
+      ~Status.is_deadlock
+      ~Status.is_expired
+      ~Status.is_in_complete
+      ~Status.is_invalid_argument
+      ~Status.is_io_error
+      ~Status.is_lock_limit
+      ~Status.is_memory_limit
+      ~Status.is_no_space
+      ~Status.is_not_found
+      ~Status.is_not_supported
+      ~Status.is_path_not_found
+      ~Status.is_shutdown_in_progress
+      ~Status.is_time_out
+      ~Status.is_try_again
+      ~Status.ok
+      ~Status.to_string
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~Status.kAborted
+      ~Status.kBusy
+      ~Status.kCompactionTooLarge
+      ~Status.kCorruption
+      ~Status.kExpired
+      ~Status.kIOError
+      ~Status.kIncomplete
+      ~Status.kInvalidArgument
+      ~Status.kMergeInProgress
+      ~Status.kNotFound
+      ~Status.kNotSupported
+      ~Status.kOk
+      ~Status.kShutdownInProgress
+      ~Status.kTimedOut
+      ~Status.kTryAgain
+   
+   

@@ -35,6 +35,8 @@ Tested with python3.7
 .. toctree::
     :maxdepth: 2
 
+    python_rocksdb
+
     Instructions how to install <installation>
     Tutorial <tutorial/index>
     Changelog <changelog>

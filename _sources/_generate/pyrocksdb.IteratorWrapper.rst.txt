@@ -1,0 +1,31 @@
+pyrocksdb.IteratorWrapper
+=========================
+
+.. currentmodule:: pyrocksdb
+
+.. autoclass:: IteratorWrapper
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~IteratorWrapper.key
+      ~IteratorWrapper.next
+      ~IteratorWrapper.prev
+      ~IteratorWrapper.seek
+      ~IteratorWrapper.seek_for_prev
+      ~IteratorWrapper.seek_to_first
+      ~IteratorWrapper.seek_to_last
+      ~IteratorWrapper.status
+      ~IteratorWrapper.valid
+      ~IteratorWrapper.value
+   
+   
+
+   
+   
+   

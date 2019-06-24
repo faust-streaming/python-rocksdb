@@ -1,0 +1,31 @@
+pyrocksdb.DB
+============
+
+.. currentmodule:: pyrocksdb
+
+.. autoclass:: DB
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~DB.__init__
+      ~DB.close
+      ~DB.create_column_family
+      ~DB.delete
+      ~DB.get
+      ~DB.iterator
+      ~DB.open
+      ~DB.open_for_readonly
+      ~DB.put
+      ~DB.write
+   
+   
+
+   
+   
+   
