@@ -124,6 +124,7 @@ class py_DB {
     py_DB();
     Status Open(const Options& options, const std::string& name);
     Status OpenForReadOnly(const Options& options, const std::string& name,  bool error_if_log_file_exist=false);
+    py::tuple OpenForReadOnly(const DBOptions& db_options, const std::string& name, const std::vector<ColumnFamilyDescriptor>& column_families, bool error_if_log_file_exist=false);
     py::tuple Open(const DBOptions& db_options, const std::string& name, const std::vector<ColumnFamilyDescriptor>& column_families);
 
     Status Put(const WriteOptions& options,

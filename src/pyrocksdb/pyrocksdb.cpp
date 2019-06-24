@@ -62,6 +62,15 @@ Status py_DB::OpenForReadOnly(const Options& options, const std::string& name,  
   return st;
 }
 
+py::tuple py_DB::OpenForReadOnly(const DBOptions& db_options, const std::string& name, const std::vector<ColumnFamilyDescriptor>& column_families, bool error_if_log_file_exist) {
+  if (db_ptr != nullptr) {
+    throw std::invalid_argument("db has been opened");
+  }
+  std::vector<ColumnFamilyHandle*> handles;
+  Status st =  DB::OpenForReadOnly(db_options, name, column_families, &handles, &db_ptr, error_if_log_file_exist);
+  return py::make_tuple(st, handles);
+}
+
 Status py_DB::Put(const WriteOptions& options, const std::string& key,
                  const std::string& value) {
   if (db_ptr == nullptr) {

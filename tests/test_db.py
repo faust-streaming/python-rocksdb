@@ -308,3 +308,51 @@ def test_column_family():
 
     for cfh in cfhs:
         del cfh
+
+def test_readonly():
+    db = pyrocksdb.DB()
+    opts = pyrocksdb.Options()
+    opts.IncreaseParallelism()
+    opts.OptimizeLevelStyleCompaction()
+    opts.create_if_missing = True
+    tmp = tempfile.TemporaryDirectory()
+    s = db.open(opts, tmp.name)
+    assert s.ok()
+    db.close()
+
+    s = db.open_for_readonly(opts, tmp.name)
+    assert(s.ok())
+
+    wopts = pyrocksdb.WriteOptions()
+    s = db.put(wopts, b'key1', b'value1')
+    assert(not s.ok())
+
+def test_readonly_column_family():
+    db = pyrocksdb.DB()
+    opts = pyrocksdb.Options()
+    opts.create_if_missing = True
+    tmp = tempfile.TemporaryDirectory()
+    s = db.open(opts, tmp.name)
+    assert s.ok()
+
+    copts = pyrocksdb.ColumnFamilyOptions()
+    s, cf = db.create_column_family(copts, "new_cf")
+    del cf
+    db.close()
+
+    cfd1 = pyrocksdb.ColumnFamilyDescriptor(pyrocksdb.DefaultColumnFamilyName, pyrocksdb.ColumnFamilyOptions())
+    cfd2 = pyrocksdb.ColumnFamilyDescriptor("new_cf", pyrocksdb.ColumnFamilyOptions())
+    cfds = pyrocksdb.VectorColumnFamilyDescriptor()
+    cfds.append(cfd1)
+    cfds.append(cfd2)
+    db_opts = pyrocksdb.DBOptions()
+    #  a = [1,2]
+    s, cfhs = db.open_for_readonly(db_opts, tmp.name, cfds)
+    assert(s.ok())
+    assert(len(cfhs) == 2)
+    assert(cfhs[0].get_name() == pyrocksdb.DefaultColumnFamilyName)
+    assert(cfhs[1].get_name() =='new_cf')
+
+    wopts = pyrocksdb.WriteOptions()
+    s = db.put(wopts, cfhs[1], b'key1', b'value1')
+    assert(not s.ok())
