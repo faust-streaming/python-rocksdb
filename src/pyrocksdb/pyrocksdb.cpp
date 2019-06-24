@@ -54,6 +54,14 @@ py::tuple py_DB::Open(const DBOptions& db_options, const std::string& name, cons
   return py::make_tuple(st, handles);
 }
 
+Status py_DB::OpenForReadOnly(const Options& options, const std::string& name,  bool error_if_log_file_exist) {
+  if (db_ptr != nullptr) {
+    throw std::invalid_argument("db has been opened");
+  }
+  Status st =  DB::OpenForReadOnly(options, name, &db_ptr, error_if_log_file_exist);
+  return st;
+}
+
 Status py_DB::Put(const WriteOptions& options, const std::string& key,
                  const std::string& value) {
   if (db_ptr == nullptr) {
@@ -144,7 +152,41 @@ void init_snapshot(py::module &);
 
 PYBIND11_MODULE(pyrocksdb, m) {
     // optional module docstring
-  m.doc() = "python rocksdb";
+  m.doc() = R"pbdoc(
+      python rocksdb API
+      -----------------------
+
+      Most of names of APIs are identical to the official rocksdb c++ APIs, thus you can find the usage in the headers of rocksdb easily
+
+      .. currentmodule:: pyrocksdb
+
+      .. autosummary::
+         :toctree: _generate
+
+         Blob
+         ColumnFamilyHandle
+         ColumnFamilyDescriptor
+         VectorColumnFamilyDescriptor
+         VectorColumnFamilyHandle
+         IteratorWrapper
+         DB
+         DBOptions
+         Options
+         AdvancedColumnFamilyOptions
+         ColumnFamilyOptions
+         Options
+         WriteOptions
+         ReadOptions
+         TransactionDBOptions
+         TransactionOptions
+         LRUCacheOptions
+         Status
+         WriteBatch
+         transaction_db
+         transaction_wrapper
+         Snapshot
+  )pbdoc";
+
   init_db(m);
   init_option(m);
   init_slice(m);
@@ -160,9 +202,6 @@ PYBIND11_MODULE(pyrocksdb, m) {
     .def_readwrite("status", &Blob::status)
     // .def_readwrite("data", &Blob::data);
     .def_property_readonly("data", &Blob::get_data);
-
-  // py::class_<ColumnFamilyHandleWrapper, std::unique_ptr<ColumnFamilyHandleWrapper>>(m, "ColumnFamilyHandleWrapper")
-    // .def(py::init<>());
 
   py::class_<ColumnFamilyHandle, py_ColumnFamilyHandle, std::unique_ptr<ColumnFamilyHandle>>(m, "ColumnFamilyHandle")
     .def(py::init<>())
