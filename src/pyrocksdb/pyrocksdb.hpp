@@ -144,6 +144,10 @@ class py_DB {
                         ColumnFamilyHandle* column_family,
                         const std::string& key);
 
+    Status CompactRange(const CompactRangeOptions& options, ColumnFamilyHandle* column_family, const Slice* begin, const Slice* end);
+
+    Status CompactRange(const CompactRangeOptions& options, const Slice* begin, const Slice* end);
+
     void Close();
     py::tuple CreateColumnFamily(const ColumnFamilyOptions& options, const std::string& column_family_name);
     std::unique_ptr<IteratorWrapper> NewIterator(const ReadOptions& options);

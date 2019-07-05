@@ -17,6 +17,8 @@ void init_db(py::module & m) {
     .def("get", (std::unique_ptr<Blob> (py_DB::*) (const ReadOptions&, ColumnFamilyHandle*, const std::string&)) &py_DB::Get)
     .def("delete", (Status (py_DB::*) (const WriteOptions& options, const std::string& key)) &py_DB::Delete)
     .def("delete", (Status (py_DB::*) (const WriteOptions&, ColumnFamilyHandle*, const std::string&)) &py_DB::Delete)
+    .def("compact_range", (Status (py_DB::*) (const CompactRangeOptions& options, ColumnFamilyHandle* column_family, const Slice* begin, const Slice* end)) &py_DB::CompactRange)
+    .def("compact_range", (Status (py_DB::*) (const CompactRangeOptions& options, const Slice* begin, const Slice* end)) &py_DB::CompactRange)
     .def("close", &py_DB::Close)
     .def("create_column_family", &py_DB::CreateColumnFamily)
     .def("iterator", &py_DB::NewIterator);

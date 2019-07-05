@@ -131,6 +131,15 @@ Status py_DB::Delete(const WriteOptions& options,
   
 }
 
+Status py_DB::CompactRange(const CompactRangeOptions& options, ColumnFamilyHandle* column_family, const Slice* begin, const Slice* end) {
+    return db_ptr->CompactRange(options, column_family, begin, end);
+}
+
+Status py_DB::CompactRange(const CompactRangeOptions& options, const Slice* begin, const Slice* end) {
+    return db_ptr->CompactRange(options, db_ptr->DefaultColumnFamily(), begin, end);
+}
+
+
 py::tuple py_DB::CreateColumnFamily(const ColumnFamilyOptions& options, const std::string& column_family_name) {
   // std::unique_ptr<ColumnFamilyHandleWrapper> cf_handle(new ColumnFamilyHandleWrapper());
   // ColumnFamilyHandleWrapper *cf_handle = new ColumnFamilyHandleWrapper();

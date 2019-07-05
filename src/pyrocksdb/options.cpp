@@ -53,4 +53,10 @@ void init_option(py::module & m) {
     .def_readwrite("strict_capacity_limit", &rocksdb::LRUCacheOptions::strict_capacity_limit)
     .def_readwrite("high_pri_pool_ratio", &rocksdb::LRUCacheOptions::high_pri_pool_ratio)
     .def_readwrite("memory_allocator", &rocksdb::LRUCacheOptions::memory_allocator);
+
+  py::class_<rocksdb::CompactRangeOptions>(m, "CompactRangeOptions")
+    .def(py::init<>())
+    .def_readwrite("exclusive_manual_compaction", &rocksdb::CompactRangeOptions::exclusive_manual_compaction)
+    .def_readwrite("change_level", &rocksdb::CompactRangeOptions::change_level)
+    .def_readwrite("target_level", &rocksdb::CompactRangeOptions::target_level);
 }

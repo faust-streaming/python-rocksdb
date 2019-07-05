@@ -15,6 +15,7 @@ def db():
     yield db
     db.close()
 
+
 @pytest.fixture
 def transaction_db():
     opts = pyrocksdb.Options()
@@ -356,3 +357,30 @@ def test_readonly_column_family():
     wopts = pyrocksdb.WriteOptions()
     s = db.put(wopts, cfhs[1], b'key1', b'value1')
     assert(not s.ok())
+
+def test_compaction(db):
+    options = pyrocksdb.CompactRangeOptions()
+    wopts = pyrocksdb.WriteOptions()
+    for i in range(100):
+        db.put(wopts, b'key1', b'value1')
+    db.compact_range(options, None, None)
+
+def test_compaction_column_family():
+    db = pyrocksdb.DB()
+    opts = pyrocksdb.Options()
+    opts.create_if_missing = True
+    tmp = tempfile.TemporaryDirectory()
+    s = db.open(opts, tmp.name)
+    assert s.ok()
+
+    copts = pyrocksdb.ColumnFamilyOptions()
+    s, cf = db.create_column_family(copts, "new_cf")
+    assert s.ok()
+
+    wopts = pyrocksdb.WriteOptions()
+    for i in range(100):
+        db.put(wopts, cf, b'key1', b'value1')
+    options = pyrocksdb.CompactRangeOptions()
+    db.compact_range(options, None, None)
+    db.close()
+
