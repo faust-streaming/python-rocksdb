@@ -35,6 +35,8 @@ pyrocksdb.Options
       ~Options.statistics
       ~Options.sync
       ~Options.table_factory
+      ~Options.target_file_size_base
+      ~Options.target_file_size_multiplier
       ~Options.use_fsync
       ~Options.write_buffer_size
    

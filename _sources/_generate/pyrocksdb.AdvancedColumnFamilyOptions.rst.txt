@@ -24,5 +24,7 @@ pyrocksdb.AdvancedColumnFamilyOptions
    .. autosummary::
    
       ~AdvancedColumnFamilyOptions.max_write_buffer_number
+      ~AdvancedColumnFamilyOptions.target_file_size_base
+      ~AdvancedColumnFamilyOptions.target_file_size_multiplier
    
    

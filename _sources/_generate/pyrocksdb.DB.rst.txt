@@ -15,6 +15,7 @@ pyrocksdb.DB
    
       ~DB.__init__
       ~DB.close
+      ~DB.compact_range
       ~DB.create_column_family
       ~DB.delete
       ~DB.get

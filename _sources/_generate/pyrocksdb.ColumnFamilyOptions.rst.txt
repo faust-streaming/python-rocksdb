@@ -27,6 +27,8 @@ pyrocksdb.ColumnFamilyOptions
       ~ColumnFamilyOptions.max_write_buffer_number
       ~ColumnFamilyOptions.sync
       ~ColumnFamilyOptions.table_factory
+      ~ColumnFamilyOptions.target_file_size_base
+      ~ColumnFamilyOptions.target_file_size_multiplier
       ~ColumnFamilyOptions.write_buffer_size
    
    
