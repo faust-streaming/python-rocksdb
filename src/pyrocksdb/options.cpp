@@ -20,7 +20,9 @@ void init_option(py::module & m) {
 
   py::class_<rocksdb::AdvancedColumnFamilyOptions>(m, "AdvancedColumnFamilyOptions")
     .def(py::init<>())
-    .def_readwrite("max_write_buffer_number", &rocksdb::AdvancedColumnFamilyOptions::max_write_buffer_number);
+    .def_readwrite("max_write_buffer_number", &rocksdb::AdvancedColumnFamilyOptions::max_write_buffer_number)
+    .def_readwrite("target_file_size_base", &rocksdb::AdvancedColumnFamilyOptions::target_file_size_base)
+    .def_readwrite("target_file_size_multiplier", &rocksdb::AdvancedColumnFamilyOptions::target_file_size_multiplier);
 
   py::class_<rocksdb::ColumnFamilyOptions, rocksdb::AdvancedColumnFamilyOptions>(m, "ColumnFamilyOptions")
     .def(py::init<>())

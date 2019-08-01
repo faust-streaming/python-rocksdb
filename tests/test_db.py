@@ -29,6 +29,11 @@ def transaction_db():
     db.close()
 
 
+def test_options():
+    opts = pyrocksdb.Options()
+    assert(opts.target_file_size_base == 64 * 1048576)
+    assert(opts.target_file_size_multiplier == 1)
+
 def test_put_get(db):
     opts = pyrocksdb.WriteOptions()
     s = db.put(opts, b"key1", b"value1")
