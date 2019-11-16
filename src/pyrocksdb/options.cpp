@@ -20,20 +20,22 @@ void init_option(py::module & m) {
 
   py::class_<rocksdb::AdvancedColumnFamilyOptions>(m, "AdvancedColumnFamilyOptions")
     .def(py::init<>())
-    .def_readwrite("max_write_buffer_number", &rocksdb::AdvancedColumnFamilyOptions::max_write_buffer_number);
+    .def_readwrite("max_write_buffer_number", &rocksdb::AdvancedColumnFamilyOptions::max_write_buffer_number)
+    .def_readwrite("target_file_size_multiplier", &rocksdb::AdvancedColumnFamilyOptions::target_file_size_multiplier);
 
   py::class_<rocksdb::ColumnFamilyOptions, rocksdb::AdvancedColumnFamilyOptions>(m, "ColumnFamilyOptions")
     .def(py::init<>())
     .def("OptimizeLevelStyleCompaction", &rocksdb::ColumnFamilyOptions::OptimizeLevelStyleCompaction, py::arg("memtable_memory_budget")=512L * 1024L * 1024L, py::return_value_policy::reference_internal)
     .def_readwrite("write_buffer_size", &rocksdb::ColumnFamilyOptions::write_buffer_size)
     .def_readwrite("table_factory", &rocksdb::ColumnFamilyOptions::table_factory)
-    .def_readwrite("sync", &rocksdb::ColumnFamilyOptions::merge_operator);
+    .def_readwrite("merge_operator", &rocksdb::ColumnFamilyOptions::merge_operator);
 
   py::class_<rocksdb::Options, rocksdb::DBOptions, rocksdb::ColumnFamilyOptions>(m, "Options")
     .def(py::init<>());
 
   py::class_<rocksdb::WriteOptions>(m, "WriteOptions")
-    .def(py::init<>());
+    .def(py::init<>())
+    .def_readwrite("sync", &WriteOptions::sync);
 
   py::class_<rocksdb::ReadOptions>(m, "ReadOptions")
     .def(py::init<>())

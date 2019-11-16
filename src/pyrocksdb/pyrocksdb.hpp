@@ -123,8 +123,21 @@ class py_DB {
   public:
     py_DB();
     Status Open(const Options& options, const std::string& name);
+
     Status OpenForReadOnly(const Options& options, const std::string& name,  bool error_if_log_file_exist=false);
     py::tuple OpenForReadOnly(const DBOptions& db_options, const std::string& name, const std::vector<ColumnFamilyDescriptor>& column_families, bool error_if_log_file_exist=false);
+
+    Status OpenAsSecondary(const Options& options, const std::string& name, const std::string& secondary_path);
+    py::tuple OpenAsSecondary(
+      const DBOptions& db_options, const std::string& name,
+      const std::string& secondary_path,
+      const std::vector<ColumnFamilyDescriptor>& column_families);
+
+
+
+
+    Status TryCatchUpWithPrimary();
+
     py::tuple Open(const DBOptions& db_options, const std::string& name, const std::vector<ColumnFamilyDescriptor>& column_families);
 
     Status Put(const WriteOptions& options,
@@ -143,6 +156,10 @@ class py_DB {
     Status Delete(const WriteOptions& options,
                         ColumnFamilyHandle* column_family,
                         const std::string& key);
+
+    Status Merge(const WriteOptions& options, ColumnFamilyHandle* column_family, const std::string& key, const std::string& value);
+
+    Status Merge(const WriteOptions& options, const std::string& key, const std::string& value);
 
     void Close();
     py::tuple CreateColumnFamily(const ColumnFamilyOptions& options, const std::string& column_family_name);

@@ -62,6 +62,32 @@ Status py_DB::OpenForReadOnly(const Options& options, const std::string& name,  
   return st;
 }
 
+Status py_DB::OpenAsSecondary(const Options& options, const std::string& name, const std::string& secondary_path) {
+  if (db_ptr != nullptr) {
+    throw std::invalid_argument("db has been opened");
+  }
+  Status st =  DB::OpenAsSecondary(options, name, secondary_path, &db_ptr);
+  return st;
+}
+
+py::tuple py_DB::OpenAsSecondary(
+      const DBOptions& db_options, const std::string& name,
+      const std::string& secondary_path,
+      const std::vector<ColumnFamilyDescriptor>& column_families) {
+  if (db_ptr != nullptr) {
+    throw std::invalid_argument("db has been opened");
+  }
+  std::vector<ColumnFamilyHandle*> handles;
+  Status st =  DB::OpenAsSecondary(db_options, name, secondary_path, column_families, &handles, &db_ptr);
+  return py::make_tuple(st, handles);
+  
+}
+
+Status py_DB::TryCatchUpWithPrimary() {
+  return db_ptr->TryCatchUpWithPrimary();
+}
+
+
 py::tuple py_DB::OpenForReadOnly(const DBOptions& db_options, const std::string& name, const std::vector<ColumnFamilyDescriptor>& column_families, bool error_if_log_file_exist) {
   if (db_ptr != nullptr) {
     throw std::invalid_argument("db has been opened");
@@ -106,6 +132,7 @@ std::unique_ptr<Blob> py_DB::Get(const ReadOptions& options, const std::string& 
 
 std::unique_ptr<Blob> py_DB::Get(const ReadOptions& options,
                           ColumnFamilyHandle* column_family, const std::string& key) {
+  // py::gil_scoped_release release;
   if (db_ptr == nullptr) {
     throw std::invalid_argument("db has been closed");
   }
@@ -129,6 +156,15 @@ Status py_DB::Delete(const WriteOptions& options,
   }
   return db_ptr->Delete(options, column_family, key);
   
+}
+
+Status py_DB::Merge(const WriteOptions& options, ColumnFamilyHandle* column_family, const std::string& key, const std::string& value) {
+  return db_ptr->Merge(options, column_family, key, value);
+}
+
+Status py_DB::Merge(const WriteOptions& options, const std::string& key, const std::string& value) {
+  // py::gil_scoped_release release;
+  return db_ptr->Merge(options, key, value);
 }
 
 py::tuple py_DB::CreateColumnFamily(const ColumnFamilyOptions& options, const std::string& column_family_name) {

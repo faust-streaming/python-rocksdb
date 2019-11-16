@@ -1,6 +1,11 @@
 import pyrocksdb
 import tempfile
 import pytest
+import os
+
+def test_options():
+    opts = pyrocksdb.Options()
+    assert(opts.target_file_size_multiplier == 1)
 
 @pytest.fixture
 def db():
@@ -356,3 +361,71 @@ def test_readonly_column_family():
     wopts = pyrocksdb.WriteOptions()
     s = db.put(wopts, cfhs[1], b'key1', b'value1')
     assert(not s.ok())
+
+#  def test_open_secondary():
+    #  db = pyrocksdb.DB()
+    #  opts = pyrocksdb.Options()
+    #  opts.create_if_missing = True
+    #  tmp = tempfile.TemporaryDirectory()
+    #  s = db.open(opts, tmp.name)
+    #  assert s.ok()
+
+    #  db2 = pyrocksdb.DB()
+    #  tmp2 = tempfile.TemporaryDirectory()
+    #  s = db2.open_as_secondary(opts, tmp.name, tmp2.name)
+    #  assert s.ok()
+
+    #  s = db2.try_catch_up_with_primary()
+    #  assert s.ok()
+
+    #  wopts = pyrocksdb.WriteOptions()
+    #  s = db.put(wopts, b'key1', b'value1')
+    #  assert(s.ok())
+    #  ropts = pyrocksdb.ReadOptions()
+    #  blob = db2.get(ropts, b'key1')
+    #  assert(blob.status.ok())
+    #  assert(blob.data == b'value1')
+
+def test_merge_operator():
+    class AddMergeOperator(pyrocksdb.AssociativeMergeOperator):
+        def merge(self, existing_value, value):
+            # TODO: can we skip slice_to_byte and keep the efficiency?
+            print ('payyyaaaaa merge {}'.format(existing_value))
+            print ('payyyaaaaa merge {}'.format(value))
+            if existing_value:
+                s = int(value) + int(existing_value)
+                return (True, str(s).encode())
+            else:
+                return (True, str(int(value)).encode())
+
+        def Name(self):
+            return b"AddMergeOperator";
+
+    opts = pyrocksdb.Options()
+    # FIXME: we have to hold this reference otherwise the python object would be destroyed
+    merge_operator = AddMergeOperator()
+    db = pyrocksdb.DB()
+    opts.IncreaseParallelism()
+    opts.OptimizeLevelStyleCompaction()
+    opts.create_if_missing = True
+    opts.merge_operator = merge_operator
+    tmp = tempfile.TemporaryDirectory()
+    s = db.open(opts, tmp.name)
+    assert(s.ok())
+    wopts = pyrocksdb.WriteOptions()
+    ropts = pyrocksdb.ReadOptions()
+    s = db.merge(wopts, b"a", b"2")
+    assert(s.ok())
+    print('get1')
+    blob = db.get(ropts, b"a")
+    s = db.merge(wopts, b"a", b"3")
+    assert(s.ok())
+    print('get2')
+    blob = db.get(ropts, b"a")
+    #  print ('a')
+    #  while (True):
+        #  pass
+
+
+
+    #  assert blob.data == b'5'
