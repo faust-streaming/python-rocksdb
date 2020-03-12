@@ -580,7 +580,8 @@ cdef class BlockBasedTableFactory(PyTableFactory):
             block_size=None,
             block_size_deviation=None,
             block_restart_interval=None,
-            whole_key_filtering=None):
+            whole_key_filtering=None,
+            enable_index_compression=True):
 
         cdef table_factory.BlockBasedTableOptions table_options
 
@@ -595,6 +596,11 @@ cdef class BlockBasedTableFactory(PyTableFactory):
             table_options.hash_index_allow_collision = True
         else:
             table_options.hash_index_allow_collision = False
+
+        if enable_index_compression:
+            table_options.enable_index_compression = True
+        else:
+            table_options.enable_index_compression = False
 
         if checksum == 'crc32':
             table_options.checksum = table_factory.kCRC32c
@@ -1267,6 +1273,12 @@ cdef class Options(ColumnFamilyOptions):
         def __set__(self, value):
             self.opts.create_if_missing = value
 
+    property create_missing_column_families:
+        def __get__(self):
+            return self.opts.create_missing_column_families
+        def __set__(self, value):
+            self.opts.create_missing_column_families = value
+
     property error_if_exists:
         def __get__(self):
             return self.opts.error_if_exists
@@ -1314,6 +1326,18 @@ cdef class Options(ColumnFamilyOptions):
             return self.opts.max_background_compactions
         def __set__(self, value):
             self.opts.max_background_compactions = value
+
+    property stats_history_buffer_size:
+        def __get__(self):
+            return self.opts.stats_history_buffer_size
+        def __set__(self, value):
+            self.opts.stats_history_buffer_size = value
+
+    property max_background_jobs:
+        def __get__(self):
+            return self.opts.max_background_jobs
+        def __set__(self, value):
+            self.opts.max_background_jobs = value
 
     property max_background_flushes:
         def __get__(self):
@@ -1674,22 +1698,31 @@ cdef class DB(object):
         self.opts.in_use = True
 
     def __dealloc__(self):
+        self.close()
+
+    def close(self, safe=True):
         cdef ColumnFamilyOptions copts
+        # -- iFA88 --
+        cdef cpp_bool c_safe = safe
         if self.db != NULL:
+            # -- iFA88 -- <<
+            # We need stop backround compactions
+            with nogil:
+                db.CancelAllBackgroundWork(self.db, c_safe)
+            # -- iFA88 -- >>
             # We have to make sure we delete the handles so rocksdb doesn't
             # assert when we delete the db
-            self.cf_handles.clear()
+            del self.cf_handles[:]
             for copts in self.cf_options:
                 if copts:
                     copts.in_use = False
-            self.cf_options.clear()
-    
+            del self.cf_options[:]
+
             with nogil:
                 del self.db
 
             if self.opts is not None:
                 self.opts.in_use = False
-
 
     @property
     def column_families(self):
