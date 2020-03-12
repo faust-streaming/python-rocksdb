@@ -203,3 +203,6 @@ cdef extern from "rocksdb/db.h" namespace "rocksdb":
             const options.ColumnFamilyOptions&) nogil except+
         string name
         options.ColumnFamilyOptions options
+
+cdef extern from "rocksdb/convenience.h" namespace "rocksdb":
+    void CancelAllBackgroundWork(DB*, cpp_bool) nogil except+
