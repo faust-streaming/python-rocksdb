@@ -81,6 +81,7 @@ cdef extern from "rocksdb/options.h" namespace "rocksdb":
         size_t log_file_time_to_roll
         size_t keep_log_file_num
         size_t recycle_log_file_num
+        size_t stats_history_buffer_size
         uint64_t max_manifest_file_size
         int table_cache_numshardbits
         uint64_t WAL_ttl_seconds
