@@ -154,6 +154,7 @@ cdef extern from "rocksdb/options.h" namespace "rocksdb":
         # TODO: remove options source_compaction_factor, max_grandparent_overlap_bytes and expanded_compaction_factor from document
         uint64_t max_compaction_bytes
         CompressionOptions compression_opts
+        cpp_bool optimize_filters_for_hits
 
     cdef cppclass Options(DBOptions, ColumnFamilyOptions):
         pass
