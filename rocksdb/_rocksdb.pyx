@@ -1240,6 +1240,11 @@ cdef class ColumnFamilyOptions(object):
             self.py_prefix_extractor = PySliceTransform(value)
             self.copts.prefix_extractor = self.py_prefix_extractor.get_transformer()
 
+    property optimize_filters_for_hits:
+        def __get__(self):
+            return self.copts.optimize_filters_for_hits
+        def __set__(self, value):
+            self.copts.optimize_filters_for_hits = value
 
 cdef class Options(ColumnFamilyOptions):
     cdef options.Options* opts
