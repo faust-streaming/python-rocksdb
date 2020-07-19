@@ -582,7 +582,8 @@ cdef class BlockBasedTableFactory(PyTableFactory):
             block_restart_interval=None,
             whole_key_filtering=None,
             enable_index_compression=False,
-            cache_index_and_filter_blocks=False
+            cache_index_and_filter_blocks=False,
+            format_version=2,
         ):
 
         cdef table_factory.BlockBasedTableOptions table_options
@@ -643,6 +644,9 @@ cdef class BlockBasedTableFactory(PyTableFactory):
 
         if block_cache_compressed is not None:
             table_options.block_cache_compressed = block_cache_compressed.get_cache()
+
+        if format_version is not None:
+            table_options.format_version = format_version
 
         # Set the filter_policy
         self.py_filter_policy = None
@@ -2089,6 +2093,21 @@ cdef class DB(object):
             ret.append(t)
 
         return ret
+
+    def get_column_family_meta_data(self, ColumnFamilyHandle column_family=None):
+        cdef db.ColumnFamilyMetaData metadata
+
+        cdef db.ColumnFamilyHandle* cf_handle = self.db.DefaultColumnFamily()
+        if column_family:
+            cf_handle = (<ColumnFamilyHandle?>column_family).get_handle()
+
+        with nogil:
+            self.db.GetColumnFamilyMetaData(cf_handle, cython.address(metadata))
+
+        return {
+            "size":metadata.size,
+            "file_count":metadata.file_count,
+        }
 
     def compact_range(self, begin=None, end=None, ColumnFamilyHandle column_family=None, **py_options):
         cdef options.CompactRangeOptions c_options
