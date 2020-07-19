@@ -51,6 +51,28 @@ cdef extern from "rocksdb/db.h" namespace "rocksdb":
         SequenceNumber smallest_seqno
         SequenceNumber largest_seqno
 
+    # cdef struct SstFileMetaData:
+    #     uint64_t size
+    #     string name
+    #     uint64_t file_number
+    #     string db_path
+    #     string smallestkey
+    #     string largestkey
+    #     SequenceNumber smallest_seqno
+    #     SequenceNumber largest_seqno
+
+    # cdef struct LevelMetaData:
+    #     int level
+    #     uint64_t size
+    #     string largestkey
+    #     LiveFileMetaData files
+
+    cdef struct ColumnFamilyMetaData:
+        uint64_t size
+        uint64_t file_count
+        # string largestkey
+        # LevelMetaData levels
+
     cdef cppclass Range:
         Range(const Slice&, const Slice&)
 
@@ -156,6 +178,7 @@ cdef extern from "rocksdb/db.h" namespace "rocksdb":
 
         Status DeleteFile(string) nogil except+
         void GetLiveFilesMetaData(vector[LiveFileMetaData]*) nogil except+
+        void GetColumnFamilyMetaData(ColumnFamilyHandle*, ColumnFamilyMetaData*) nogil except+
         ColumnFamilyHandle* DefaultColumnFamily()
 
 
