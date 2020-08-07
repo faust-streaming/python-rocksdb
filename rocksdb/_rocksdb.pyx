@@ -1856,6 +1856,9 @@ cdef class DB(object):
             check_status(st)
 
     def multi_get(self, keys, *args, **kwargs):
+        # Remove duplicate keys
+        keys = list(dict.fromkeys(keys))
+
         cdef vector[string] values
         values.resize(len(keys))
 
