@@ -11,6 +11,7 @@ from slice_ cimport Slice
 from snapshot cimport Snapshot
 from slice_transform cimport SliceTransform
 from table_factory cimport TableFactory
+#from statistics cimport Statistics
 from memtablerep cimport MemTableRepFactory
 from universal_compaction cimport CompactionOptionsUniversal
 from cache cimport Cache
@@ -68,7 +69,7 @@ cdef extern from "rocksdb/options.h" namespace "rocksdb":
         shared_ptr[Logger] info_log
         int max_open_files
         int max_file_opening_threads
-        # TODO: statistics
+        #shared_ptr[Statistics] statistics
         cpp_bool use_fsync
         string db_log_dir
         string wal_dir
