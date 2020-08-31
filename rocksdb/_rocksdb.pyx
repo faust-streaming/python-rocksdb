@@ -1725,14 +1725,11 @@ cdef class DB(object):
 
     def close(self, safe=True):
         cdef ColumnFamilyOptions copts
-        # -- iFA88 --
         cdef cpp_bool c_safe = safe
-        if self.db != NULL:
-            # -- iFA88 -- <<
+        if hasattr(self, "db"):
             # We need stop backround compactions
             with nogil:
                 db.CancelAllBackgroundWork(self.db, c_safe)
-            # -- iFA88 -- >>
             # We have to make sure we delete the handles so rocksdb doesn't
             # assert when we delete the db
             del self.cf_handles[:]
