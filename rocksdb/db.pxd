@@ -1,12 +1,12 @@
-cimport options
+from . cimport options
 from libc.stdint cimport uint64_t, uint32_t
-from status cimport Status
+from .status cimport Status
 from libcpp cimport bool as cpp_bool
 from libcpp.string cimport string
 from libcpp.vector cimport vector
-from slice_ cimport Slice
-from snapshot cimport Snapshot
-from iterator cimport Iterator
+from .slice_ cimport Slice
+from .snapshot cimport Snapshot
+from .iterator cimport Iterator
 
 cdef extern from "rocksdb/write_batch.h" namespace "rocksdb":
     cdef cppclass WriteBatch:
@@ -169,6 +169,7 @@ cdef extern from "rocksdb/db.h" namespace "rocksdb":
         Status Flush(const options.FlushOptions&, ColumnFamilyHandle*) nogil except+
         Status DisableFileDeletions() nogil except+
         Status EnableFileDeletions() nogil except+
+        Status Close() nogil except+
 
         # TODO: Status GetSortedWalFiles(VectorLogPtr& files)
         # TODO: SequenceNumber GetLatestSequenceNumber()
