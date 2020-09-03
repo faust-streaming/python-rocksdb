@@ -1,4 +1,4 @@
-import platform
+import platform, sys
 from setuptools import setup
 from setuptools import find_packages
 from setuptools import Extension
@@ -17,6 +17,8 @@ extra_compile_args = [
 if platform.system() == 'Darwin':
     extra_compile_args += ['-mmacosx-version-min=10.7', '-stdlib=libc++']
 
+if sys.version_info < (3 , 0):
+    raise Exception("pyRocksDB require Python 3.x")
 
 setup(
     name="python-rocksdb",
