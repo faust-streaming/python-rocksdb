@@ -1,9 +1,9 @@
 from libcpp.string cimport string
 from libcpp cimport bool as cpp_bool
 from libcpp.deque cimport deque
-from slice_ cimport Slice
-from logger cimport Logger
-from std_memory cimport shared_ptr
+from .slice_ cimport Slice
+from .logger cimport Logger
+from .std_memory cimport shared_ptr
 
 cdef extern from "rocksdb/merge_operator.h" namespace "rocksdb":
     cdef cppclass MergeOperator:
