@@ -4,7 +4,7 @@ The original pyrocksdb (https://pypi.python.org/pypi/pyrocksdb/0.4) has not been
 
 News (2020/09/03 iFA)
 =========
-Python version which lower than 3.0 is __not supported__ anymore.
+Python version which lower than 3.0 is not supported anymore.
 
 pyrocksdb
 =========
