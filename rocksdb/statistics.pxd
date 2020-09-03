@@ -1,5 +1,5 @@
 from libc.stdint cimport uint32_t, uint8_t
-from std_memory cimport shared_ptr
+from .std_memory cimport shared_ptr
 
 cdef extern from "rocksdb/statistics.h" namespace "rocksdb":
     ctypedef enum StatsLevel:
