@@ -1,3 +1,4 @@
+#cython: language_level=3
 import cython
 from libcpp.string cimport string
 from libcpp.deque cimport deque
@@ -12,44 +13,52 @@ from cpython.bytes cimport PyBytes_FromString
 from cpython.bytes cimport PyBytes_FromStringAndSize
 from cpython.unicode cimport PyUnicode_Decode
 
-from std_memory cimport shared_ptr
-cimport options
-cimport merge_operator
-cimport filter_policy
-cimport comparator
-cimport slice_transform
-cimport cache
-cimport logger
-cimport snapshot
-cimport db
-cimport iterator
-cimport backup
-cimport env
-cimport table_factory
-cimport memtablerep
-cimport universal_compaction
+from .std_memory cimport shared_ptr
+from . cimport options
+from . cimport merge_operator
+from . cimport filter_policy
+from . cimport comparator
+from . cimport slice_transform
+from . cimport cache
+from . cimport logger
+from . cimport snapshot
+from . cimport db
+from . cimport iterator
+from . cimport backup
+from . cimport env
+from . cimport table_factory
+from . cimport memtablerep
+from . cimport universal_compaction
 
 # Enums are the only exception for direct imports
 # Their name als already unique enough
-from universal_compaction cimport kCompactionStopStyleSimilarSize
-from universal_compaction cimport kCompactionStopStyleTotalSize
+from .universal_compaction cimport kCompactionStopStyleSimilarSize
+from .universal_compaction cimport kCompactionStopStyleTotalSize
 
-from options cimport kCompactionStyleLevel
-from options cimport kCompactionStyleUniversal
-from options cimport kCompactionStyleFIFO
-from options cimport kCompactionStyleNone
+from .options cimport kCompactionStyleLevel
+from .options cimport kCompactionStyleUniversal
+from .options cimport kCompactionStyleFIFO
+from .options cimport kCompactionStyleNone
 
-from slice_ cimport Slice
-from status cimport Status
+from .slice_ cimport Slice
+from .status cimport Status
 
 import sys
-from interfaces import MergeOperator as IMergeOperator
-from interfaces import AssociativeMergeOperator as IAssociativeMergeOperator
-from interfaces import FilterPolicy as IFilterPolicy
-from interfaces import Comparator as IComparator
-from interfaces import SliceTransform as ISliceTransform
+from .interfaces import MergeOperator as IMergeOperator
+from .interfaces import AssociativeMergeOperator as IAssociativeMergeOperator
+from .interfaces import FilterPolicy as IFilterPolicy
+from .interfaces import Comparator as IComparator
+from .interfaces import SliceTransform as ISliceTransform
+
 import traceback
-import errors
+from .errors import NotFound
+from .errors import Corruption
+from .errors import NotSupported
+from .errors import InvalidArgument
+from .errors import RocksIOError
+from .errors import MergeInProgress
+from .errors import Incomplete
+
 import weakref
 
 ctypedef const filter_policy.FilterPolicy ConstFilterPolicy
@@ -70,25 +79,25 @@ cdef check_status(const Status& st):
         return
 
     if st.IsNotFound():
-        raise errors.NotFound(st.ToString())
+        raise NotFound(st.ToString())
 
     if st.IsCorruption():
-        raise errors.Corruption(st.ToString())
+        raise Corruption(st.ToString())
 
     if st.IsNotSupported():
-        raise errors.NotSupported(st.ToString())
+        raise NotSupported(st.ToString())
 
     if st.IsInvalidArgument():
-        raise errors.InvalidArgument(st.ToString())
+        raise InvalidArgument(st.ToString())
 
     if st.IsIOError():
-        raise errors.RocksIOError(st.ToString())
+        raise RocksIOError(st.ToString())
 
     if st.IsMergeInProgress():
-        raise errors.MergeInProgress(st.ToString())
+        raise MergeInProgress(st.ToString())
 
     if st.IsIncomplete():
-        raise errors.Incomplete(st.ToString())
+        raise Incomplete(st.ToString())
 
     raise Exception("Unknown error: %s" % st.ToString())
 ######################################################
@@ -1739,10 +1748,13 @@ cdef class DB(object):
             del self.cf_options[:]
 
             with nogil:
+                st = self.db.Close()
                 del self.db
 
             if self.opts is not None:
                 self.opts.in_use = False
+
+            check_status(st)
 
     @property
     def column_families(self):
