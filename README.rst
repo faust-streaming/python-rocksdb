@@ -1,8 +1,7 @@
 python-rocksdb
 ==============
 
-Python bindings for RocksDB.
-See http://rocksdb.readthedocs.io for a more comprehensive install and usage description.
+Python bindings for RocksDB. See http://rocksdb.readthedocs.io for a more comprehensive install and usage description.
 
 
 Quick install
@@ -23,10 +22,9 @@ Quick install for debian/ubuntu like linux distributions.
     $ export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}${LD_LIBRARY_PATH:+:}`pwd`/build/
     $ export LIBRARY_PATH=${LIBRARY_PATH}${LIBRARY_PATH:+:}`pwd`/build/
 
-    $ apt-get install python-virtualenv python-dev
-    $ virtualenv rocksdb_test
-    $ cd rocksdb_test
-    $ . bin/activate
+    $ apt-get install python-dev
+    $ python3 -m venv .venv
+    $ source .venv/bin/activate
     $ pip install rocksdb
 
 
@@ -43,7 +41,7 @@ Quick usage guide
 
 
 Acknowledgements
-~~~~~~~~~~~~~~~~
+----------------
 
 This project is a fork of `python-rocksdb`_ maintained by `twmht`_, which itself is a fork
 of `pyrocksdb`_, that was originally written by `stephan-hof`_.
