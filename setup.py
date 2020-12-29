@@ -24,7 +24,7 @@ def _get_long_description():
 
 setuptools.setup(
     name='rocksdb',
-    version='0.8.0rc1',
+    version='0.8.0rc2',
     description='Python bindings for RocksDB',
     long_description=_get_long_description(),
     long_description_content_type='text/x-rst',
