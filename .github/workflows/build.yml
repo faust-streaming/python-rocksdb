@@ -1,0 +1,87 @@
+name: "Build"
+
+on: ['push', 'pull_request']
+
+jobs:
+  build_wheels:
+    name: "Build wheels"
+    runs-on: 'ubuntu-latest'
+
+    steps:
+      - uses: actions/checkout@v2
+        name: "Checkout source repository"
+
+      - uses: actions/setup-python@v2
+        name: "Set up Python 3.9"
+        with:
+          python-version: '3.9'
+
+      - name: "Install cibuildwheel"
+        run: |
+          python3 -m pip install cibuildwheel==1.7.1
+
+      - name: "Build wheels"
+        run: |
+          python3 -m cibuildwheel --output-dir dist
+        env:
+          ROCKSDB_VERSION: '6.14.6'
+          CIBW_MANYLINUX_X86_64_IMAGE: 'manylinux2014'
+          CIBW_BUILD: 'cp37-manylinux* cp38-manylinux* cp39-manylinux*'
+          CIBW_SKIP: '*-manylinux_i686'
+          CIBW_TEST_REQUIRES: '.[test]'
+          CIBW_TEST_COMMAND: 'rm {project}/rocksdb/tests/__init__.py; pytest {project}/rocksdb/tests'
+          CIBW_BEFORE_BUILD: |
+            yum install -y bzip2-devel lz4-devel snappy-devel zlib-devel
+            pushd /opt
+            git clone https://github.com/facebook/rocksdb
+            cd rocksdb
+            git reset --hard $ROCKSDB_VERSION
+            CXXFLAGS='-flto -Os -s' PORTABLE=1 make shared_lib -j 4
+            make install-shared
+            popd
+
+      - uses: actions/upload-artifact@v2
+        name: "Upload build artifacts"
+        with:
+          path: 'dist/*.whl'
+
+
+  build_sdist:
+    name: "Build source distribution"
+    runs-on: 'ubuntu-latest'
+    steps:
+      - uses: actions/checkout@v2
+        name: "Checkout source repository"
+
+      - uses: actions/setup-python@v2
+        name: "Set up Python 3.9"
+        with:
+          python-version: '3.9'
+
+      - name: "Build sdist"
+        run: |
+          python3 setup.py sdist
+
+      - uses: actions/upload-artifact@v2
+        name: "Upload build artifacts"
+        with:
+          path: 'dist/*.tar.gz'
+
+
+  upload_pypi:
+    name: "Upload packages"
+    needs: ['build_wheels', 'build_sdist']
+    runs-on: 'ubuntu-latest'
+    if: github.event_name == 'push' && startsWith(github.event.ref, 'refs/tags/v')
+    steps:
+      - uses: actions/download-artifact@v2
+        name: "Download artifacts"
+        with:
+          name: 'artifact'
+          path: 'dist'
+
+      - uses: pypa/gh-action-pypi-publish@master
+        name: "Publish built packages"
+        with:
+          user: '__token__'
+          password: "${{ secrets.PYPI_API_TOKEN }}"
