@@ -534,7 +534,7 @@ cdef Slice slice_transform_callback(
         return Slice(src.data() + offset, size)
     except BaseException as error:
         tb = traceback.format_exc()
-        logger.Log(log, "Error in slice transfrom callback: %s", <bytes>tb)
+        logger.Log(log, "Error in slice transform callback: %s", <bytes>tb)
         error_msg.assign(<bytes>str(error))
 
 cdef cpp_bool slice_in_domain_callback(
@@ -547,7 +547,7 @@ cdef cpp_bool slice_in_domain_callback(
         return (<object>ctx).in_domain(slice_to_bytes(src))
     except BaseException as error:
         tb = traceback.format_exc()
-        logger.Log(log, "Error in slice transfrom callback: %s", <bytes>tb)
+        logger.Log(log, "Error in slice transform callback: %s", <bytes>tb)
         error_msg.assign(<bytes>str(error))
 
 cdef cpp_bool slice_in_range_callback(
@@ -560,7 +560,7 @@ cdef cpp_bool slice_in_range_callback(
         return (<object>ctx).in_range(slice_to_bytes(src))
     except BaseException as error:
         tb = traceback.format_exc()
-        logger.Log(log, "Error in slice transfrom callback: %s", <bytes>tb)
+        logger.Log(log, "Error in slice transform callback: %s", <bytes>tb)
         error_msg.assign(<bytes>str(error))
 ###########################################
 
@@ -979,7 +979,7 @@ cdef class ColumnFamilyOptions(object):
             elif self.copts.compression == options.kDisableCompressionOption:
                 return CompressionType.disable_compression
             else:
-                raise Exception("Unknonw type: %s" % self.opts.compression)
+                raise Exception("Unknown type: %s" % self.opts.compression)
 
         def __set__(self, value):
             if value == CompressionType.no_compression:
