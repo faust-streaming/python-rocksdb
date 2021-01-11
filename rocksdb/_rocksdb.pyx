@@ -1864,9 +1864,10 @@ cdef class DB(object):
         else:
             check_status(st)
 
-    def multi_get(self, keys, *args, **kwargs):
-        # Remove duplicate keys
-        keys = list(dict.fromkeys(keys))
+    def multi_get(self, keys, *args, as_dict=True, **kwargs):
+        if as_dict:
+            # Remove duplicate keys
+            keys = list(dict.fromkeys(keys))
 
         cdef vector[string] values
         values.resize(len(keys))
@@ -1895,15 +1896,27 @@ cdef class DB(object):
                 cython.address(values))
 
         cdef dict ret_dict = {}
-        for index in range(len(keys)):
-            if res[index].ok():
-                ret_dict[keys[index]] = string_to_bytes(values[index])
-            elif res[index].IsNotFound():
-                ret_dict[keys[index]] = None
-            else:
-                check_status(res[index])
+        cdef list ret_list = []
+        if as_dict:
+            for index in range(len(keys)):
+                if res[index].ok():
+                    ret_dict[keys[index]] = string_to_bytes(values[index])
+                elif res[index].IsNotFound():
+                    ret_dict[keys[index]] = None
+                else:
+                    check_status(res[index])
 
-        return ret_dict
+            return ret_dict
+        else:
+            for index in range(len(keys)):
+                if res[index].ok():
+                    ret_list.append(string_to_bytes(values[index]))
+                elif res[index].IsNotFound():
+                    ret_list.append(None)
+                else:
+                    check_status(res[index])
+
+            return ret_list
 
     def key_may_exist(self, key, fetch=False, *args, **kwargs):
         cdef string value
