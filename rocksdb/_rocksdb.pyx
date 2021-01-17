@@ -1729,13 +1729,11 @@ cdef class DB(object):
         self.opts = opts
         self.opts.in_use = True
 
-    def __dealloc__(self):
-        self.close()
-
     def close(self, safe=True):
         cdef ColumnFamilyOptions copts
         cdef cpp_bool c_safe = safe
-        if hasattr(self, "db"):
+        cdef Status st
+        if self.db != NULL:
             # We need stop backround compactions
             with nogil:
                 db.CancelAllBackgroundWork(self.db, c_safe)
@@ -1746,15 +1744,14 @@ cdef class DB(object):
                 if copts:
                     copts.in_use = False
             del self.cf_options[:]
-
             with nogil:
                 st = self.db.Close()
-                del self.db
-
+                self.db = NULL
             if self.opts is not None:
                 self.opts.in_use = False
 
-            check_status(st)
+    def __dealloc__(self):
+        self.close()
 
     @property
     def column_families(self):
