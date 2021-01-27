@@ -3,17 +3,18 @@ from libcpp.string cimport string
 from libcpp.vector cimport vector
 from libc.stdint cimport uint64_t
 from libc.stdint cimport uint32_t
-from std_memory cimport shared_ptr
-from comparator cimport Comparator
-from merge_operator cimport MergeOperator
-from logger cimport Logger
-from slice_ cimport Slice
-from snapshot cimport Snapshot
-from slice_transform cimport SliceTransform
-from table_factory cimport TableFactory
-from memtablerep cimport MemTableRepFactory
-from universal_compaction cimport CompactionOptionsUniversal
-from cache cimport Cache
+from .std_memory cimport shared_ptr
+from .comparator cimport Comparator
+from .merge_operator cimport MergeOperator
+from .logger cimport Logger
+from .slice_ cimport Slice
+from .snapshot cimport Snapshot
+from .slice_transform cimport SliceTransform
+from .table_factory cimport TableFactory
+#from .statistics cimport Statistics
+from .memtablerep cimport MemTableRepFactory
+from .universal_compaction cimport CompactionOptionsUniversal
+from .cache cimport Cache
 
 cdef extern from "rocksdb/options.h" namespace "rocksdb":
     cdef cppclass CompressionOptions:
@@ -68,7 +69,7 @@ cdef extern from "rocksdb/options.h" namespace "rocksdb":
         shared_ptr[Logger] info_log
         int max_open_files
         int max_file_opening_threads
-        # TODO: statistics
+        #shared_ptr[Statistics] statistics
         cpp_bool use_fsync
         string db_log_dir
         string wal_dir
@@ -81,6 +82,7 @@ cdef extern from "rocksdb/options.h" namespace "rocksdb":
         size_t log_file_time_to_roll
         size_t keep_log_file_num
         size_t recycle_log_file_num
+        size_t stats_history_buffer_size
         uint64_t max_manifest_file_size
         int table_cache_numshardbits
         uint64_t WAL_ttl_seconds
@@ -102,6 +104,7 @@ cdef extern from "rocksdb/options.h" namespace "rocksdb":
         cpp_bool allow_concurrent_memtable_write
         cpp_bool enable_write_thread_adaptive_yield
         shared_ptr[Cache] row_cache
+        void IncreaseParallelism(int) nogil except+
 
     cdef cppclass ColumnFamilyOptions:
         ColumnFamilyOptions()
@@ -152,6 +155,8 @@ cdef extern from "rocksdb/options.h" namespace "rocksdb":
         # TODO: remove options source_compaction_factor, max_grandparent_overlap_bytes and expanded_compaction_factor from document
         uint64_t max_compaction_bytes
         CompressionOptions compression_opts
+        cpp_bool optimize_filters_for_hits
+        cpp_bool paranoid_file_checks
 
     cdef cppclass Options(DBOptions, ColumnFamilyOptions):
         pass

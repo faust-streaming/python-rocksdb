@@ -1,3 +1,4 @@
+#cython: language_level=3
 import cython
 from libcpp.string cimport string
 from libcpp.deque cimport deque
@@ -12,44 +13,52 @@ from cpython.bytes cimport PyBytes_FromString
 from cpython.bytes cimport PyBytes_FromStringAndSize
 from cpython.unicode cimport PyUnicode_Decode
 
-from std_memory cimport shared_ptr
-cimport options
-cimport merge_operator
-cimport filter_policy
-cimport comparator
-cimport slice_transform
-cimport cache
-cimport logger
-cimport snapshot
-cimport db
-cimport iterator
-cimport backup
-cimport env
-cimport table_factory
-cimport memtablerep
-cimport universal_compaction
+from .std_memory cimport shared_ptr
+from . cimport options
+from . cimport merge_operator
+from . cimport filter_policy
+from . cimport comparator
+from . cimport slice_transform
+from . cimport cache
+from . cimport logger
+from . cimport snapshot
+from . cimport db
+from . cimport iterator
+from . cimport backup
+from . cimport env
+from . cimport table_factory
+from . cimport memtablerep
+from . cimport universal_compaction
 
 # Enums are the only exception for direct imports
 # Their name als already unique enough
-from universal_compaction cimport kCompactionStopStyleSimilarSize
-from universal_compaction cimport kCompactionStopStyleTotalSize
+from .universal_compaction cimport kCompactionStopStyleSimilarSize
+from .universal_compaction cimport kCompactionStopStyleTotalSize
 
-from options cimport kCompactionStyleLevel
-from options cimport kCompactionStyleUniversal
-from options cimport kCompactionStyleFIFO
-from options cimport kCompactionStyleNone
+from .options cimport kCompactionStyleLevel
+from .options cimport kCompactionStyleUniversal
+from .options cimport kCompactionStyleFIFO
+from .options cimport kCompactionStyleNone
 
-from slice_ cimport Slice
-from status cimport Status
+from .slice_ cimport Slice
+from .status cimport Status
 
 import sys
-from interfaces import MergeOperator as IMergeOperator
-from interfaces import AssociativeMergeOperator as IAssociativeMergeOperator
-from interfaces import FilterPolicy as IFilterPolicy
-from interfaces import Comparator as IComparator
-from interfaces import SliceTransform as ISliceTransform
+from .interfaces import MergeOperator as IMergeOperator
+from .interfaces import AssociativeMergeOperator as IAssociativeMergeOperator
+from .interfaces import FilterPolicy as IFilterPolicy
+from .interfaces import Comparator as IComparator
+from .interfaces import SliceTransform as ISliceTransform
+
 import traceback
-import errors
+from .errors import NotFound
+from .errors import Corruption
+from .errors import NotSupported
+from .errors import InvalidArgument
+from .errors import RocksIOError
+from .errors import MergeInProgress
+from .errors import Incomplete
+
 import weakref
 
 ctypedef const filter_policy.FilterPolicy ConstFilterPolicy
@@ -70,25 +79,25 @@ cdef check_status(const Status& st):
         return
 
     if st.IsNotFound():
-        raise errors.NotFound(st.ToString())
+        raise NotFound(st.ToString())
 
     if st.IsCorruption():
-        raise errors.Corruption(st.ToString())
+        raise Corruption(st.ToString())
 
     if st.IsNotSupported():
-        raise errors.NotSupported(st.ToString())
+        raise NotSupported(st.ToString())
 
     if st.IsInvalidArgument():
-        raise errors.InvalidArgument(st.ToString())
+        raise InvalidArgument(st.ToString())
 
     if st.IsIOError():
-        raise errors.RocksIOError(st.ToString())
+        raise RocksIOError(st.ToString())
 
     if st.IsMergeInProgress():
-        raise errors.MergeInProgress(st.ToString())
+        raise MergeInProgress(st.ToString())
 
     if st.IsIncomplete():
-        raise errors.Incomplete(st.ToString())
+        raise Incomplete(st.ToString())
 
     raise Exception("Unknown error: %s" % st.ToString())
 ######################################################
@@ -580,7 +589,11 @@ cdef class BlockBasedTableFactory(PyTableFactory):
             block_size=None,
             block_size_deviation=None,
             block_restart_interval=None,
-            whole_key_filtering=None):
+            whole_key_filtering=None,
+            enable_index_compression=False,
+            cache_index_and_filter_blocks=False,
+            format_version=2,
+        ):
 
         cdef table_factory.BlockBasedTableOptions table_options
 
@@ -595,6 +608,11 @@ cdef class BlockBasedTableFactory(PyTableFactory):
             table_options.hash_index_allow_collision = True
         else:
             table_options.hash_index_allow_collision = False
+
+        if enable_index_compression:
+            table_options.enable_index_compression = True
+        else:
+            table_options.enable_index_compression = False
 
         if checksum == 'crc32':
             table_options.checksum = table_factory.kCRC32c
@@ -624,11 +642,20 @@ cdef class BlockBasedTableFactory(PyTableFactory):
             else:
                 table_options.whole_key_filtering = False
 
+        if cache_index_and_filter_blocks is not None:
+            if cache_index_and_filter_blocks:
+                table_options.cache_index_and_filter_blocks = True
+            else:
+                table_options.cache_index_and_filter_blocks = False
+
         if block_cache is not None:
             table_options.block_cache = block_cache.get_cache()
 
         if block_cache_compressed is not None:
             table_options.block_cache_compressed = block_cache_compressed.get_cache()
+
+        if format_version is not None:
+            table_options.format_version = format_version
 
         # Set the filter_policy
         self.py_filter_policy = None
@@ -1234,6 +1261,17 @@ cdef class ColumnFamilyOptions(object):
             self.py_prefix_extractor = PySliceTransform(value)
             self.copts.prefix_extractor = self.py_prefix_extractor.get_transformer()
 
+    property optimize_filters_for_hits:
+        def __get__(self):
+            return self.copts.optimize_filters_for_hits
+        def __set__(self, value):
+            self.copts.optimize_filters_for_hits = value
+
+    property paranoid_file_checks:
+        def __get__(self):
+            return self.copts.paranoid_file_checks
+        def __set__(self, value):
+            self.copts.paranoid_file_checks = value
 
 cdef class Options(ColumnFamilyOptions):
     cdef options.Options* opts
@@ -1258,11 +1296,20 @@ cdef class Options(ColumnFamilyOptions):
         for key, value in kwargs.items():
             setattr(self, key, value)
 
+    def IncreaseParallelism(self, int total_threads=16):
+        self.opts.IncreaseParallelism(total_threads)
+
     property create_if_missing:
         def __get__(self):
             return self.opts.create_if_missing
         def __set__(self, value):
             self.opts.create_if_missing = value
+
+    property create_missing_column_families:
+        def __get__(self):
+            return self.opts.create_missing_column_families
+        def __set__(self, value):
+            self.opts.create_missing_column_families = value
 
     property error_if_exists:
         def __get__(self):
@@ -1311,6 +1358,18 @@ cdef class Options(ColumnFamilyOptions):
             return self.opts.max_background_compactions
         def __set__(self, value):
             self.opts.max_background_compactions = value
+
+    property stats_history_buffer_size:
+        def __get__(self):
+            return self.opts.stats_history_buffer_size
+        def __set__(self, value):
+            self.opts.stats_history_buffer_size = value
+
+    property max_background_jobs:
+        def __get__(self):
+            return self.opts.max_background_jobs
+        def __set__(self, value):
+            self.opts.max_background_jobs = value
 
     property max_background_flushes:
         def __get__(self):
@@ -1672,23 +1731,30 @@ cdef class DB(object):
 
     def __dealloc__(self):
         self.close()
-        
-    def close(self):
+
+    def close(self, safe=True):
         cdef ColumnFamilyOptions copts
-        if not self.db == NULL:
+        cdef cpp_bool c_safe = safe
+        if hasattr(self, "db"):
+            # We need stop backround compactions
+            with nogil:
+                db.CancelAllBackgroundWork(self.db, c_safe)
             # We have to make sure we delete the handles so rocksdb doesn't
             # assert when we delete the db
-            self.cf_handles.clear()
+            del self.cf_handles[:]
             for copts in self.cf_options:
                 if copts:
                     copts.in_use = False
-            self.cf_options.clear()
+            del self.cf_options[:]
 
             with nogil:
+                st = self.db.Close()
                 del self.db
 
-        if self.opts is not None:
-            self.opts.in_use = False
+            if self.opts is not None:
+                self.opts.in_use = False
+
+            check_status(st)
 
     @property
     def column_families(self):
@@ -1799,6 +1865,9 @@ cdef class DB(object):
             check_status(st)
 
     def multi_get(self, keys, *args, **kwargs):
+        # Remove duplicate keys
+        keys = list(dict.fromkeys(keys))
+
         cdef vector[string] values
         values.resize(len(keys))
 
@@ -2036,6 +2105,21 @@ cdef class DB(object):
             ret.append(t)
 
         return ret
+
+    def get_column_family_meta_data(self, ColumnFamilyHandle column_family=None):
+        cdef db.ColumnFamilyMetaData metadata
+
+        cdef db.ColumnFamilyHandle* cf_handle = self.db.DefaultColumnFamily()
+        if column_family:
+            cf_handle = (<ColumnFamilyHandle?>column_family).get_handle()
+
+        with nogil:
+            self.db.GetColumnFamilyMetaData(cf_handle, cython.address(metadata))
+
+        return {
+            "size":metadata.size,
+            "file_count":metadata.file_count,
+        }
 
     def compact_range(self, begin=None, end=None, ColumnFamilyHandle column_family=None, **py_options):
         cdef options.CompactRangeOptions c_options

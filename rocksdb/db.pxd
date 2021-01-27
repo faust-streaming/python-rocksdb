@@ -1,12 +1,12 @@
-cimport options
+from . cimport options
 from libc.stdint cimport uint64_t, uint32_t
-from status cimport Status
+from .status cimport Status
 from libcpp cimport bool as cpp_bool
 from libcpp.string cimport string
 from libcpp.vector cimport vector
-from slice_ cimport Slice
-from snapshot cimport Snapshot
-from iterator cimport Iterator
+from .slice_ cimport Slice
+from .snapshot cimport Snapshot
+from .iterator cimport Iterator
 
 cdef extern from "rocksdb/write_batch.h" namespace "rocksdb":
     cdef cppclass WriteBatch:
@@ -50,6 +50,28 @@ cdef extern from "rocksdb/db.h" namespace "rocksdb":
         string largestkey
         SequenceNumber smallest_seqno
         SequenceNumber largest_seqno
+
+    # cdef struct SstFileMetaData:
+    #     uint64_t size
+    #     string name
+    #     uint64_t file_number
+    #     string db_path
+    #     string smallestkey
+    #     string largestkey
+    #     SequenceNumber smallest_seqno
+    #     SequenceNumber largest_seqno
+
+    # cdef struct LevelMetaData:
+    #     int level
+    #     uint64_t size
+    #     string largestkey
+    #     LiveFileMetaData files
+
+    cdef struct ColumnFamilyMetaData:
+        uint64_t size
+        uint64_t file_count
+        # string largestkey
+        # LevelMetaData levels
 
     cdef cppclass Range:
         Range(const Slice&, const Slice&)
@@ -147,6 +169,7 @@ cdef extern from "rocksdb/db.h" namespace "rocksdb":
         Status Flush(const options.FlushOptions&, ColumnFamilyHandle*) nogil except+
         Status DisableFileDeletions() nogil except+
         Status EnableFileDeletions() nogil except+
+        Status Close() nogil except+
 
         # TODO: Status GetSortedWalFiles(VectorLogPtr& files)
         # TODO: SequenceNumber GetLatestSequenceNumber()
@@ -156,6 +179,7 @@ cdef extern from "rocksdb/db.h" namespace "rocksdb":
 
         Status DeleteFile(string) nogil except+
         void GetLiveFilesMetaData(vector[LiveFileMetaData]*) nogil except+
+        void GetColumnFamilyMetaData(ColumnFamilyHandle*, ColumnFamilyMetaData*) nogil except+
         ColumnFamilyHandle* DefaultColumnFamily()
 
 
@@ -203,3 +227,6 @@ cdef extern from "rocksdb/db.h" namespace "rocksdb":
             const options.ColumnFamilyOptions&) nogil except+
         string name
         options.ColumnFamilyOptions options
+
+cdef extern from "rocksdb/convenience.h" namespace "rocksdb":
+    void CancelAllBackgroundWork(DB*, cpp_bool) nogil except+
