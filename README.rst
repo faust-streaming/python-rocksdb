@@ -1,11 +1,10 @@
 python-rocksdb
 ==============
 
-pyrocksdb
-=========
-
 Python bindings for RocksDB.
-See http://python-rocksdb.readthedocs.io/en/latest/ for a more comprehensive install and usage description.
+
+See https://rocksdb-tina.readthedocs.io/ for a more comprehensive install and
+usage description.
 
 
 Quick install
@@ -31,8 +30,11 @@ Quick usage guide
 Acknowledgements
 ----------------
 
-This project is a fork of `python-rocksdb`_ maintained by `twmht`_, which itself is a fork
-of `pyrocksdb`_, that was originally written by `stephan-hof`_.
+This project attempts to collect the efforts put into different forks of the
+`pyrocksdb`_ project that was originally written by `stephan-hof`_, as sadly
+none seems to be actively maintained. In particular, the `python-rocksdb`_ fork
+created by `twmht`_, but it also incorporates changes from other forks and
+unfinished pull requests.
 
 .. _python-rocksdb: https://github.com/twmht/python-rocksdb
 .. _twmht: https://github.com/twmht
