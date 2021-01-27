@@ -1,9 +1,112 @@
 Changelog
 *********
 
+Version 0.8
+-----------
+
+Yet Another Fork, started by @NightTsarina, collecting loose commits from the
+many forks of the original project. Summary of commits:
+
+  [ Alexander Böhn ]
+  * Allow `rocksdb.DB` instances to be manually closed.
+
+  [ iFA ]
+  * Many tidying changes.
+  * Added support for many parameters in different interfaces.
+  * Create statistics.pxd
+  * Fixing closing
+
+  [ Andrey Martyanov ]
+  * Build wheel packages
+  * Update README with simplified installation procedure
+
+  [ Martina Ferrari ]
+  * Fix a few typos.
+  * Add as_dict option to multi_get.
+  * Update README, set myself as current author/maintainer, and move most
+    of setup.py to the configuration file.
+
+Version 0.7
+-----------
+
+Version released by @twmht; summary of commits:
+
+  [ Ming-Hsuan-Tu ]
+  * remove full_scan_mode
+  * change default compaction_pri
+
+  [ meridianz ]
+  * Docs: fix typo in installation command line
+
+  [ Roman Zeyde ]
+  * Remove `fetch=False` unsupported keyword from
+    db.iter{items,keys,values} documentation
+
+  [ Abhiram R ]
+  * Modified docs to export CPLUS_INCLUDE_PATH, LD_LIBRARY_PATH and
+    LIBRARY_PATH correctly even if they weren't originally assigned
+  * Added liblz4-dev as a package to be installed
+
+  [ Jason Fried ]
+  * Column Family Support. Add support for Column Families in a runtime
+    safe way. Add unittests to test functionality Insure all unittests are
+    passing. Cleaned up unittests to not use a fixed directory in tmp, but
+    use tempfile
+
+Version 0.6
+-----------
+
+Version released by @twmht; summary of commits:
+
+  [ Ming-Hsuan-Tu ]
+  * now support rocksdb 5.3.0
+  * Merge options source_compaction_factor, max_grandparent_overlap_bytes
+    and expanded_compaction_factor into max_compaction_bytes
+  * add default merge operator
+  * add compaction_pri
+  * add seekForPrev
+  * update the usage of default operators
+  * fix memtable_factory crash
+  * add testcase for memtable
+
+  [ George Mossessian ]
+  * allow snappy_compression as a default option in
+    test_options.py::TestOptions::test_simple
+
+  [ RIMPY BHAROT ]
+  * Update installation.rst. Missing steps need to be added for clean
+    installation.
+
+  [ Chris Hager ]
+  * OSX support for 'pip install'
+
+  [ Mehdi Abaakouk ]
+  * Allow to compile the extension everywhere.
+
+
 Version 0.5
 -----------
 
+Last version released by the @hofmockel; summary of commits:
+
+  * Remove prints from the tests.
+  * Use another compiler flag wich works for clang and gcc.
+  * Wrap the RepairDB function.
+  * Get rid of this 'extension_defaults' variable.
+  * Only 'cythonize' if Cython is installed.
+  * Add the .hpp .pxd .pyx files for the sdist.
+  * Rename README.md to README.rst so setup.py can pick it up.
+  * Update the installation page by mentioning a 'system wide' rocksdb
+    installation.
+  * Improve the README.rst by adding a quick install/using guide.
+  * Don't set a theme explicitly. Let 'readthedocs' decide itself.
+  * Change API of compact_range to be compatible with the change of
+    rocksdb.
+  * No need for the 'get_ob' methods on PyCache.
+  * Add "row_cache" to options.
+  * Document the new row_cache option.
+  * Update the versions (python,rocksdb) pyrocksdb 0.4 was tested with.
+  * Mention in the changelog that this version is avaialable on pypi.
 
 Version 0.4
 -----------
