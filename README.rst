@@ -1,10 +1,5 @@
-Note
-=========
-The original pyrocksdb (https://pypi.python.org/pypi/pyrocksdb/0.4) has not been updated for long time. I update pyrocksdb to support the latest rocksdb. Please open issues in github if you have any problem.
-
-News (2020/09/03 iFA)
-=========
-Python version which lower than 3.0 is not supported anymore.
+python-rocksdb
+==============
 
 pyrocksdb
 =========
@@ -13,38 +8,33 @@ Python bindings for RocksDB.
 See http://python-rocksdb.readthedocs.io/en/latest/ for a more comprehensive install and usage description.
 
 
-Quick Install
+Quick install
 -------------
-
-Quick install for debian/ubuntu like linux distributions.
 
 .. code-block:: bash
 
-    $ apt-get install build-essential libsnappy-dev zlib1g-dev libbz2-dev libgflags-dev liblz4-dev
-    $ git clone https://github.com/facebook/rocksdb.git
-    $ cd rocksdb
-    $ mkdir build && cd build
-    $ cmake ..
-    $ make
-    $ cd ..
-    $ export CPLUS_INCLUDE_PATH=${CPLUS_INCLUDE_PATH}${CPLUS_INCLUDE_PATH:+:}`pwd`/include/
-    $ export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}${LD_LIBRARY_PATH:+:}`pwd`/build/
-    $ export LIBRARY_PATH=${LIBRARY_PATH}${LIBRARY_PATH:+:}`pwd`/build/
-
-    $ apt-get install python-virtualenv python-dev
-    $ virtualenv pyrocks_test
-    $ cd pyrocks_test
-    $ . bin/active
-    $ pip install python-rocksdb
+    $ pip install rocksdb
 
 
-Quick Usage Guide
+Quick usage guide
 -----------------
 
-.. code-block:: pycon
+.. code-block:: python
 
     >>> import rocksdb
-    >>> db = rocksdb.DB("test.db", rocksdb.Options(create_if_missing=True))
+    >>> db = rocksdb.DB('test.db', rocksdb.Options(create_if_missing=True))
     >>> db.put(b'a', b'data')
-    >>> print db.get(b'a')
+    >>> print(db.get(b'a'))
     b'data'
+
+
+Acknowledgements
+----------------
+
+This project is a fork of `python-rocksdb`_ maintained by `twmht`_, which itself is a fork
+of `pyrocksdb`_, that was originally written by `stephan-hof`_.
+
+.. _python-rocksdb: https://github.com/twmht/python-rocksdb
+.. _twmht: https://github.com/twmht
+.. _pyrocksdb: https://github.com/stephan-hof/pyrocksdb
+.. _stephan-hof: https://github.com/stephan-hof
