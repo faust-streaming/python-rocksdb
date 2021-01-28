@@ -590,9 +590,9 @@ cdef class BlockBasedTableFactory(PyTableFactory):
             block_size_deviation=None,
             block_restart_interval=None,
             whole_key_filtering=None,
-            enable_index_compression=False,
-            cache_index_and_filter_blocks=False,
-            format_version=2,
+            enable_index_compression=None,
+            cache_index_and_filter_blocks=None,
+            format_version=None,
         ):
 
         cdef table_factory.BlockBasedTableOptions table_options
@@ -609,17 +609,18 @@ cdef class BlockBasedTableFactory(PyTableFactory):
         else:
             table_options.hash_index_allow_collision = False
 
-        if enable_index_compression:
-            table_options.enable_index_compression = True
-        else:
-            table_options.enable_index_compression = False
-
         if checksum == 'crc32':
             table_options.checksum = table_factory.kCRC32c
         elif checksum == 'xxhash':
             table_options.checksum = table_factory.kxxHash
         else:
             raise ValueError("Unknown checksum: %s" % checksum)
+
+        if block_cache is not None:
+            table_options.block_cache = block_cache.get_cache()
+
+        if block_cache_compressed is not None:
+            table_options.block_cache_compressed = block_cache_compressed.get_cache()
 
         if no_block_cache:
             table_options.no_block_cache = True
@@ -642,17 +643,17 @@ cdef class BlockBasedTableFactory(PyTableFactory):
             else:
                 table_options.whole_key_filtering = False
 
+        if enable_index_compression is not None:
+            if enable_index_compression:
+                table_options.enable_index_compression = True
+            else:
+                table_options.enable_index_compression = False
+
         if cache_index_and_filter_blocks is not None:
             if cache_index_and_filter_blocks:
                 table_options.cache_index_and_filter_blocks = True
             else:
                 table_options.cache_index_and_filter_blocks = False
-
-        if block_cache is not None:
-            table_options.block_cache = block_cache.get_cache()
-
-        if block_cache_compressed is not None:
-            table_options.block_cache_compressed = block_cache_compressed.get_cache()
 
         if format_version is not None:
             table_options.format_version = format_version
@@ -911,6 +912,7 @@ cdef class ColumnFamilyOptions(object):
             self.copts.min_write_buffer_number_to_merge = value
 
     property compression_opts:
+        # FIXME: add missing fields.
         def __get__(self):
             cdef dict ret_ob = {}
 
@@ -933,6 +935,8 @@ cdef class ColumnFamilyOptions(object):
                 copts.strategy = value['strategy']
             if 'max_dict_bytes' in value:
                 copts.max_dict_bytes = value['max_dict_bytes']
+
+    # FIXME: add bottommost_compression_opts
 
     property compaction_pri:
         def __get__(self):
@@ -1002,6 +1006,8 @@ cdef class ColumnFamilyOptions(object):
                 self.copts.compression = options.kDisableCompressionOption
             else:
                 raise TypeError("Unknown compression: %s" % value)
+
+    # FIXME: add bottommost_compression
 
     property max_compaction_bytes:
         def __get__(self):
