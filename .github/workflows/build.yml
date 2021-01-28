@@ -26,22 +26,26 @@ jobs:
 
       - name: 'Install dependencies'
         run: |
-          sudo apt install -y libsnappy-dev libbz2-dev liblz4-dev libz-dev libgflags-dev libzstd-dev python3-pytest
+          sudo apt install -y libsnappy-dev libbz2-dev liblz4-dev libz-dev libgflags-dev libzstd-dev
 
       - name: 'Install RocksDB ${{ matrix.rocksdb_ver }}'
         run: |
-          pushd /opt
-          git clone https://github.com/facebook/rocksdb
-          cd rocksdb
-          git reset --hard ${{ matrix.rocksdb_ver }}
-          CXXFLAGS='-flto -Os -s' PORTABLE=1 make shared_lib -j 4
-          make shared_lib
-          sudo make install-shared
+          pushd /opt &&
+          git clone https://github.com/facebook/rocksdb &&
+          cd rocksdb &&
+          git reset --hard ${{ matrix.rocksdb_ver }} &&
+          CXXFLAGS='-flto -Os -s' PORTABLE=1 make shared_lib -j 4 &&
+          make shared_lib &&
+          sudo make install-shared &&
           popd
 
-      - name: Test with pytest
+      - name: Install python-rocksdb
         run: |
-          pytest-3 rocksdb/tests
+          sudo python3 setup.py install
+
+      - name: Run tests
+        run: |
+          python3 setup.py test
 
   build_wheels:
     name: 'Build wheels'
@@ -68,16 +72,16 @@ jobs:
           CIBW_MANYLINUX_X86_64_IMAGE: 'manylinux2014'
           CIBW_BUILD: 'cp3*'
           CIBW_SKIP: '*-manylinux_i686'
-          CIBW_TEST_REQUIRES: '.[test]'
-          CIBW_TEST_COMMAND: 'pytest {project}/rocksdb/tests'
+          CIBW_TEST_REQUIRES: '.[test] pytest'
+          CIBW_TEST_COMMAND: 'python3 -m pytest {project}/rocksdb/tests'
           CIBW_BEFORE_BUILD: |
-            apt install -y libsnappy-dev libbz2-dev liblz4-dev libz-dev python3-pytest
-            pushd /opt
-            git clone https://github.com/facebook/rocksdb
-            cd rocksdb
-            git reset --hard $ROCKSDB_VERSION
-            CXXFLAGS='-flto -Os -s' PORTABLE=1 make shared_lib -j 4
-            make install-shared
+            yum install -y bzip2-devel lz4-devel snappy-devel zlib-devel &&
+            pushd /opt &&
+            git clone https://github.com/facebook/rocksdb &&
+            cd rocksdb &&
+            git reset --hard $ROCKSDB_VERSION &&
+            CXXFLAGS='-flto -Os -s' PORTABLE=1 make shared_lib -j 4 &&
+            make install-shared &&
             popd
 
       - uses: actions/upload-artifact@v2
