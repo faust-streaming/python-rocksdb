@@ -22,6 +22,8 @@ cdef extern from "rocksdb/options.h" namespace "rocksdb":
         int level;
         int strategy;
         uint32_t max_dict_bytes
+        # FIXME: add missing fields: max_dict_bytes, zstd_max_train_bytes,
+        # parallel_threads, enabled
         CompressionOptions() except +
         CompressionOptions(int, int, int, int) except +
 
