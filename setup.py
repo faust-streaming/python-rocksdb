@@ -19,8 +19,8 @@ if platform.system() == 'Darwin':
 
 
 setup(
-    name="python-rocksdb",
-    version='0.7.0',
+    name="faust-streaming-rocksdb",
+    version='0.8.0',
     description="Python bindings for RocksDB",
     keywords='rocksdb',
     author='Ming Hsuan Tu',
