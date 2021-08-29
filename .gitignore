@@ -6,6 +6,8 @@ docs/_build
 *.egg-info/
 *.pyc
 *.so
+venv
+.idea
 __pycache__
 rocksdb/_rocksdb.cpp
 
