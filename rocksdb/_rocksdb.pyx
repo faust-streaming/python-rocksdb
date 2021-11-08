@@ -1738,6 +1738,7 @@ cdef class DB(object):
                     copts.in_use = False
             del self.cf_options[:]
             with nogil:
+                st = self.db.Close()
                 self.db = NULL
             if self.opts is not None:
                 self.opts.in_use = False
