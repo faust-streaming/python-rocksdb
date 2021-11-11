@@ -590,7 +590,6 @@ cdef class BlockBasedTableFactory(PyTableFactory):
             block_size_deviation=None,
             block_restart_interval=None,
             whole_key_filtering=None,
-            enable_index_compression=None,
             cache_index_and_filter_blocks=None,
             format_version=None,
         ):
@@ -642,12 +641,6 @@ cdef class BlockBasedTableFactory(PyTableFactory):
                 table_options.whole_key_filtering = True
             else:
                 table_options.whole_key_filtering = False
-
-        if enable_index_compression is not None:
-            if enable_index_compression:
-                table_options.enable_index_compression = True
-            else:
-                table_options.enable_index_compression = False
 
         if cache_index_and_filter_blocks is not None:
             if cache_index_and_filter_blocks:
@@ -1364,12 +1357,6 @@ cdef class Options(ColumnFamilyOptions):
             return self.opts.max_background_compactions
         def __set__(self, value):
             self.opts.max_background_compactions = value
-
-    property stats_history_buffer_size:
-        def __get__(self):
-            return self.opts.stats_history_buffer_size
-        def __set__(self, value):
-            self.opts.stats_history_buffer_size = value
 
     property max_background_jobs:
         def __get__(self):
