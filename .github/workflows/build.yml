@@ -4,16 +4,51 @@ name: 'Build'
 on: ['push', 'pull_request']
 
 jobs:
-  test:
-    name: 'Test'
+  # Build the RocksDB C library and cache the result.
+  librocksdb:
+    name: 'Build librocksdb'
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
         os: [ubuntu-latest]
-          #py_ver: ['3.7', '3.8', '3.9']
-          #rocksdb_ver: ['v6.14.6', 'v6.11.4', 'v5.17.2']
-        py_ver: ['3.9']
-        rocksdb_ver: ['v6.14.6']
+        rocksdb_ver: ['v6.14.6', 'v6.11.4']
+
+    steps:
+      - uses: actions/cache@v2
+        id: cache-librocksdb
+        with:
+          key: ${{ matrix.os }}-librocksdb-${{ matrix.rocksdb_ver }}
+          path: /opt/rocksdb
+          restore-keys: |
+            librocksdb-${{ matrix.os }}-
+            librocksdb-
+
+      - name: 'Install dependencies'
+        if: steps.cache-librocksdb.outputs.cache-hit != 'true'
+        run: >
+          sudo apt install -y libsnappy-dev libbz2-dev liblz4-dev libz-dev
+          libgflags-dev libzstd-dev
+
+      - name: 'Clone & build RocksDB ${{ matrix.rocksdb_ver }}'
+        if: steps.cache-librocksdb.outputs.cache-hit != 'true'
+        run: |
+          pushd /opt &&
+          git clone https://github.com/facebook/rocksdb &&
+          cd rocksdb &&
+          git reset --hard ${{ matrix.rocksdb_ver }} &&
+          CXXFLAGS='-flto -Os -s' PORTABLE=1 make shared_lib -j 4 &&
+          make shared_lib &&
+          popd
+
+  test:
+    name: 'Build and test python-rocksdb'
+    needs: librocksdb
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest]
+        py_ver: ['3.7', '3.8', '3.9']
+        rocksdb_ver: ['v6.14.6', 'v6.11.4']
 
     steps:
       - uses: actions/checkout@v2
@@ -24,108 +59,41 @@ jobs:
         with:
           python-version: ${{ matrix.py_ver }}
 
-      - name: 'Install dependencies'
-        run: |
-          sudo apt install -y libsnappy-dev libbz2-dev liblz4-dev libz-dev libgflags-dev libzstd-dev
+      - name: 'Install C libraries'
+        # XXX(Tina): The non-development versions are sufficient, but package
+        # names are difficult to predict.
+        run: >
+          sudo apt install -y libsnappy-dev libbz2-dev liblz4-dev libz-dev
+          libgflags-dev libzstd-dev
+
+      # Recover the pre-built C library.
+      - uses: actions/cache@v2
+        id: cache-librocksdb
+        with:
+          key: ${{ matrix.os }}-librocksdb-${{ matrix.rocksdb_ver }}
+          path: /opt/rocksdb
 
       - name: 'Install RocksDB ${{ matrix.rocksdb_ver }}'
+        if: steps.cache-librocksdb.outputs.cache-hit == 'true'
+        # DO NOT FORGET to call `ldconfig`!
         run: |
-          pushd /opt &&
-          git clone https://github.com/facebook/rocksdb &&
-          cd rocksdb &&
-          git reset --hard ${{ matrix.rocksdb_ver }} &&
-          CXXFLAGS='-flto -Os -s' PORTABLE=1 make shared_lib -j 4 &&
-          make shared_lib &&
+          pushd /opt/rocksdb &&
           sudo make install-shared &&
+          sudo ldconfig &&
           popd
 
-      - name: Install python-rocksdb
+      - name: Build and install python-rocksdb
+        # Use `pip install` instead of `setup.py` so build-dependencies from
+        # `pyproject.toml` are installed, in particular `Cython`, without which
+        # the build fails in confusing ways.
         run: |
-          sudo python3 setup.py install
+          python3 -m pip install '.[test]'
 
       - name: Run tests
+        # Use `--pyargs` to interpret parameter as module to import, not as a
+        # path, and do not use `python3 -m pytest`. This way we prevent
+        # importing the module from the current directory instead of the
+        # installed package, and failing when it cannot find the shared
+        # library.
         run: |
-          python3 setup.py test
-
-  build_wheels:
-    name: 'Build wheels'
-    runs-on: ubuntu-latest
-
-    steps:
-      - uses: actions/checkout@v2
-        name: 'Checkout source repository'
-
-      - uses: actions/setup-python@v2
-        name: 'Set up Python 3.9'
-        with:
-          python-version: '3.9'
-
-      - name: 'Install cibuildwheel'
-        run: |
-          python3 -m pip install cibuildwheel==1.7.1
-
-      - name: 'Build wheels'
-        run: |
-          python3 -m cibuildwheel --output-dir dist
-        env:
-          ROCKSDB_VERSION: 'v6.14.6'
-          CIBW_MANYLINUX_X86_64_IMAGE: 'manylinux2014'
-          CIBW_BUILD: 'cp3*'
-          CIBW_SKIP: '*-manylinux_i686'
-          CIBW_TEST_REQUIRES: '.[test] pytest'
-          CIBW_TEST_COMMAND: 'python3 -m pytest {project}/rocksdb/tests'
-          CIBW_BEFORE_BUILD: |
-            yum install -y bzip2-devel lz4-devel snappy-devel zlib-devel &&
-            pushd /opt &&
-            git clone https://github.com/facebook/rocksdb &&
-            cd rocksdb &&
-            git reset --hard $ROCKSDB_VERSION &&
-            CXXFLAGS='-flto -Os -s' PORTABLE=1 make shared_lib -j 4 &&
-            make install-shared &&
-            popd
-
-      - uses: actions/upload-artifact@v2
-        name: 'Upload build artifacts'
-        with:
-          path: 'dist/*.whl'
-
-
-  build_sdist:
-    name: 'Build source distribution'
-    runs-on: 'ubuntu-latest'
-    steps:
-      - uses: actions/checkout@v2
-        name: 'Checkout source repository'
-
-      - uses: actions/setup-python@v2
-        name: 'Set up Python 3.9'
-        with:
-          python-version: '3.9'
-
-      - name: 'Build sdist'
-        run: |
-          python3 setup.py sdist
-
-      - uses: actions/upload-artifact@v2
-        name: 'Upload build artifacts'
-        with:
-          path: 'dist/*.tar.gz'
-
-
-#  upload_pypi:
-#    name: 'Upload packages'
-#    needs: ['build_wheels', 'build_sdist']
-#    runs-on: 'ubuntu-latest'
-#    if: github.event_name == 'push' && startsWith(github.event.ref, 'refs/tags/v')
-#    steps:
-#      - uses: actions/download-artifact@v2
-#        name: 'Download artifacts'
-#        with:
-#          name: 'artifact'
-#          path: 'dist'
-#
-#      - uses: pypa/gh-action-pypi-publish@master
-#        name: 'Publish built packages'
-#        with:
-#          user: '__token__'
-#          password: '${{ secrets.PYPI_API_TOKEN }}'
+          pytest --pyargs rocksdb
