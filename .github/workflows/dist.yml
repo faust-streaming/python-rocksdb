@@ -10,7 +10,13 @@ on:
 jobs:
   build_wheels:
     name: 'Build wheels'
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
+    env:
+      LIBROCKSDB_PATH: /opt/rocksdb-${{ matrix.rocksdb_ver }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest]
+        rocksdb_ver: ['v6.14.6']
 
     steps:
       - uses: actions/checkout@v2
@@ -29,7 +35,6 @@ jobs:
         run: |
           python3 -m cibuildwheel --output-dir dist
         env:
-          ROCKSDB_VERSION: 'v6.14.6'
           CIBW_MANYLINUX_X86_64_IMAGE: 'manylinux2014'
           CIBW_BUILD: 'cp3*'
           CIBW_SKIP: '*-manylinux_i686'
@@ -46,14 +51,15 @@ jobs:
           CIBW_BEFORE_BUILD: >
             yum install -y bzip2-devel lz4-devel snappy-devel zlib-devel
             python3-Cython &&
-            pushd /opt &&
-            test -d rocksdb || (
-            git clone https://github.com/facebook/rocksdb &&
-            cd rocksdb &&
-            git reset --hard $ROCKSDB_VERSION &&
-            CXXFLAGS='-flto -Os -s' PORTABLE=1 make shared_lib -j 4 &&
-            make install-shared
+            test -d ${{ env.LIBROCKSDB_PATH }} || (
+            git clone https://github.com/facebook/rocksdb --depth 1
+            --branch ${{ matrix.rocksdb_ver }} ${{ env.LIBROCKSDB_PATH }} &&
+            cd ${{ env.LIBROCKSDB_PATH }} &&
+            CXXFLAGS='-flto -Os -s' PORTABLE=1 make shared_lib -j 4
             ) &&
+            pushd ${{ env.LIBROCKSDB_PATH }} &&
+            make install-shared &&
+            ldconfig &&
             popd
 
       - uses: actions/upload-artifact@v2

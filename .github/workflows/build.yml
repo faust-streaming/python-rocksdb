@@ -1,13 +1,16 @@
 # vim:ts=2:sw=2:et:ai:sts=2
 name: 'Build'
 
-on: ['push', 'pull_request']
+on:
+  push:
 
 jobs:
   # Build the RocksDB C library and cache the result.
   librocksdb:
     name: 'Build librocksdb'
     runs-on: ${{ matrix.os }}
+    env:
+      LIBROCKSDB_PATH: /opt/rocksdb-${{ matrix.rocksdb_ver }}
     strategy:
       matrix:
         os: [ubuntu-latest]
@@ -18,10 +21,7 @@ jobs:
         id: cache-librocksdb
         with:
           key: ${{ matrix.os }}-librocksdb-${{ matrix.rocksdb_ver }}
-          path: /opt/rocksdb
-          restore-keys: |
-            librocksdb-${{ matrix.os }}-
-            librocksdb-
+          path: ${{ env.LIBROCKSDB_PATH }}
 
       - name: 'Install dependencies'
         if: steps.cache-librocksdb.outputs.cache-hit != 'true'
@@ -31,19 +31,19 @@ jobs:
 
       - name: 'Clone & build RocksDB ${{ matrix.rocksdb_ver }}'
         if: steps.cache-librocksdb.outputs.cache-hit != 'true'
-        run: |
-          pushd /opt &&
-          git clone https://github.com/facebook/rocksdb &&
-          cd rocksdb &&
-          git reset --hard ${{ matrix.rocksdb_ver }} &&
+        run: >
+          git clone https://github.com/facebook/rocksdb --depth 1
+          --branch ${{ matrix.rocksdb_ver }} ${{ env.LIBROCKSDB_PATH }} &&
+          pushd ${{ env.LIBROCKSDB_PATH }} &&
           CXXFLAGS='-flto -Os -s' PORTABLE=1 make shared_lib -j 4 &&
-          make shared_lib &&
           popd
 
   test:
     name: 'Build and test python-rocksdb'
     needs: librocksdb
     runs-on: ${{ matrix.os }}
+    env:
+      LIBROCKSDB_PATH: /opt/rocksdb-${{ matrix.rocksdb_ver }}
     strategy:
       matrix:
         os: [ubuntu-latest]
@@ -71,13 +71,13 @@ jobs:
         id: cache-librocksdb
         with:
           key: ${{ matrix.os }}-librocksdb-${{ matrix.rocksdb_ver }}
-          path: /opt/rocksdb
+          path: ${{ env.LIBROCKSDB_PATH }}
 
       - name: 'Install RocksDB ${{ matrix.rocksdb_ver }}'
         if: steps.cache-librocksdb.outputs.cache-hit == 'true'
         # DO NOT FORGET to call `ldconfig`!
         run: |
-          pushd /opt/rocksdb &&
+          pushd ${{ env.LIBROCKSDB_PATH }} &&
           sudo make install-shared &&
           sudo ldconfig &&
           popd
