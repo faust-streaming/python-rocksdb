@@ -3,6 +3,7 @@ import cython
 from libcpp.string cimport string
 from libcpp.deque cimport deque
 from libcpp.vector cimport vector
+from libcpp.map cimport map
 from cpython cimport bool as py_bool
 from libcpp cimport bool as cpp_bool
 from libc.stdint cimport uint32_t
@@ -2383,6 +2384,24 @@ cdef class DB(object):
         else:
             return None
 
+    # def get_map_property(self, prop, ColumnFamilyHandle column_family=None):
+    #     cdef map[string, string] value
+    #     cdef Slice c_prop = bytes_to_slice(prop)
+    #     cdef cpp_bool ret = False
+    #     cdef db.ColumnFamilyHandle* cf_handle = NULL 
+    #     if column_family:
+    #         cf_handle = column_family.get_handle()
+    #     else:
+    #         cf_handle = self.db.DefaultColumnFamily()
+
+    #     with nogil:
+    #         ret = self.db.GetMapProperty(cf_handle, c_prop, cython.address(value))
+
+    #     if ret:
+    #         return value
+    #     else:
+    #         return None
+
     def get_live_files_metadata(self):
         cdef vector[metadata.LiveFileMetaData] metadata
 
@@ -2541,6 +2560,18 @@ def repair_db(db_name, Options opts):
     st = db.RepairDB(db_path, deref(opts.opts))
     check_status(st)
 
+# TODO Figure out API to add descriptors. See constructor which deals with vector of ColumnFamilyDescriptor
+# def repair_db(db_name, Options opts, descriptors):
+#     cdef Status st
+#     cdef string db_path
+#     cdef vector[db.ColumnFamilyDescriptor] c_descriptors
+
+#     for d in descriptors:
+#         c_descriptors.push_back(<db.ColumnFamilyDescriptor>(d))
+
+#     db_path = path_to_string(db_name)
+#     st = db.RepairDB(db_path, deref(opts.opts), c_descriptors)
+#     check_status(st)
 
 def list_column_families(db_name, Options opts):
     cdef Status st
