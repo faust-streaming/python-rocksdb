@@ -29,6 +29,7 @@ from . cimport env
 from . cimport table_factory
 from . cimport memtablerep
 from . cimport universal_compaction
+from . cimport metadata
 
 # Enums are the only exception for direct imports
 # Their name als already unique enough
@@ -2383,7 +2384,7 @@ cdef class DB(object):
             return None
 
     def get_live_files_metadata(self):
-        cdef vector[db.LiveFileMetaData] metadata
+        cdef vector[metadata.LiveFileMetaData] metadata
 
         with nogil:
             self.db.GetLiveFilesMetaData(cython.address(metadata))
@@ -2404,7 +2405,7 @@ cdef class DB(object):
         return ret
 
     def get_column_family_meta_data(self, ColumnFamilyHandle column_family=None):
-        cdef db.ColumnFamilyMetaData metadata
+        cdef metadata.ColumnFamilyMetaData metadata
 
         cdef db.ColumnFamilyHandle* cf_handle = self.db.DefaultColumnFamily()
         if column_family:
