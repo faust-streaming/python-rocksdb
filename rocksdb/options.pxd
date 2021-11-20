@@ -11,6 +11,7 @@ from .slice_ cimport Slice
 from .snapshot cimport Snapshot
 from .slice_transform cimport SliceTransform
 from .table_factory cimport TableFactory
+from .statistics cimport Statistics
 from .memtablerep cimport MemTableRepFactory
 from .universal_compaction cimport CompactionOptionsUniversal
 from .cache cimport Cache
