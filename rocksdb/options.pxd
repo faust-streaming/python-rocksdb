@@ -11,28 +11,14 @@ from .slice_ cimport Slice
 from .snapshot cimport Snapshot
 from .slice_transform cimport SliceTransform
 from .table_factory cimport TableFactory
-#from .statistics cimport Statistics
 from .memtablerep cimport MemTableRepFactory
 from .universal_compaction cimport CompactionOptionsUniversal
 from .cache cimport Cache
+from . cimport advanced_options
+from .advanced_options cimport CompressionOptions
+from .advanced_options cimport AdvancedColumnFamilyOptions
 
 cdef extern from "rocksdb/options.h" namespace "rocksdb":
-    cdef cppclass CompressionOptions:
-        int window_bits;
-        int level;
-        int strategy;
-        uint32_t max_dict_bytes
-        # FIXME: add missing fields: max_dict_bytes, zstd_max_train_bytes,
-        # parallel_threads, enabled
-        CompressionOptions() except +
-        CompressionOptions(int, int, int, int) except +
-
-    ctypedef enum CompactionStyle:
-        kCompactionStyleLevel
-        kCompactionStyleUniversal
-        kCompactionStyleFIFO
-        kCompactionStyleNone
-
     ctypedef enum CompressionType:
         kNoCompression
         kSnappyCompression
@@ -48,12 +34,6 @@ cdef extern from "rocksdb/options.h" namespace "rocksdb":
     ctypedef enum ReadTier:
         kReadAllTier
         kBlockCacheTier
-
-    ctypedef enum CompactionPri:
-        kByCompensatedSize
-        kOldestLargestSeqFirst
-        kOldestSmallestSeqFirst
-        kMinOverlappingRatio
 
     # This needs to be in _rocksdb.pxd so it will export into python
     #cpdef enum AccessHint "rocksdb::DBOptions::AccessHint":
@@ -118,8 +98,8 @@ cdef extern from "rocksdb/options.h" namespace "rocksdb":
         size_t write_buffer_size
         int max_write_buffer_number
         int min_write_buffer_number_to_merge
-        CompressionType compression
-        CompactionPri compaction_pri
+        advanced_options.CompressionType compression
+        advanced_options.CompactionPri compaction_pri
         # TODO: compression_per_level
         shared_ptr[SliceTransform] prefix_extractor
         int num_levels
@@ -145,7 +125,7 @@ cdef extern from "rocksdb/options.h" namespace "rocksdb":
         cpp_bool purge_redundant_kvs_while_flush
         cpp_bool allow_os_buffer
         cpp_bool verify_checksums_in_compaction
-        CompactionStyle compaction_style
+        advanced_options.CompactionStyle compaction_style
         CompactionOptionsUniversal compaction_options_universal
         cpp_bool filter_deletes
         uint64_t max_sequential_skip_in_iterations

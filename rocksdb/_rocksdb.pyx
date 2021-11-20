@@ -35,10 +35,10 @@ from . cimport universal_compaction
 from .universal_compaction cimport kCompactionStopStyleSimilarSize
 from .universal_compaction cimport kCompactionStopStyleTotalSize
 
-from .options cimport kCompactionStyleLevel
-from .options cimport kCompactionStyleUniversal
-from .options cimport kCompactionStyleFIFO
-from .options cimport kCompactionStyleNone
+from .advanced_options cimport kCompactionStyleLevel
+from .advanced_options cimport kCompactionStyleUniversal
+from .advanced_options cimport kCompactionStyleFIFO
+from .advanced_options cimport kCompactionStyleNone
 
 from .slice_ cimport Slice
 from .status cimport Status
@@ -905,7 +905,6 @@ cdef class ColumnFamilyOptions(object):
             self.copts.min_write_buffer_number_to_merge = value
 
     property compression_opts:
-        # FIXME: add missing fields.
         def __get__(self):
             cdef dict ret_ob = {}
 
@@ -913,6 +912,9 @@ cdef class ColumnFamilyOptions(object):
             ret_ob['level'] = self.copts.compression_opts.level
             ret_ob['strategy'] = self.copts.compression_opts.strategy
             ret_ob['max_dict_bytes'] = self.copts.compression_opts.max_dict_bytes
+            ret_ob['zstd_max_train_bytes'] = self.copts.compression_opts.zstd_max_train_bytes
+            ret_ob['parallel_threads'] = self.copts.compression_opts.parallel_threads
+            ret_ob['enabled'] = self.copts.compression_opts.enabled
 
             return ret_ob
 
@@ -928,28 +930,66 @@ cdef class ColumnFamilyOptions(object):
                 copts.strategy = value['strategy']
             if 'max_dict_bytes' in value:
                 copts.max_dict_bytes = value['max_dict_bytes']
+            if 'zstd_max_train_bytes' in value:
+                copts.zstd_max_train_bytes = value['zstd_max_train_bytes']
+            if 'parallel_threads' in value:
+                copts.parallel_threads = value['parallel_threads']
+            if 'enabled' in value:
+                copts.enabled = value['enabled']
 
-    # FIXME: add bottommost_compression_opts
+    property bottommost_compression_opts:
+        def __get__(self):
+            cdef dict ret_ob = {}
+
+            ret_ob['window_bits'] = self.copts.bottommost_compression_opts.window_bits
+            ret_ob['level'] = self.copts.bottommost_compression_opts.level
+            ret_ob['strategy'] = self.copts.bottommost_compression_opts.strategy
+            ret_ob['max_dict_bytes'] = self.copts.bottommost_compression_opts.max_dict_bytes
+            ret_ob['zstd_max_train_bytes'] = self.copts.bottommost_compression_opts.zstd_max_train_bytes
+            ret_ob['parallel_threads'] = self.copts.bottommost_compression_opts.parallel_threads
+            ret_ob['enabled'] = self.copts.bottommost_compression_opts.enabled
+
+            return ret_ob
+
+        def __set__(self, dict value):
+            cdef options.CompressionOptions* copts
+            copts = cython.address(self.copts.bottommost_compression_opts)
+            #  CompressionOptions(int wbits, int _lev, int _strategy, int _max_dict_bytes)
+            if 'window_bits' in value:
+                copts.window_bits  = value['window_bits']
+            if 'level' in value:
+                copts.level = value['level']
+            if 'strategy' in value:
+                copts.strategy = value['strategy']
+            if 'max_dict_bytes' in value:
+                copts.max_dict_bytes = value['max_dict_bytes']
+            if 'zstd_max_train_bytes' in value:
+                copts.zstd_max_train_bytes = value['zstd_max_train_bytes']
+            if 'parallel_threads' in value:
+                copts.parallel_threads = value['parallel_threads']
+            if 'enabled' in value:
+                copts.enabled = value['enabled']
+    
 
     property compaction_pri:
         def __get__(self):
-            if self.copts.compaction_pri == options.kByCompensatedSize:
+            if self.copts.compaction_pri == options.advanced_options.kByCompensatedSize:
                 return CompactionPri.by_compensated_size
-            if self.copts.compaction_pri == options.kOldestLargestSeqFirst:
+            if self.copts.compaction_pri == options.advanced_options.kOldestLargestSeqFirst:
                 return CompactionPri.oldest_largest_seq_first
-            if self.copts.compaction_pri == options.kOldestSmallestSeqFirst:
+            if self.copts.compaction_pri == options.advanced_options.kOldestSmallestSeqFirst:
                 return CompactionPri.oldest_smallest_seq_first
-            if self.copts.compaction_pri == options.kMinOverlappingRatio:
+            if self.copts.compaction_pri == options.advanced_options.kMinOverlappingRatio:
                 return CompactionPri.min_overlapping_ratio
         def __set__(self, value):
             if value == CompactionPri.by_compensated_size:
-                self.copts.compaction_pri = options.kByCompensatedSize
+                self.copts.compaction_pri = options.advanced_options.kByCompensatedSize
             elif value == CompactionPri.oldest_largest_seq_first:
-                self.copts.compaction_pri = options.kOldestLargestSeqFirst
+                self.copts.compaction_pri = options.advanced_options.kOldestLargestSeqFirst
             elif value == CompactionPri.oldest_smallest_seq_first:
-                self.copts.compaction_pri = options.kOldestSmallestSeqFirst
+                self.copts.compaction_pri = options.advanced_options.kOldestSmallestSeqFirst
             elif value == CompactionPri.min_overlapping_ratio:
-                self.copts.compaction_pri = options.kMinOverlappingRatio
+                self.copts.compaction_pri = options.advanced_options.kMinOverlappingRatio
             else:
                 raise TypeError("Unknown compaction pri: %s" % value)
 
