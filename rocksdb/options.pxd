@@ -20,6 +20,7 @@ from .advanced_options cimport CompressionOptions
 from .advanced_options cimport AdvancedColumnFamilyOptions
 from .env cimport Env
 from .types cimport SequenceNumber
+from .compaction_filter cimport CompactionFilter, CompactionFilterFactory
 
 cdef extern from "rocksdb/options.h" namespace "rocksdb":
     ctypedef enum CpuPriority:
@@ -48,8 +49,8 @@ cdef extern from "rocksdb/options.h" namespace "rocksdb":
         ColumnFamilyOptions* OptimizeUniversalStyleCompaction(uint64_t)
         const Comparator* comparator
         shared_ptr[MergeOperator] merge_operator
-        # TODO: compaction_filter
-        # TODO: compaction_filter_factory
+        CompactionFilter* compaction_filter
+        shared_ptr[CompactionFilterFactory] compaction_filter_factory
         size_t write_buffer_size
         advanced_options.CompressionType compression
         advanced_options.CompressionType bottommost_compression
