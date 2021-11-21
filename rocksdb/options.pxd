@@ -21,6 +21,7 @@ from .advanced_options cimport AdvancedColumnFamilyOptions
 from .env cimport Env
 from .types cimport SequenceNumber
 from .compaction_filter cimport CompactionFilter, CompactionFilterFactory
+from .concurrent_task_limiter cimport ConcurrentTaskLimiter
 
 cdef extern from "rocksdb/options.h" namespace "rocksdb":
     ctypedef enum CpuPriority:
@@ -66,7 +67,7 @@ cdef extern from "rocksdb/options.h" namespace "rocksdb":
         shared_ptr[TableFactory] table_factory
 
         vector[DbPath] cf_paths
-        # TODO shared_ptr[ConcurrentTaskLimiter] compaction_thread_limiter
+        shared_ptr[ConcurrentTaskLimiter] compaction_thread_limiter
         ColumnFamilyOptions()
         ColumnFamilyOptions(const Options& options)
         void Dump(Logger*)
