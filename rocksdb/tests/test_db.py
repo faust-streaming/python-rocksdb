@@ -19,7 +19,8 @@ class TestHelper(unittest.TestCase):
         self.addCleanup(self._close_db)
 
     def _close_db(self):
-        del self.db
+        if hasattr(self, 'db'):
+            del self.db
         gc.collect()
         if os.path.exists(self.db_loc):
             shutil.rmtree(self.db_loc)
