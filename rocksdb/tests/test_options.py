@@ -200,3 +200,436 @@ class TestOptions(unittest.TestCase):
         self.assertIsNone(opts.row_cache)
         opts.row_cache = cache = rocksdb.LRUCache(2*1024*1024)
         self.assertEqual(cache, opts.row_cache)
+
+    def test_max_open_files(self):
+        opts = rocksdb.Options()
+        self.assertIsNotNone(opts.max_open_files)
+        opts.max_open_files = 10
+        self.assertEqual(opts.max_open_files, 10)
+
+    def test_max_file_opening_threads(self):
+        opts = rocksdb.Options()
+        self.assertIsNotNone(opts.max_file_opening_threads)
+        opts.max_file_opening_threads = 10
+        self.assertEqual(opts.max_file_opening_threads, 10)
+
+    def test_max_total_wal_size(self):
+        opts = rocksdb.Options()
+        self.assertIsNotNone(opts.max_total_wal_size)
+        opts.max_total_wal_size = 10
+        self.assertEqual(opts.max_total_wal_size, 10)
+
+    def test_max_background_jobs(self):
+        opts = rocksdb.Options()
+        self.assertIsNotNone(opts.max_background_jobs)
+        opts.max_background_jobs = 10
+        self.assertEqual(opts.max_background_jobs, 10)
+
+    def test_base_background_compactions(self):
+        opts = rocksdb.Options()
+        self.assertIsNotNone(opts.base_background_compactions)
+        opts.base_background_compactions = 10
+        self.assertEqual(opts.base_background_compactions, 10)
+
+    def test_max_background_compactions(self):
+        opts = rocksdb.Options()
+        self.assertIsNotNone(opts.max_background_compactions)
+        opts.max_background_compactions = 10
+        self.assertEqual(opts.max_background_compactions, 10)
+
+    def test_max_subcompactions(self):
+        opts = rocksdb.Options()
+        self.assertIsNotNone(opts.max_subcompactions)
+        opts.max_subcompactions = 10
+        self.assertEqual(opts.max_subcompactions, 10)
+
+    def test_max_background_flushes(self):
+        opts = rocksdb.Options()
+        self.assertIsNotNone(opts.max_background_flushes)
+        opts.max_background_flushes = 10
+        self.assertEqual(opts.max_background_flushes, 10)
+
+    def test_max_log_file_size(self):
+        opts = rocksdb.Options()
+        self.assertIsNotNone(opts.max_log_file_size)
+        opts.max_log_file_size = 10
+        self.assertEqual(opts.max_log_file_size, 10)
+
+    def test_log_file_time_to_roll(self):
+        opts = rocksdb.Options()
+        self.assertIsNotNone(opts.log_file_time_to_roll)
+        opts.log_file_time_to_roll = 10
+        self.assertEqual(opts.log_file_time_to_roll, 10)
+
+    def test_recycle_log_file_num(self):
+        opts = rocksdb.Options()
+        self.assertIsNotNone(opts.recycle_log_file_num)
+        opts.recycle_log_file_num = 10        
+        self.assertEqual(opts.recycle_log_file_num, 10)
+
+    def test_stats_history_buffer_size(self):
+        opts = rocksdb.Options()
+        self.assertIsNotNone(opts.stats_history_buffer_size)
+        opts.stats_history_buffer_size = 10
+        self.assertEqual(opts.stats_history_buffer_size, 10)
+
+    def test_max_manifest_file_size(self):
+        opts = rocksdb.Options()
+        self.assertIsNotNone(opts.max_manifest_file_size)
+        opts.max_manifest_file_size = 10
+        self.assertEqual(opts.max_manifest_file_size, 10)
+
+    def test_table_cache_numshardbits(self):
+        opts = rocksdb.Options()
+        self.assertIsNotNone(opts.table_cache_numshardbits)
+        opts.table_cache_numshardbits = 10
+        self.assertEqual(opts.table_cache_numshardbits, 10)
+
+    def test_wal_ttl_seconds(self):
+        opts = rocksdb.Options()
+        self.assertIsNotNone(opts.wal_ttl_seconds)
+        opts.wal_ttl_seconds = 10
+        self.assertEqual(opts.wal_ttl_seconds, 10)
+
+    def test_wal_size_limit_mb(self):
+        opts = rocksdb.Options()
+        self.assertIsNotNone(opts.wal_size_limit_mb)
+        opts.wal_size_limit_mb = 10
+        self.assertEqual(opts.wal_size_limit_mb, 10)
+
+    def test_manifest_preallocation_size(self):
+        opts = rocksdb.Options()
+        self.assertIsNotNone(opts.manifest_preallocation_size)
+        opts.manifest_preallocation_size = 10
+        self.assertEqual(opts.manifest_preallocation_size, 10)
+
+    def test_allow_mmap_reads(self):
+        opts = rocksdb.Options()
+        self.assertIsNotNone(opts.allow_mmap_reads)
+        self.assertEqual(opts.allow_mmap_reads, False)
+        opts.allow_mmap_reads = True
+        self.assertEqual(opts.allow_mmap_reads, True)
+
+    def test_allow_mmap_writes(self):
+        opts = rocksdb.Options()
+        self.assertIsNotNone(opts.allow_mmap_writes)
+        self.assertEqual(opts.allow_mmap_writes, False)
+        opts.allow_mmap_writes = True
+        self.assertEqual(opts.allow_mmap_writes, True)
+
+    def test_use_direct_reads(self):
+        opts = rocksdb.Options()
+        self.assertIsNotNone(opts.use_direct_reads)
+        self.assertEqual(opts.use_direct_reads, False)
+        opts.use_direct_reads = True
+        self.assertEqual(opts.use_direct_reads, True)
+
+    def test_use_direct_io_for_flush_and_compaction(self):
+        opts = rocksdb.Options()
+        self.assertIsNotNone(opts.use_direct_io_for_flush_and_compaction)
+        self.assertEqual(opts.use_direct_io_for_flush_and_compaction, False)
+        opts.use_direct_io_for_flush_and_compaction = True
+        self.assertEqual(opts.use_direct_io_for_flush_and_compaction, True)
+
+    def test_allow_fallocate(self):
+        opts = rocksdb.Options()
+        self.assertIsNotNone(opts.allow_fallocate)
+        self.assertEqual(opts.allow_fallocate, True)
+        opts.allow_fallocate = False
+        self.assertEqual(opts.allow_fallocate, False)
+
+    def test_is_fd_close_on_exec(self):
+        opts = rocksdb.Options()
+        self.assertIsNotNone(opts.is_fd_close_on_exec)
+        self.assertEqual(opts.is_fd_close_on_exec, True)
+        opts.is_fd_close_on_exec = False
+        self.assertEqual(opts.is_fd_close_on_exec, False)
+
+    def test_skip_log_error_on_recovery(self):
+        opts = rocksdb.Options()
+        self.assertIsNotNone(opts.skip_log_error_on_recovery)
+        self.assertEqual(opts.skip_log_error_on_recovery, False)
+        opts.skip_log_error_on_recovery = True
+        self.assertEqual(opts.skip_log_error_on_recovery, True)
+
+    def test_stats_dump_period_sec(self):
+        opts = rocksdb.Options()
+        self.assertIsNotNone(opts.stats_dump_period_sec)
+        self.assertEqual(opts.stats_dump_period_sec, 600)
+        opts.stats_dump_period_sec = 3600
+        self.assertEqual(opts.stats_dump_period_sec, 3600)
+
+    def test_stats_persist_period_sec(self):
+        opts = rocksdb.Options()
+        self.assertIsNotNone(opts.stats_persist_period_sec)
+        self.assertEqual(opts.stats_persist_period_sec, 600)
+        opts.stats_persist_period_sec = 3600
+        self.assertEqual(opts.stats_persist_period_sec, 3600)
+
+    def test_persist_stats_to_disk(self):
+        opts = rocksdb.Options()
+        self.assertIsNotNone(opts.persist_stats_to_disk)
+        self.assertEqual(opts.persist_stats_to_disk, False)
+        opts.persist_stats_to_disk = True
+        self.assertEqual(opts.persist_stats_to_disk, True)
+
+    def test_stats_history_buffer_size(self):
+        opts = rocksdb.Options()
+        self.assertIsNotNone(opts.stats_history_buffer_size)
+        self.assertEqual(opts.stats_history_buffer_size, 1024*1024)
+        opts.stats_history_buffer_size = 3600
+        self.assertEqual(opts.stats_history_buffer_size, 3600)
+
+    def test_advise_random_on_open(self):
+        opts = rocksdb.Options()
+        self.assertIsNotNone(opts.advise_random_on_open)
+        self.assertEqual(opts.advise_random_on_open, True)
+        opts.advise_random_on_open = False
+        self.assertEqual(opts.advise_random_on_open, False)
+
+    def test_db_write_buffer_size(self):
+        opts = rocksdb.Options()
+        self.assertIsNotNone(opts.db_write_buffer_size)
+        self.assertEqual(opts.db_write_buffer_size, 0)
+        opts.db_write_buffer_size = 3600
+        self.assertEqual(opts.db_write_buffer_size, 3600)
+
+    def test_new_table_reader_for_compaction_inputs(self):
+        opts = rocksdb.Options()
+        self.assertIsNotNone(opts.new_table_reader_for_compaction_inputs)
+        self.assertEqual(opts.new_table_reader_for_compaction_inputs, False)
+        opts.new_table_reader_for_compaction_inputs = True
+        self.assertEqual(opts.new_table_reader_for_compaction_inputs, True)
+
+    def test_compaction_readahead_size(self):
+        opts = rocksdb.Options()
+        self.assertIsNotNone(opts.compaction_readahead_size)
+        self.assertEqual(opts.compaction_readahead_size, 0)
+        opts.compaction_readahead_size = 3600
+        self.assertEqual(opts.compaction_readahead_size, 3600)
+
+    def test_random_access_max_buffer_size(self):
+        opts = rocksdb.Options()
+        self.assertIsNotNone(opts.random_access_max_buffer_size)
+        self.assertEqual(opts.random_access_max_buffer_size, 1024*1024)
+        opts.random_access_max_buffer_size = 3600
+        self.assertEqual(opts.random_access_max_buffer_size, 3600)
+
+    def test_writable_file_max_buffer_size(self):
+        opts = rocksdb.Options()
+        self.assertIsNotNone(opts.writable_file_max_buffer_size)
+        self.assertEqual(opts.writable_file_max_buffer_size, 1024*1024)
+        opts.writable_file_max_buffer_size = 3600
+        self.assertEqual(opts.writable_file_max_buffer_size, 3600)
+
+    def test_use_adaptive_mutex(self):
+        opts = rocksdb.Options()
+        self.assertIsNotNone(opts.use_adaptive_mutex)
+        self.assertEqual(opts.use_adaptive_mutex, False)
+        opts.use_adaptive_mutex = True
+        self.assertEqual(opts.use_adaptive_mutex, True)
+
+    def test_bytes_per_sync(self):
+        opts = rocksdb.Options()
+        self.assertIsNotNone(opts.bytes_per_sync)
+        self.assertEqual(opts.bytes_per_sync, 0)
+        opts.bytes_per_sync = 3600
+        self.assertEqual(opts.bytes_per_sync, 3600)
+
+    def test_wal_wal_bytes_per_sync(self):
+        opts = rocksdb.Options()
+        self.assertIsNotNone(opts.wal_bytes_per_sync)
+        self.assertEqual(opts.wal_bytes_per_sync, 0)
+        opts.wal_bytes_per_sync = 3600
+        self.assertEqual(opts.wal_bytes_per_sync, 3600)
+
+    def test_strict_bytes_per_sync(self):
+        opts = rocksdb.Options()
+        self.assertIsNotNone(opts.strict_bytes_per_sync)
+        self.assertEqual(opts.strict_bytes_per_sync, False)
+        opts.strict_bytes_per_sync = True
+        self.assertEqual(opts.strict_bytes_per_sync, True)
+
+    def test_enable_thread_tracking(self):
+        opts = rocksdb.Options()
+        self.assertIsNotNone(opts.enable_thread_tracking)
+        self.assertEqual(opts.enable_thread_tracking, False)
+        opts.enable_thread_tracking = True
+        self.assertEqual(opts.enable_thread_tracking, True)
+
+    def test_delayed_write_rate(self):
+        opts = rocksdb.Options()
+        self.assertIsNotNone(opts.delayed_write_rate)
+        self.assertEqual(opts.delayed_write_rate, 0)
+        opts.delayed_write_rate = 10
+        self.assertEqual(opts.delayed_write_rate, 10)
+
+    def test_enable_pipelined_write(self):
+        opts = rocksdb.Options()
+        self.assertIsNotNone(opts.enable_pipelined_write)
+        self.assertEqual(opts.enable_pipelined_write, False)
+        opts.enable_pipelined_write = True
+        self.assertEqual(opts.enable_pipelined_write, True)
+
+    def test_unordered_write(self):
+        opts = rocksdb.Options()
+        self.assertIsNotNone(opts.unordered_write)
+        self.assertEqual(opts.unordered_write, False)
+        opts.unordered_write = True
+        self.assertEqual(opts.unordered_write, True)
+
+    def test_allow_concurrent_memtable_write(self):
+        opts = rocksdb.Options()
+        self.assertIsNotNone(opts.allow_concurrent_memtable_write)
+        self.assertEqual(opts.allow_concurrent_memtable_write, True)
+        opts.allow_concurrent_memtable_write = False
+        self.assertEqual(opts.allow_concurrent_memtable_write, False)
+
+    def test_enable_write_thread_adaptive_yield(self):
+        opts = rocksdb.Options()
+        self.assertIsNotNone(opts.enable_write_thread_adaptive_yield)
+        self.assertEqual(opts.enable_write_thread_adaptive_yield, True)
+        opts.enable_write_thread_adaptive_yield = False
+        self.assertEqual(opts.enable_write_thread_adaptive_yield, False)
+
+    def test_max_write_batch_group_size_bytes(self):
+        opts = rocksdb.Options()
+        self.assertIsNotNone(opts.max_write_batch_group_size_bytes)
+        self.assertEqual(opts.max_write_batch_group_size_bytes, 1 << 20)
+        opts.max_write_batch_group_size_bytes = 200
+        self.assertEqual(opts.max_write_batch_group_size_bytes, 200)
+
+    def test_write_thread_max_yield_usec(self):
+        opts = rocksdb.Options()
+        self.assertIsNotNone(opts.write_thread_max_yield_usec)
+        self.assertEqual(opts.write_thread_max_yield_usec, 100)
+        opts.write_thread_max_yield_usec = 200
+        self.assertEqual(opts.write_thread_max_yield_usec, 200)
+
+    def test_write_thread_slow_yield_usec(self):
+        opts = rocksdb.Options()
+        self.assertIsNotNone(opts.write_thread_slow_yield_usec)
+        self.assertEqual(opts.write_thread_slow_yield_usec, 3)
+        opts.write_thread_slow_yield_usec = 200
+        self.assertEqual(opts.write_thread_slow_yield_usec, 200)
+
+    def test_skip_stats_update_on_db_open(self):
+        opts = rocksdb.Options()
+        self.assertIsNotNone(opts.skip_stats_update_on_db_open)
+        self.assertEqual(opts.skip_stats_update_on_db_open, False)
+        opts.skip_stats_update_on_db_open = True
+        self.assertEqual(opts.skip_stats_update_on_db_open, True)
+
+    def test_skip_checking_sst_file_sizes_on_db_open(self):
+        opts = rocksdb.Options()
+        self.assertIsNotNone(opts.skip_checking_sst_file_sizes_on_db_open)
+        self.assertEqual(opts.skip_checking_sst_file_sizes_on_db_open, False)
+        opts.skip_checking_sst_file_sizes_on_db_open = True
+        self.assertEqual(opts.skip_checking_sst_file_sizes_on_db_open, True)
+
+    def test_allow_2pc(self):
+        opts = rocksdb.Options()
+        self.assertIsNotNone(opts.allow_2pc)
+        self.assertEqual(opts.allow_2pc, False)
+        opts.allow_2pc = True
+        self.assertEqual(opts.allow_2pc, True)
+
+    def test_row_cache(self):
+        opts = rocksdb.Options()
+        self.assertIsNone(opts.row_cache)
+        with self.assertRaises(Exception):
+            opts.row_cache = True
+
+    def test_fail_if_options_file_error(self):
+        opts = rocksdb.Options()
+        self.assertIsNotNone(opts.fail_if_options_file_error)
+        self.assertEqual(opts.fail_if_options_file_error, False)
+        opts.fail_if_options_file_error = True
+        self.assertEqual(opts.fail_if_options_file_error, True)
+
+    def test_dump_malloc_stats(self):
+        opts = rocksdb.Options()
+        self.assertIsNotNone(opts.dump_malloc_stats)
+        self.assertEqual(opts.dump_malloc_stats, False)
+        opts.dump_malloc_stats = True
+        self.assertEqual(opts.dump_malloc_stats, True)
+
+    def test_avoid_flush_during_recovery(self):
+        opts = rocksdb.Options()
+        self.assertIsNotNone(opts.avoid_flush_during_recovery)
+        self.assertEqual(opts.avoid_flush_during_recovery, False)
+        opts.avoid_flush_during_recovery = True
+        self.assertEqual(opts.avoid_flush_during_recovery, True)
+
+    def test_avoid_flush_during_shutdown(self):
+        opts = rocksdb.Options()
+        self.assertIsNotNone(opts.avoid_flush_during_shutdown)
+        self.assertEqual(opts.avoid_flush_during_shutdown, False)
+        opts.avoid_flush_during_shutdown = True
+        self.assertEqual(opts.avoid_flush_during_shutdown, True)
+
+    def test_allow_ingest_behind(self):
+        opts = rocksdb.Options()
+        self.assertIsNotNone(opts.allow_ingest_behind)
+        self.assertEqual(opts.allow_ingest_behind, False)
+        opts.allow_ingest_behind = True
+        self.assertEqual(opts.allow_ingest_behind, True)
+
+    def test_preserve_deletes(self):
+        opts = rocksdb.Options()
+        self.assertIsNotNone(opts.preserve_deletes)
+        self.assertEqual(opts.preserve_deletes, False)
+        opts.preserve_deletes = True
+        self.assertEqual(opts.preserve_deletes, True)
+
+    def test_two_write_queues(self):
+        opts = rocksdb.Options()
+        self.assertIsNotNone(opts.two_write_queues)
+        self.assertEqual(opts.two_write_queues, False)
+        opts.two_write_queues = True
+        self.assertEqual(opts.two_write_queues, True)
+
+    def test_manual_wal_flush(self):
+        opts = rocksdb.Options()
+        self.assertIsNotNone(opts.manual_wal_flush)
+        self.assertEqual(opts.manual_wal_flush, False)
+        opts.manual_wal_flush = True
+        self.assertEqual(opts.manual_wal_flush, True)
+
+    def test_atomic_flush(self):
+        opts = rocksdb.Options()
+        self.assertIsNotNone(opts.atomic_flush)
+        self.assertEqual(opts.atomic_flush, False)
+        opts.atomic_flush = True
+        self.assertEqual(opts.atomic_flush, True)
+
+    def test_avoid_unnecessary_blocking_io(self):
+        opts = rocksdb.Options()
+        self.assertIsNotNone(opts.avoid_unnecessary_blocking_io)
+        self.assertEqual(opts.avoid_unnecessary_blocking_io, False)
+        opts.avoid_unnecessary_blocking_io = True
+        self.assertEqual(opts.avoid_unnecessary_blocking_io, True)
+
+    def test_write_dbid_to_manifest(self):
+        opts = rocksdb.Options()
+        self.assertIsNotNone(opts.write_dbid_to_manifest)
+        self.assertEqual(opts.write_dbid_to_manifest, False)
+        opts.write_dbid_to_manifest = True
+        self.assertEqual(opts.write_dbid_to_manifest, True)
+
+    def test_log_readahead_size(self):
+        opts = rocksdb.Options()
+        self.assertIsNotNone(opts.log_readahead_size)
+        self.assertEqual(opts.log_readahead_size, 0)
+        opts.log_readahead_size = 10
+        self.assertEqual(opts.log_readahead_size, 10)
+
+    def test_best_efforts_recovery(self):
+        opts = rocksdb.Options()
+        self.assertIsNotNone(opts.best_efforts_recovery)
+        self.assertEqual(opts.best_efforts_recovery, False)
+        opts.best_efforts_recovery = True
+        self.assertEqual(opts.best_efforts_recovery, True)
+
+
+
