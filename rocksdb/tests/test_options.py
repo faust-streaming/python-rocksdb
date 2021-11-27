@@ -37,17 +37,16 @@ class TestOptions(unittest.TestCase):
             #  opts.merge_operator = "not an operator"
 
     # FIXME: travis test should include the latest version of rocksdb
-    #  def test_compaction_pri(self):
-        #  opts = rocksdb.Options()
+    def test_compaction_pri(self):
+        opts = rocksdb.Options()
         # default compaction_pri
-        #  self.assertEqual(opts.compaction_pri, rocksdb.CompactionPri.by_compensated_size)
-        #  self.assertEqual(opts.compaction_pri, rocksdb.CompactionPri.min_overlapping_ratio)
-        #  opts.compaction_pri = rocksdb.CompactionPri.by_compensated_size
-        #  self.assertEqual(opts.compaction_pri, rocksdb.CompactionPri.by_compensated_size)
-        #  opts.compaction_pri = rocksdb.CompactionPri.oldest_largest_seq_first
-        #  self.assertEqual(opts.compaction_pri, rocksdb.CompactionPri.oldest_largest_seq_first)
-        #  opts.compaction_pri = rocksdb.CompactionPri.min_overlapping_ratio
-        #  self.assertEqual(opts.compaction_pri, rocksdb.CompactionPri.min_overlapping_ratio)
+        self.assertEqual(opts.compaction_pri, rocksdb.CompactionPri.min_overlapping_ratio)
+        opts.compaction_pri = rocksdb.CompactionPri.by_compensated_size
+        self.assertEqual(opts.compaction_pri, rocksdb.CompactionPri.by_compensated_size)
+        opts.compaction_pri = rocksdb.CompactionPri.oldest_largest_seq_first
+        self.assertEqual(opts.compaction_pri, rocksdb.CompactionPri.oldest_largest_seq_first)
+        opts.compaction_pri = rocksdb.CompactionPri.min_overlapping_ratio
+        self.assertEqual(opts.compaction_pri, rocksdb.CompactionPri.min_overlapping_ratio)
 
     def test_enable_write_thread_adaptive_yield(self):
         opts = rocksdb.Options()
@@ -67,20 +66,51 @@ class TestOptions(unittest.TestCase):
         # default value
         self.assertEqual(isinstance(compression_opts, dict), True)
         self.assertEqual(compression_opts['window_bits'], -14)
-        # This doesn't match rocksdb latest
-        # self.assertEqual(compression_opts['level'], -1)
+        self.assertEqual(compression_opts['level'], 2**15 - 1)
         self.assertEqual(compression_opts['strategy'], 0)
         self.assertEqual(compression_opts['max_dict_bytes'], 0)
+        self.assertEqual(compression_opts['zstd_max_train_bytes'], 0)
+        self.assertEqual(compression_opts['parallel_threads'], 1)
+        self.assertEqual(compression_opts['enabled'], False)
 
         with self.assertRaises(TypeError):
-            opts.compression_opts = list(1,2)
+            opts.compression_opts = list(1, 2)
 
-        opts.compression_opts = {'window_bits': 1, 'level': 2, 'strategy': 3, 'max_dict_bytes': 4}
+        opts.compression_opts = {'window_bits': 1, 'level': 2, 'strategy': 3, 'max_dict_bytes': 4, 'zstd_max_train_bytes': 15, 'parallel_threads': 4, 'enabled': True}
         compression_opts = opts.compression_opts
         self.assertEqual(compression_opts['window_bits'], 1)
         self.assertEqual(compression_opts['level'], 2)
         self.assertEqual(compression_opts['strategy'], 3)
         self.assertEqual(compression_opts['max_dict_bytes'], 4)
+        self.assertEqual(compression_opts['zstd_max_train_bytes'], 15)
+        self.assertEqual(compression_opts['parallel_threads'], 4)
+        self.assertEqual(compression_opts['enabled'], True)
+
+    def test_bottommost_compression_opts(self):
+        opts = rocksdb.Options()
+        bottommost_compression_opts = opts.bottommost_compression_opts
+        # default value
+        self.assertEqual(isinstance(bottommost_compression_opts, dict), True)
+        self.assertEqual(bottommost_compression_opts['window_bits'], -14)
+        self.assertEqual(bottommost_compression_opts['level'], 2**15 - 1)
+        self.assertEqual(bottommost_compression_opts['strategy'], 0)
+        self.assertEqual(bottommost_compression_opts['max_dict_bytes'], 0)
+        self.assertEqual(bottommost_compression_opts['zstd_max_train_bytes'], 0)
+        self.assertEqual(bottommost_compression_opts['parallel_threads'], 1)
+        self.assertEqual(bottommost_compression_opts['enabled'], False)
+
+        with self.assertRaises(TypeError):
+            opts.compression_opts = list(1, 2)
+
+        opts.bottommost_compression_opts = {'window_bits': 1, 'level': 2, 'strategy': 3, 'max_dict_bytes': 4, 'zstd_max_train_bytes': 15, 'parallel_threads': 4, 'enabled': True}
+        bottommost_compression_opts = opts.bottommost_compression_opts
+        self.assertEqual(bottommost_compression_opts['window_bits'], 1)
+        self.assertEqual(bottommost_compression_opts['level'], 2)
+        self.assertEqual(bottommost_compression_opts['strategy'], 3)
+        self.assertEqual(bottommost_compression_opts['max_dict_bytes'], 4)
+        self.assertEqual(bottommost_compression_opts['zstd_max_train_bytes'], 15)
+        self.assertEqual(bottommost_compression_opts['parallel_threads'], 4)
+        self.assertEqual(bottommost_compression_opts['enabled'], True)
 
     def test_simple(self):
         opts = rocksdb.Options()
