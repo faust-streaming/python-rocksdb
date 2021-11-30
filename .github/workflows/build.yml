@@ -2,7 +2,10 @@
 name: 'Build'
 
 on:
+  pull_request:
   push:
+    branches:
+      - main
 
 jobs:
   # Build the RocksDB C library and cache the result.
