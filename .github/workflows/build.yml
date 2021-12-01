@@ -5,7 +5,9 @@ on:
   pull_request:
   push:
     branches:
-      - main
+      - 'main'
+      - 'force_ci/all/**'    # For development, forcing all workflows to run.
+      - 'force_ci/build/**'  # For debugging and/or only forcing this workflow.
 
 jobs:
   # Build the RocksDB C library and cache the result.
