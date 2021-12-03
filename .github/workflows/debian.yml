@@ -30,14 +30,14 @@ jobs:
               python3-dev python3-pip python3-pytest \
               libsnappy-dev libbz2-dev liblz4-dev libz-dev
 
-      - name: Symlink pytest
-        run: |
-          ln -s /usr/bin/pytest-3 /usr/local/bin/pytest
-
       - name: Build pyrocksdb
+        # TODO(dato): consider using pypa/build --no-isolaiton, to
+        # build the package using a tool specifically designed for
+        # that, rather than trusting it to a tool that does a lot
+        # more (pip).
         run: |
-          python3 -m pip install '.[test]'
+          python3 -m pip install --no-build-isolation -v '.[test]'
 
       - name: Run tests
         run: |
-          pytest --pyargs rocksdb
+          pytest-3 --pyargs rocksdb
