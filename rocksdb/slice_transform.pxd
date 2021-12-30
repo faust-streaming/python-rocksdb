@@ -8,6 +8,12 @@ cdef extern from "rocksdb/slice_transform.h" namespace "rocksdb":
     cdef cppclass SliceTransform:
         pass
 
+    cdef const SliceTransform* ST_NewCappedPrefixTransform "rocksdb::NewCappedPrefixTransform"(
+        size_t) nogil except+
+
+    cdef const SliceTransform* ST_NewFixedPrefixTransform "rocksdb::NewFixedPrefixTransform"(
+        size_t) nogil except+
+
 ctypedef Slice (*transform_func)(
     void*,
     Logger*,

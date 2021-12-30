@@ -1297,8 +1297,11 @@ cdef class ColumnFamilyOptions(object):
             return self.py_prefix_extractor.get_ob()
 
         def __set__(self, value):
-            self.py_prefix_extractor = PySliceTransform(value)
-            self.copts.prefix_extractor = self.py_prefix_extractor.get_transformer()
+            if isinstance(value, int):
+                self.copts.prefix_extractor.reset(slice_transform.ST_NewFixedPrefixTransform(value))
+            else:
+                self.py_prefix_extractor = PySliceTransform(value)
+                self.copts.prefix_extractor = self.py_prefix_extractor.get_transformer()
 
     property optimize_filters_for_hits:
         def __get__(self):
@@ -2465,10 +2468,11 @@ cdef class DB(object):
 
     @staticmethod
     def __parse_read_opts(
-        verify_checksums=False,
-        fill_cache=True,
-        snapshot=None,
-        read_tier="all"):
+            verify_checksums=False,
+            fill_cache=True,
+            snapshot=None,
+            read_tier="all",
+            total_order_seek=False):
 
         # TODO: Is this really effiencet ?
         return locals()
@@ -2479,6 +2483,9 @@ cdef class DB(object):
         opts.fill_cache = py_opts['fill_cache']
         if py_opts['snapshot'] is not None:
             opts.snapshot = (<Snapshot?>(py_opts['snapshot'])).ptr
+
+        if py_opts['total_order_seek'] is not None:
+            opts.total_order_seek = py_opts['total_order_seek']
 
         if py_opts['read_tier'] == "all":
             opts.read_tier = options.kReadAllTier
