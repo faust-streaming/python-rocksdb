@@ -2121,6 +2121,8 @@ cdef class DB(object):
             # We have to make sure we delete the handles so rocksdb doesn't
             # assert when we delete the db
             del self.cf_handles[:]
+            for cfhandle in self.column_family_handles:
+                cfhandle = NULL
             for copts in self.cf_options:
                 if copts:
                     copts.in_use = False
@@ -2132,6 +2134,9 @@ cdef class DB(object):
                 self.opts.in_use = False
 
     def __dealloc__(self):
+        if type(self) != DB:
+            self.wrapped_db = NULL
+            return
         self.close()
 
     @property
@@ -2710,6 +2715,33 @@ cdef class TransactionDB(DB):
     property transaction_options:
         def __get__(self):
             return self.tdb_opts
+
+    def close(self, safe=True):
+        cdef ColumnFamilyOptions copts
+        cdef cpp_bool c_safe = safe
+        cdef Status st
+        if self.wrapped_db != NULL:
+            # We need stop backround compactions
+            with nogil:
+                db.CancelAllBackgroundWork(self.wrapped_db, c_safe)
+            # We have to make sure we delete the handles so rocksdb doesn't
+            # assert when we delete the db
+            del self.cf_handles[:]
+            for cfhandle in self.column_family_handles:
+                cfhandle = NULL
+            for copts in self.cf_options:
+                if copts:
+                    copts.in_use = False
+            del self.cf_options[:]
+            with nogil:
+                st = (<transaction_db.TransactionDB *>(self.wrapped_db)).Close()
+            if self.opts is not None:
+                self.opts.in_use = False
+            if self.tdb_opts is not None:
+                self.tdb_opts.in_use = False
+
+    def __dealloc__(self):
+        self.close()
 
 @cython.no_gc_clear
 @cython.internal
