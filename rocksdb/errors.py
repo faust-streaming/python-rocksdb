@@ -1,20 +1,23 @@
-class NotFound(Exception):
+class Error(Exception):
     pass
 
-class Corruption(Exception):
+class NotFound(Error):
     pass
 
-class NotSupported(Exception):
+class Corruption(Error):
     pass
 
-class InvalidArgument(Exception):
+class NotSupported(Error):
     pass
 
-class RocksIOError(Exception):
+class InvalidArgument(Error):
     pass
 
-class MergeInProgress(Exception):
+class RocksIOError(Error):
     pass
 
-class Incomplete(Exception):
+class MergeInProgress(Error):
+    pass
+
+class Incomplete(Error):
     pass

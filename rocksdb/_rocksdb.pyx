@@ -51,6 +51,7 @@ from .interfaces import Comparator as IComparator
 from .interfaces import SliceTransform as ISliceTransform
 
 import traceback
+from .errors import Error
 from .errors import NotFound
 from .errors import Corruption
 from .errors import NotSupported
