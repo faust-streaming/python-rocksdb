@@ -113,6 +113,9 @@ cdef string_to_bytes(string ob):
 cdef Slice bytes_to_slice(ob) except *:
     return Slice(PyBytes_AsString(ob), PyBytes_Size(ob))
 
+cdef Slice* bytes_to_new_slice(ob) except *:
+    return new Slice(PyBytes_AsString(ob), PyBytes_Size(ob))
+
 cdef slice_to_bytes(Slice sl):
     return PyBytes_FromStringAndSize(sl.data(), sl.size())
 
@@ -2472,11 +2475,13 @@ cdef class DB(object):
             fill_cache=True,
             snapshot=None,
             read_tier="all",
-            total_order_seek=False):
+            total_order_seek=False,
+            iterate_lower_bound=None,
+            iterate_upper_bound=None
+    ):
 
         # TODO: Is this really effiencet ?
         return locals()
-
     cdef options.ReadOptions build_read_opts(self, dict py_opts):
         cdef options.ReadOptions opts
         opts.verify_checksums = py_opts['verify_checksums']
@@ -2493,6 +2498,22 @@ cdef class DB(object):
             opts.read_tier = options.kBlockCacheTier
         else:
             raise ValueError("Invalid read_tier")
+
+        def make_bytes(iterate_bound):
+            if isinstance(iterate_bound, bytes):
+                return iterate_bound
+            elif isinstance(iterate_bound, str):
+                return str.encode(iterate_bound)
+            elif isinstance(iterate_bound, int):
+                return str.encode(str(iterate_bound))
+            else:
+                return None
+        if py_opts['iterate_lower_bound'] is not None:
+            # Calling this new without corresponding delete causes a memory leak.
+            # TODO: Figure out where the object should be destroyed without causing segfaults
+            opts.iterate_lower_bound = bytes_to_new_slice(make_bytes(py_opts['iterate_lower_bound']))
+        if py_opts['iterate_upper_bound'] is not None:
+            opts.iterate_upper_bound = bytes_to_new_slice(make_bytes(py_opts['iterate_upper_bound']))
 
         return opts
 
