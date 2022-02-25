@@ -4,6 +4,7 @@ from .status cimport Status
 from libcpp cimport bool as cpp_bool
 from libcpp.string cimport string
 from libcpp.vector cimport vector
+from .types cimport SequenceNumber
 from .slice_ cimport Slice
 from .snapshot cimport Snapshot
 from .iterator cimport Iterator
@@ -39,7 +40,6 @@ cdef extern from "cpp/write_batch_iter_helper.hpp" namespace "py_rocks":
 
 
 cdef extern from "rocksdb/db.h" namespace "rocksdb":
-    ctypedef uint64_t SequenceNumber
     string kDefaultColumnFamilyName
 
     cdef struct LiveFileMetaData:

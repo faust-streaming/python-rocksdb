@@ -35,10 +35,10 @@ from . cimport universal_compaction
 from .universal_compaction cimport kCompactionStopStyleSimilarSize
 from .universal_compaction cimport kCompactionStopStyleTotalSize
 
-from .options cimport kCompactionStyleLevel
-from .options cimport kCompactionStyleUniversal
-from .options cimport kCompactionStyleFIFO
-from .options cimport kCompactionStyleNone
+from .advanced_options cimport kCompactionStyleLevel
+from .advanced_options cimport kCompactionStyleUniversal
+from .advanced_options cimport kCompactionStyleFIFO
+from .advanced_options cimport kCompactionStyleNone
 
 from .slice_ cimport Slice
 from .status cimport Status
@@ -905,7 +905,6 @@ cdef class ColumnFamilyOptions(object):
             self.copts.min_write_buffer_number_to_merge = value
 
     property compression_opts:
-        # FIXME: add missing fields.
         def __get__(self):
             cdef dict ret_ob = {}
 
@@ -913,6 +912,9 @@ cdef class ColumnFamilyOptions(object):
             ret_ob['level'] = self.copts.compression_opts.level
             ret_ob['strategy'] = self.copts.compression_opts.strategy
             ret_ob['max_dict_bytes'] = self.copts.compression_opts.max_dict_bytes
+            ret_ob['zstd_max_train_bytes'] = self.copts.compression_opts.zstd_max_train_bytes
+            ret_ob['parallel_threads'] = self.copts.compression_opts.parallel_threads
+            ret_ob['enabled'] = self.copts.compression_opts.enabled
 
             return ret_ob
 
@@ -928,28 +930,65 @@ cdef class ColumnFamilyOptions(object):
                 copts.strategy = value['strategy']
             if 'max_dict_bytes' in value:
                 copts.max_dict_bytes = value['max_dict_bytes']
+            if 'zstd_max_train_bytes' in value:
+                copts.zstd_max_train_bytes = value['zstd_max_train_bytes']
+            if 'parallel_threads' in value:
+                copts.parallel_threads = value['parallel_threads']
+            if 'enabled' in value:
+                copts.enabled = value['enabled']
 
-    # FIXME: add bottommost_compression_opts
+    property bottommost_compression_opts:
+        def __get__(self):
+            cdef dict ret_ob = {}
+
+            ret_ob['window_bits'] = self.copts.bottommost_compression_opts.window_bits
+            ret_ob['level'] = self.copts.bottommost_compression_opts.level
+            ret_ob['strategy'] = self.copts.bottommost_compression_opts.strategy
+            ret_ob['max_dict_bytes'] = self.copts.bottommost_compression_opts.max_dict_bytes
+            ret_ob['zstd_max_train_bytes'] = self.copts.bottommost_compression_opts.zstd_max_train_bytes
+            ret_ob['parallel_threads'] = self.copts.bottommost_compression_opts.parallel_threads
+            ret_ob['enabled'] = self.copts.bottommost_compression_opts.enabled
+
+            return ret_ob
+
+        def __set__(self, dict value):
+            cdef options.CompressionOptions* copts
+            copts = cython.address(self.copts.bottommost_compression_opts)
+            #  CompressionOptions(int wbits, int _lev, int _strategy, int _max_dict_bytes)
+            if 'window_bits' in value:
+                copts.window_bits  = value['window_bits']
+            if 'level' in value:
+                copts.level = value['level']
+            if 'strategy' in value:
+                copts.strategy = value['strategy']
+            if 'max_dict_bytes' in value:
+                copts.max_dict_bytes = value['max_dict_bytes']
+            if 'zstd_max_train_bytes' in value:
+                copts.zstd_max_train_bytes = value['zstd_max_train_bytes']
+            if 'parallel_threads' in value:
+                copts.parallel_threads = value['parallel_threads']
+            if 'enabled' in value:
+                copts.enabled = value['enabled']
 
     property compaction_pri:
         def __get__(self):
-            if self.copts.compaction_pri == options.kByCompensatedSize:
+            if self.copts.compaction_pri == options.advanced_options.kByCompensatedSize:
                 return CompactionPri.by_compensated_size
-            if self.copts.compaction_pri == options.kOldestLargestSeqFirst:
+            if self.copts.compaction_pri == options.advanced_options.kOldestLargestSeqFirst:
                 return CompactionPri.oldest_largest_seq_first
-            if self.copts.compaction_pri == options.kOldestSmallestSeqFirst:
+            if self.copts.compaction_pri == options.advanced_options.kOldestSmallestSeqFirst:
                 return CompactionPri.oldest_smallest_seq_first
-            if self.copts.compaction_pri == options.kMinOverlappingRatio:
+            if self.copts.compaction_pri == options.advanced_options.kMinOverlappingRatio:
                 return CompactionPri.min_overlapping_ratio
         def __set__(self, value):
             if value == CompactionPri.by_compensated_size:
-                self.copts.compaction_pri = options.kByCompensatedSize
+                self.copts.compaction_pri = options.advanced_options.kByCompensatedSize
             elif value == CompactionPri.oldest_largest_seq_first:
-                self.copts.compaction_pri = options.kOldestLargestSeqFirst
+                self.copts.compaction_pri = options.advanced_options.kOldestLargestSeqFirst
             elif value == CompactionPri.oldest_smallest_seq_first:
-                self.copts.compaction_pri = options.kOldestSmallestSeqFirst
+                self.copts.compaction_pri = options.advanced_options.kOldestSmallestSeqFirst
             elif value == CompactionPri.min_overlapping_ratio:
-                self.copts.compaction_pri = options.kMinOverlappingRatio
+                self.copts.compaction_pri = options.advanced_options.kMinOverlappingRatio
             else:
                 raise TypeError("Unknown compaction pri: %s" % value)
 
@@ -1328,6 +1367,18 @@ cdef class Options(ColumnFamilyOptions):
         def __set__(self, value):
             self.opts.max_open_files = value
 
+    property max_file_opening_threads:
+        def __get__(self):
+            return self.opts.max_file_opening_threads
+        def __set__(self, value):
+            self.opts.max_file_opening_threads = value
+
+    property max_total_wal_size:
+        def __get__(self):
+            return self.opts.max_total_wal_size
+        def __set__(self, value):
+            self.opts.max_total_wal_size = value
+
     property use_fsync:
         def __get__(self):
             return self.opts.use_fsync
@@ -1352,17 +1403,29 @@ cdef class Options(ColumnFamilyOptions):
         def __set__(self, value):
             self.opts.delete_obsolete_files_period_micros = value
 
+    property max_background_jobs:
+        def __get__(self):
+            return self.opts.max_background_jobs
+        def __set__(self, value):
+            self.opts.max_background_jobs = value
+
+    property base_background_compactions:
+        def __get__(self):
+            return self.opts.base_background_compactions
+        def __set__(self, value):
+            self.opts.base_background_compactions = value
+
     property max_background_compactions:
         def __get__(self):
             return self.opts.max_background_compactions
         def __set__(self, value):
             self.opts.max_background_compactions = value
 
-    property max_background_jobs:
+    property max_subcompactions:
         def __get__(self):
-            return self.opts.max_background_jobs
+            return self.opts.max_subcompactions
         def __set__(self, value):
-            self.opts.max_background_jobs = value
+            self.opts.max_subcompactions = value
 
     property max_background_flushes:
         def __get__(self):
@@ -1387,6 +1450,12 @@ cdef class Options(ColumnFamilyOptions):
             return self.opts.keep_log_file_num
         def __set__(self, value):
             self.opts.keep_log_file_num = value
+
+    property recycle_log_file_num:
+        def __get__(self):
+            return self.opts.recycle_log_file_num
+        def __set__(self, value):
+            self.opts.recycle_log_file_num = value
 
     property max_manifest_file_size:
         def __get__(self):
@@ -1418,18 +1487,6 @@ cdef class Options(ColumnFamilyOptions):
         def __set__(self, value):
             self.opts.manifest_preallocation_size = value
 
-    property enable_write_thread_adaptive_yield:
-        def __get__(self):
-            return self.opts.enable_write_thread_adaptive_yield
-        def __set__(self, value):
-            self.opts.enable_write_thread_adaptive_yield = value
-
-    property allow_concurrent_memtable_write:
-        def __get__(self):
-            return self.opts.allow_concurrent_memtable_write
-        def __set__(self, value):
-            self.opts.allow_concurrent_memtable_write = value
-
     property allow_mmap_reads:
         def __get__(self):
             return self.opts.allow_mmap_reads
@@ -1441,6 +1498,24 @@ cdef class Options(ColumnFamilyOptions):
             return self.opts.allow_mmap_writes
         def __set__(self, value):
             self.opts.allow_mmap_writes = value
+
+    property use_direct_reads:
+        def __get__(self):
+            return self.opts.use_direct_reads
+        def __set__(self, value):
+            self.opts.use_direct_reads = value
+
+    property use_direct_io_for_flush_and_compaction:
+        def __get__(self):
+            return self.opts.use_direct_io_for_flush_and_compaction
+        def __set__(self, value):
+            self.opts.use_direct_io_for_flush_and_compaction = value
+
+    property allow_fallocate:
+        def __get__(self):
+            return self.opts.allow_fallocate
+        def __set__(self, value):
+            self.opts.allow_fallocate = value
 
     property is_fd_close_on_exec:
         def __get__(self):
@@ -1460,11 +1535,35 @@ cdef class Options(ColumnFamilyOptions):
         def __set__(self, value):
             self.opts.stats_dump_period_sec = value
 
+    property stats_persist_period_sec:
+        def __get__(self):
+            return self.opts.stats_persist_period_sec
+        def __set__(self, value):
+            self.opts.stats_persist_period_sec = value
+
+    property persist_stats_to_disk:
+        def __get__(self):
+            return self.opts.persist_stats_to_disk
+        def __set__(self, value):
+            self.opts.persist_stats_to_disk = value
+
+    property stats_history_buffer_size:
+        def __get__(self):
+            return self.opts.stats_history_buffer_size
+        def __set__(self, value):
+            self.opts.stats_history_buffer_size = value
+
     property advise_random_on_open:
         def __get__(self):
             return self.opts.advise_random_on_open
         def __set__(self, value):
             self.opts.advise_random_on_open = value
+
+    property db_write_buffer_size:
+        def __get__(self):
+            return self.opts.db_write_buffer_size
+        def __set__(self, value):
+            self.opts.db_write_buffer_size = value
 
   # TODO: need to remove -Wconversion to make this work
   # property access_hint_on_compaction_start:
@@ -1472,6 +1571,30 @@ cdef class Options(ColumnFamilyOptions):
   #         return self.opts.access_hint_on_compaction_start
   #     def __set__(self, AccessHint value):
   #         self.opts.access_hint_on_compaction_start = value
+
+    property new_table_reader_for_compaction_inputs:
+        def __get__(self):
+            return self.opts.new_table_reader_for_compaction_inputs
+        def __set__(self, value):
+            self.opts.new_table_reader_for_compaction_inputs = value
+
+    property compaction_readahead_size:
+        def __get__(self):
+            return self.opts.compaction_readahead_size
+        def __set__(self, value):
+            self.opts.compaction_readahead_size = value
+
+    property random_access_max_buffer_size:
+        def __get__(self):
+            return self.opts.random_access_max_buffer_size
+        def __set__(self, value):
+            self.opts.random_access_max_buffer_size = value
+
+    property writable_file_max_buffer_size:
+        def __get__(self):
+            return self.opts.writable_file_max_buffer_size
+        def __set__(self, value):
+            self.opts.writable_file_max_buffer_size = value
 
     property use_adaptive_mutex:
         def __get__(self):
@@ -1484,6 +1607,90 @@ cdef class Options(ColumnFamilyOptions):
             return self.opts.bytes_per_sync
         def __set__(self, value):
             self.opts.bytes_per_sync = value
+
+    property wal_bytes_per_sync:
+        def __get__(self):
+            return self.opts.wal_bytes_per_sync
+        def __set__(self, value):
+            self.opts.wal_bytes_per_sync = value
+
+    property strict_bytes_per_sync:
+        def __get__(self):
+            return self.opts.strict_bytes_per_sync
+        def __set__(self, value):
+            self.opts.strict_bytes_per_sync = value
+
+    property enable_thread_tracking:
+        def __get__(self):
+            return self.opts.enable_thread_tracking
+        def __set__(self, value):
+            self.opts.enable_thread_tracking = value
+
+    property delayed_write_rate:
+        def __get__(self):
+            return self.opts.delayed_write_rate
+        def __set__(self, value):
+            self.opts.delayed_write_rate = value
+
+    property enable_pipelined_write:
+        def __get__(self):
+            return self.opts.enable_pipelined_write
+        def __set__(self, value):
+            self.opts.enable_pipelined_write = value
+
+    property unordered_write:
+        def __get__(self):
+            return self.opts.unordered_write
+        def __set__(self, value):
+            self.opts.unordered_write = value
+
+    property allow_concurrent_memtable_write:
+        def __get__(self):
+            return self.opts.allow_concurrent_memtable_write
+        def __set__(self, value):
+            self.opts.allow_concurrent_memtable_write = value
+
+    property enable_write_thread_adaptive_yield:
+        def __get__(self):
+            return self.opts.enable_write_thread_adaptive_yield
+        def __set__(self, value):
+            self.opts.enable_write_thread_adaptive_yield = value
+
+    property max_write_batch_group_size_bytes:
+        def __get__(self):
+            return self.opts.max_write_batch_group_size_bytes
+        def __set__(self, value):
+            self.opts.max_write_batch_group_size_bytes = value
+
+    property write_thread_max_yield_usec:
+        def __get__(self):
+            return self.opts.write_thread_max_yield_usec
+        def __set__(self, value):
+            self.opts.write_thread_max_yield_usec = value
+
+    property write_thread_slow_yield_usec:
+        def __get__(self):
+            return self.opts.write_thread_slow_yield_usec
+        def __set__(self, value):
+            self.opts.write_thread_slow_yield_usec = value
+
+    property skip_stats_update_on_db_open:
+        def __get__(self):
+            return self.opts.skip_stats_update_on_db_open
+        def __set__(self, value):
+            self.opts.skip_stats_update_on_db_open = value
+
+    property skip_checking_sst_file_sizes_on_db_open:
+        def __get__(self):
+            return self.opts.skip_checking_sst_file_sizes_on_db_open
+        def __set__(self, value):
+            self.opts.skip_checking_sst_file_sizes_on_db_open = value
+
+    property allow_2pc:
+        def __get__(self):
+            return self.opts.allow_2pc
+        def __set__(self, value):
+            self.opts.allow_2pc = value
 
     property row_cache:
         def __get__(self):
@@ -1498,6 +1705,84 @@ cdef class Options(ColumnFamilyOptions):
             else:
                 self.py_row_cache = value
                 self.opts.row_cache = self.py_row_cache.get_cache()
+
+    property fail_if_options_file_error:
+        def __get__(self):
+            return self.opts.fail_if_options_file_error
+        def __set__(self, value):
+            self.opts.fail_if_options_file_error = value
+
+    property dump_malloc_stats:
+        def __get__(self):
+            return self.opts.dump_malloc_stats
+        def __set__(self, value):
+            self.opts.dump_malloc_stats = value
+
+    property avoid_flush_during_recovery:
+        def __get__(self):
+            return self.opts.avoid_flush_during_recovery
+        def __set__(self, value):
+            self.opts.avoid_flush_during_recovery = value
+
+    property avoid_flush_during_shutdown:
+        def __get__(self):
+            return self.opts.avoid_flush_during_shutdown
+        def __set__(self, value):
+            self.opts.avoid_flush_during_shutdown = value
+
+    property allow_ingest_behind:
+        def __get__(self):
+            return self.opts.allow_ingest_behind
+        def __set__(self, value):
+            self.opts.allow_ingest_behind = value
+
+    property preserve_deletes:
+        def __get__(self):
+            return self.opts.preserve_deletes
+        def __set__(self, value):
+            self.opts.preserve_deletes = value
+
+    property two_write_queues:
+        def __get__(self):
+            return self.opts.two_write_queues
+        def __set__(self, value):
+            self.opts.two_write_queues = value
+
+    property manual_wal_flush:
+        def __get__(self):
+            return self.opts.manual_wal_flush
+        def __set__(self, value):
+            self.opts.manual_wal_flush = value
+
+    property atomic_flush:
+        def __get__(self):
+            return self.opts.atomic_flush
+        def __set__(self, value):
+            self.opts.atomic_flush = value
+
+    property avoid_unnecessary_blocking_io:
+        def __get__(self):
+            return self.opts.avoid_unnecessary_blocking_io
+        def __set__(self, value):
+            self.opts.avoid_unnecessary_blocking_io = value
+
+    property write_dbid_to_manifest:
+        def __get__(self):
+            return self.opts.write_dbid_to_manifest
+        def __set__(self, value):
+            self.opts.write_dbid_to_manifest = value
+
+    property log_readahead_size:
+        def __get__(self):
+            return self.opts.log_readahead_size
+        def __set__(self, value):
+            self.opts.log_readahead_size = value
+
+    property best_efforts_recovery:
+        def __get__(self):
+            return self.opts.best_efforts_recovery
+        def __set__(self, value):
+            self.opts.best_efforts_recovery = value
 
 
 # Forward declaration
