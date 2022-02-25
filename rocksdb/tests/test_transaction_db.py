@@ -26,7 +26,7 @@ class TestTransactionDB(TestDB):
     def test_options_used_twice(self):
         expected = "Options object is already used by another DB"
         tdb_opts = rocksdb.TransactionDBOptions()
-        with self.assertRaisesRegex(Exception, expected):
+        with self.assertRaisesRegex(rocksdb.InvalidArgument, expected):
             rocksdb.TransactionDB(os.path.join(self.db_loc, "test2"),
                                   self.db.options,
                                   tdb_opts=tdb_opts)
