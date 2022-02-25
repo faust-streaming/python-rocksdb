@@ -498,9 +498,9 @@ class TestFixedPrefixExtractor(TestHelper):
 
     def _fill_db(self):
         for x in range(3000):
-            keyx = hex(x)[2:].zfill(5).encode('utf8') + b'.x'
-            keyy = hex(x)[2:].zfill(5).encode('utf8') + b'.y'
-            keyz = hex(x)[2:].zfill(5).encode('utf8') + b'.z'
+            keyx = b'%05x.%b' % (x, b'x')
+            keyy = b'%05x.%b' % (x, b'y')
+            keyz = b'%05x.%b' % (x, b'z')
             self.db.put(keyx, b'x')
             self.db.put(keyy, b'y')
             self.db.put(keyz, b'z')
