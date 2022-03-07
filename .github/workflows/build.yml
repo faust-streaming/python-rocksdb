@@ -19,7 +19,7 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest]
-        rocksdb_ver: ['v6.14.6', 'v6.11.4']
+        rocksdb_ver: ['v6.29.3', 'v6.25.3', 'v6.11.4']
 
     steps:
       - uses: actions/cache@v2
@@ -53,7 +53,7 @@ jobs:
       matrix:
         os: [ubuntu-latest]
         py_ver: ['3.7', '3.8', '3.9']
-        rocksdb_ver: ['v6.14.6', 'v6.11.4']
+        rocksdb_ver: ['v6.29.3', 'v6.25.3', 'v6.11.4']
 
     steps:
       - uses: actions/checkout@v2
