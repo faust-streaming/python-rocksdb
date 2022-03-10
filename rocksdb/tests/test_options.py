@@ -1,6 +1,8 @@
-import unittest
 import sys
+import unittest
+
 import rocksdb
+
 
 class TestFilterPolicy(rocksdb.interfaces.FilterPolicy):
     def create_filter(self, keys):
@@ -230,7 +232,6 @@ class TestOptions(unittest.TestCase):
                 ('use_direct_io_for_flush_and_compaction', False, True),
                 ('allow_fallocate', True, False),
                 ('is_fd_close_on_exec', True, False),
-                ('skip_log_error_on_recovery', False, True),
                 ('stats_dump_period_sec', 600, 3600),
                 ('stats_persist_period_sec', 600, 3600),
                 ('persist_stats_to_disk', False, True),

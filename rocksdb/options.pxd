@@ -134,7 +134,6 @@ cdef extern from "rocksdb/options.h" namespace "rocksdb":
         cpp_bool use_direct_io_for_flush_and_compaction
         cpp_bool allow_fallocate
         cpp_bool is_fd_close_on_exec
-        cpp_bool skip_log_error_on_recovery
         unsigned int stats_dump_period_sec
         unsigned int stats_persist_period_sec
         cpp_bool persist_stats_to_disk
