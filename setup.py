@@ -6,7 +6,6 @@ import sys
 
 import pkgconfig
 from Cython.Build import cythonize
-from pkgconfig import PackageNotFoundError
 from setuptools import Extension, setup
 
 extra_compile_args = [
@@ -23,7 +22,19 @@ if platform.system() == 'Darwin':
     extra_compile_args += ['-mmacosx-version-min=10.7', '-stdlib=libc++']
 
 if sys.version_info < (3 , 0):
-    raise Exception("python-rocksdb requires Python 3.x")
+    raise Exception('python-rocksdb requires Python 3.x')
+
+try:
+    ext_args = pkgconfig.parse('rocksdb')
+except pkgconfig.PackageNotFoundError:
+    include_path = os.environ.get('INCLUDE_PATH')
+    library_path = os.environ.get('LIBRARY_PATH')
+
+    ext_args = {
+        'include_dirs': include_path.split(os.pathsep) if include_path else [],
+        'library_dirs': library_path.split(os.pathsep) if library_path else [],
+        'libraries': ['rocksdb', 'snappy', 'bz2', 'z', 'lz4'],
+    }
 
 rocksdb_extension = Extension(
     'rocksdb._rocksdb',
@@ -32,23 +43,8 @@ rocksdb_extension = Extension(
     ],
     extra_compile_args=extra_compile_args,
     language='c++',
-    libraries=['rocksdb'],
+    **ext_args,
 )
-
-try:
-    pkgconfig.configure_extension(rocksdb_extension, "rocksdb")
-except PackageNotFoundError:
-    include_path = os.environ.get("INCLUDE_PATH")
-    library_path = os.environ.get("LIBRARY_PATH")
-
-    rocksdb_extension.include_dirs += include_path.split(os.pathsep) if include_path else []
-    rocksdb_extension.library_dirs += library_path.split(os.pathsep) if library_path else []
-    rocksdb_extension.libraries += [
-        'snappy',
-        'bz2',
-        'z',
-        'lz4',
-    ]
 
 setup(
     ext_modules=cythonize([rocksdb_extension]),
