@@ -49,7 +49,7 @@ jobs:
           # Avoid re-building the C library in every iteration by testing for
           # the build directory.
           CIBW_BEFORE_BUILD: >
-            yum install -y bzip2-devel lz4-devel snappy-devel zlib-devel
+            yum install -y python3-pkgconfig bzip2-devel lz4-devel snappy-devel zlib-devel
             python3-Cython &&
             test -d ${{ env.LIBROCKSDB_PATH }} || (
             git clone https://github.com/facebook/rocksdb --depth 1
