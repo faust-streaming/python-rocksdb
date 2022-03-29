@@ -6,6 +6,8 @@ on:
   push:
     branches:
       - main
+      - 'force_ci/all/**'     # For development, forcing all workflows to run.
+      - 'force_ci/dist/**'    # For debugging and/or only forcing this workflow.
 
 jobs:
   build_wheels:
@@ -49,14 +51,14 @@ jobs:
           # Avoid re-building the C library in every iteration by testing for
           # the build directory.
           CIBW_BEFORE_BUILD: >
-            yum install -y python3-pkgconfig bzip2-devel lz4-devel snappy-devel zlib-devel
-            python3-Cython &&
-            test -d ${{ env.LIBROCKSDB_PATH }} || (
-            git clone https://github.com/facebook/rocksdb --depth 1
-            --branch ${{ matrix.rocksdb_ver }} ${{ env.LIBROCKSDB_PATH }} &&
-            cd ${{ env.LIBROCKSDB_PATH }} &&
-            CXXFLAGS='-flto -Os -s' PORTABLE=1 make shared_lib -j 4
-            ) &&
+            yum install -y bzip2-devel lz4-devel snappy-devel zlib-devel
+            python3-Cython && (
+              test -d ${{ env.LIBROCKSDB_PATH }} || (
+              git clone https://github.com/facebook/rocksdb --depth 1
+              --branch ${{ matrix.rocksdb_ver }} ${{ env.LIBROCKSDB_PATH }} &&
+              cd ${{ env.LIBROCKSDB_PATH }} &&
+              CXXFLAGS='-flto -Os -s' PORTABLE=1 make shared_lib -j 4
+            )) &&
             pushd ${{ env.LIBROCKSDB_PATH }} &&
             make install-shared &&
             ldconfig &&
