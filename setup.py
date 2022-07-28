@@ -6,7 +6,7 @@ import sys
 
 import pkgconfig
 from Cython.Build import cythonize
-from setuptools import Extension, setup
+from setuptools import Extension, setup, find_packages
 
 extra_compile_args = [
     '-std=c++11',
@@ -47,5 +47,17 @@ rocksdb_extension = Extension(
 )
 
 setup(
+    name="faust-streaming-rocksdb",
+    version='0.9.0',
+    description="Python bindings for RocksDB",
+    keywords='rocksdb',
+    author='Ming Hsuan Tu',
+    author_email="qrnnis2623891@gmail.com",
+    url="https://github.com/faust-streaming/python-rocksdb",
+    license='BSD License',
+    setup_requires=['setuptools>=25', 'Cython>=0.20'],
+    install_requires=['setuptools>=25'],
+    package_dir={'rocksdb': 'rocksdb'},
+    packages=find_packages('.'),
     ext_modules=cythonize([rocksdb_extension]),
 )
