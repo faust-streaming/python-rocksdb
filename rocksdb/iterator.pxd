@@ -1,6 +1,6 @@
 from libcpp cimport bool as cpp_bool
-from slice_ cimport Slice
-from status cimport Status
+from .slice_ cimport Slice
+from .status cimport Status
 
 cdef extern from "rocksdb/iterator.h" namespace "rocksdb":
     cdef cppclass Iterator:

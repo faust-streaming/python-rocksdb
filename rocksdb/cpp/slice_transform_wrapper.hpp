@@ -32,12 +32,12 @@ namespace py_rocks {
             SliceTransformWrapper(
                 string name,
                 void* ctx,
-                transform_func transfrom_callback,
+                transform_func transform_callback,
                 in_domain_func in_domain_callback,
                 in_range_func in_range_callback):
                     name(name),
                     ctx(ctx),
-                    transfrom_callback(transfrom_callback),
+                    transform_callback(transform_callback),
                     in_domain_callback(in_domain_callback),
                     in_range_callback(in_range_callback)
             {}
@@ -50,7 +50,7 @@ namespace py_rocks {
                 string error_msg;
                 Slice val;
 
-                val = this->transfrom_callback(
+                val = this->transform_callback(
                     this->ctx,
                     this->info_log.get(),
                     error_msg,
@@ -101,7 +101,7 @@ namespace py_rocks {
         private:
             string name;
             void* ctx;
-            transform_func transfrom_callback;
+            transform_func transform_callback;
             in_domain_func in_domain_callback;
             in_range_func in_range_callback;
             std::shared_ptr<Logger> info_log;

@@ -1,12 +1,18 @@
-from slice_ cimport Slice
+from .slice_ cimport Slice
 from libcpp.string cimport string
 from libcpp cimport bool as cpp_bool
-from logger cimport Logger
-from std_memory cimport shared_ptr
+from .logger cimport Logger
+from .std_memory cimport shared_ptr
 
 cdef extern from "rocksdb/slice_transform.h" namespace "rocksdb":
     cdef cppclass SliceTransform:
         pass
+
+    cdef const SliceTransform* ST_NewCappedPrefixTransform "rocksdb::NewCappedPrefixTransform"(
+        size_t) nogil except+
+
+    cdef const SliceTransform* ST_NewFixedPrefixTransform "rocksdb::NewFixedPrefixTransform"(
+        size_t) nogil except+
 
 ctypedef Slice (*transform_func)(
     void*,
