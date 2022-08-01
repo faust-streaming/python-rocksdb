@@ -48,7 +48,7 @@ rocksdb_extension = Extension(
 
 setup(
     name="faust-streaming-rocksdb",
-    version='0.8.0',
+    version='0.9.0',
     description="Python bindings for RocksDB",
     keywords='rocksdb',
     author='Ming Hsuan Tu',
