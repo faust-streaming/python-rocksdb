@@ -1,24 +1,24 @@
 Options creation
 ****************
 
-Options object
-==============
+Options objects
+===============
+
+.. IMPORTANT::
+
+    The default values mentioned here, describe the values of the
+    C++ library only.  This wrapper does not set any default value
+    itself. So as soon as the rocksdb developers change a default value
+    this document could be outdated. So if you really depend on a default
+    value, double check it with the according version of the C++ library.
+
+    | Most recent default values should be here
+    | https://github.com/facebook/rocksdb/blob/master/include/rocksdb/options.h
+    | https://github.com/facebook/rocksdb/blob/master/util/options.cc
 
 
-.. py:class:: rocksdb.Options
+.. py:class:: rocksdb.ColumnFamilyOptions
 
-    .. IMPORTANT:: 
-
-        The default values mentioned here, describe the values of the
-        C++ library only.  This wrapper does not set any default value
-        itself. So as soon as the rocksdb developers change a default value
-        this document could be outdated. So if you really depend on a default
-        value, double check it with the according version of the C++ library.
-
-        | Most recent default values should be here
-        | https://github.com/facebook/rocksdb/blob/master/include/rocksdb/options.h
-        | https://github.com/facebook/rocksdb/blob/master/util/options.cc
-        
     .. py:method:: __init__(**kwargs)
 
         All options mentioned below can also be passed as keyword-arguments in
@@ -26,40 +26,10 @@ Options object
 
             import rocksdb
 
-            opts = rocksdb.Options(create_if_missing=True)
+            opts = rocksdb.ColumnFamilyOptions(disable_auto_compactions=True)
             # is the same as
-            opts = rocksdb.Options()
-            opts.create_if_missing = True
-
-
-    .. py:attribute:: create_if_missing
-
-        If ``True``, the database will be created if it is missing.
-
-        | *Type:* ``bool``
-        | *Default:* ``False``
-
-    .. py:attribute:: error_if_exists
-
-        If ``True``, an error is raised if the database already exists.
-
-        | *Type:* ``bool``
-        | *Default:* ``False``
-
-
-    .. py:attribute:: paranoid_checks
-
-        If ``True``, the implementation will do aggressive checking of the
-        data it is processing and will stop early if it detects any
-        errors.  This may have unforeseen ramifications: for example, a
-        corruption of one DB entry may cause a large number of entries to
-        become unreadable or for the entire DB to become unopenable.
-        If any of the  writes to the database fails (Put, Delete, Merge, Write),
-        the database will switch to read-only mode and fail all other
-        Write operations.
-
-        | *Type:* ``bool``
-        | *Default:* ``True``
+            opts = rocksdb.ColumnFamilyOptions()
+            opts.disable_auto_compactions = True
 
     .. py:attribute:: write_buffer_size
 
@@ -67,13 +37,16 @@ Options object
         on disk) before converting to a sorted on-disk file.
 
         Larger values increase performance, especially during bulk loads.
-        Up to max_write_buffer_number write buffers may be held in memory
-        at the same time, so you may wish to adjust this parameter to control
-        memory usage.  Also, a larger write buffer will result in a longer recovery
-        time the next time the database is opened.
+        Up to :py:attr:`max_write_buffer_number` write buffers may be held in
+        memory at the same time, so you may wish to adjust this parameter to
+        control memory usage.  Also, a larger write buffer will result in a
+        longer recovery time the next time the database is opened.
+
+        Note that write_buffer_size is enforced per column family. See
+        py:attr:`db_write_buffer_size` for sharing memory across column families.
 
         | *Type:* ``int``
-        | *Default:* ``4194304``
+        | *Default:* ``67108864``
 
     .. py:attribute:: max_write_buffer_number
 
@@ -97,25 +70,115 @@ Options object
         | *Type:* ``int``
         | *Default:* ``1``
 
-    .. py:attribute:: max_open_files
+    .. py:attribute:: compression_opts
 
-        Number of open files that can be used by the DB.  You may need to
-        increase this if your database has a large working set. Value -1 means
-        files opened are always kept open. You can estimate number of
-        files based on target_file_size_base and target_file_size_multiplier
-        for level-based compaction.
-        For universal-style compaction, you can usually set it to -1.
+        A dictionary specifying different options for compression algorithms.
+        When setting, only the values present in the dictionary are applied.
 
-        | *Type:* ``int``
-        | *Default:* ``5000``
+        | *Type:* ``dict``
+
+        window_bits (``int``, default: -14)
+            FIXME
+
+        level (``int``, default: kDefaultCompressionLevel)
+            FIXME
+
+        strategy (``int``, default: 0)
+            FIXME
+
+        max_dict_bytes (``int``, default: 0)
+            Maximum size of dictionaries used to prime the compression library.
+            Enabling dictionary can improve compression ratios when there are
+            repetitions across data blocks.
+
+            The dictionary is created by sampling the SST file data. If
+            `zstd_max_train_bytes` is nonzero, the samples are passed through zstd's
+            dictionary generator. Otherwise, the random samples are used directly as
+            the dictionary.
+
+            When compression dictionary is disabled, we compress and write each block
+            before buffering data for the next one. When compression dictionary is
+            enabled, we buffer all SST file data in-memory so we can sample it, as data
+            can only be compressed and written after the dictionary has been finalized.
+            So users of this feature may see increased memory usage.
+
+        zstd_max_train_bytes (``int``, default: 0)
+            Maximum size of training data passed to zstd's dictionary trainer. Using
+            zstd's dictionary trainer can achieve even better compression ratio
+            improvements than using `max_dict_bytes` alone.
+
+            The training data will be used to generate a dictionary of max_dict_bytes.
+
+        parallel_threads (``int``, default: 1)
+            Number of threads for parallel compression.
+            Parallel compression is enabled only if threads > 1.
+
+            THE FEATURE IS STILL EXPERIMENTAL
+
+            This option is valid only when BlockBasedTable is used.
+
+            When parallel compression is enabled, SST size file sizes might be
+            more inflated compared to the target size, because more data of unknown
+            compressed size is in flight when compression is parallelized. To be
+            reasonably accurate, this inflation is also estimated by using historical
+            compression ratio and current bytes inflight.
+
+        enabled (``bool``, default: False)
+            When the compression options are set by the user, it will be set to "True".
+            For bottommost_compression_opts, to enable it, user must set
+            ``enabled=True``.  Otherwise, bottommost compression will use
+            :py:attr:`compression_opts` as default compression options.
+
+            For :py:attr:`compression_opts`, if ``enabled=False``, it is still
+            used as compression options for compression process.
+
+    .. py:attribute:: bottommost_compression_opts
+
+            Different options for compression algorithms used by
+            :py:attr:`bottommost_compression` if it is enabled. To enable it,
+            please see the definition of :py:attr:`compression_opts`.
 
     .. py:attribute:: compression
 
         Compress blocks using the specified compression algorithm.
         This parameter can be changed dynamically.
 
+        If you do not set :py:attr`compression_opts`.``level``, or set it to
+        `kDefaultCompressionLevel`, we will attempt to pick the default
+        corresponding to `compression` as follows:
+
+        * CompressionType.zstd_compression: 3
+        * CompressionType.zlib_compression: ``Z_DEFAULT_COMPRESSION`` (currently -1)
+        * CompressionType.lz4hc_compression: 0
+        * For all others, we do not specify a compression level
+
         | *Type:* Member of :py:class:`rocksdb.CompressionType`
         | *Default:* :py:attr:`rocksdb.CompressionType.snappy_compression`
+
+    .. py:attribute:: bottommost_compression
+
+        Compression algorithm that will be used for the bottommost level that
+        contain files.
+
+        | *Type:* Member of :py:class:`rocksdb.CompressionType`
+        | *Default:* :py:attr:`rocksdb.CompressionType.no_compression`
+
+    .. py:attribute:: compaction_pri
+
+        If level compaction_style = kCompactionStyleLevel, for each level,
+        which files are prioritized to be picked to compact.
+
+        | *Type:* Member of :py:class:`rocksdb.CompactionPri`
+        | *Default:* :py:attr:`rocksdb.CompactionPri.kByCompensatedSize`
+
+    .. py:attribute:: max_compaction_bytes
+
+        We try to limit number of bytes in one compaction to be lower than this
+        threshold. But it's not guaranteed.
+        Value 0 will be sanitized.
+
+        | *Type:* ``int``
+        | *Default:* ``target_file_size_base * 25``
 
     .. py:attribute:: num_levels
 
@@ -123,7 +186,6 @@ Options object
 
         | *Type:* ``int``
         | *Default:* ``7``
-
 
     .. py:attribute:: level0_file_num_compaction_trigger
 
@@ -160,7 +222,6 @@ Options object
 
         | *Type:* ``int``
         | *Default:* ``2``
-
 
     .. py:attribute:: target_file_size_base
 
@@ -215,158 +276,12 @@ Options object
         | *Type:* ``[int]``
         | *Default:* ``[1, 1, 1, 1, 1, 1, 1]``
 
-    .. py:attribute:: max_compaction_bytes
-
-        We try to limit number of bytes in one compaction to be lower than this
-        threshold. But it's not guaranteed.
-        Value 0 will be sanitized.
-        
-        | *Type:* ``int``
-        | *Default:* ``target_file_size_base * 25``
-
-    .. py:attribute:: use_fsync
-
-        If true, then every store to stable storage will issue a fsync.
-        If false, then every store to stable storage will issue a fdatasync.
-        This parameter should be set to true while storing data to
-        filesystem like ext3 that can lose files after a reboot.
-
-        | *Type:* ``bool``
-        | *Default:* ``False``
-
-    .. py:attribute:: db_log_dir
-
-        This specifies the info LOG dir.
-        If it is empty, the log files will be in the same dir as data.
-        If it is non empty, the log files will be in the specified dir,
-        and the db data dir's absolute path will be used as the log file
-        name's prefix.
-
-        | *Type:* ``unicode``
-        | *Default:* ``""``
-
-    .. py:attribute:: wal_dir
-
-        This specifies the absolute dir path for write-ahead logs (WAL).
-        If it is empty, the log files will be in the same dir as data,
-        dbname is used as the data dir by default.
-        If it is non empty, the log files will be in kept the specified dir.
-        When destroying the db, all log files in wal_dir and the dir itself is deleted
-
-        | *Type:* ``unicode``
-        | *Default:* ``""``
-
-    .. py:attribute:: delete_obsolete_files_period_micros
-
-        The periodicity when obsolete files get deleted. The default
-        value is 6 hours. The files that get out of scope by compaction
-        process will still get automatically delete on every compaction,
-        regardless of this setting
-
-        | *Type:* ``int``
-        | *Default:* ``21600000000``
-
-    .. py:attribute:: max_background_compactions
-
-        Maximum number of concurrent background jobs, submitted to
-        the default LOW priority thread pool
-
-        | *Type:* ``int``
-        | *Default:* ``1``
-
-    .. py:attribute:: max_background_flushes
-
-        Maximum number of concurrent background memtable flush jobs, submitted to
-        the HIGH priority thread pool.
-        By default, all background jobs (major compaction and memtable flush) go
-        to the LOW priority pool. If this option is set to a positive number,
-        memtable flush jobs will be submitted to the HIGH priority pool.
-        It is important when the same Env is shared by multiple db instances.
-        Without a separate pool, long running major compaction jobs could
-        potentially block memtable flush jobs of other db instances, leading to
-        unnecessary Put stalls.
-
-        | *Type:* ``int``
-        | *Default:* ``1``
-
-    .. py:attribute:: max_log_file_size
-
-        Specify the maximal size of the info log file. If the log file
-        is larger than `max_log_file_size`, a new info log file will
-        be created.
-        If max_log_file_size == 0, all logs will be written to one
-        log file.
-
-        | *Type:* ``int``
-        | *Default:* ``0``
-
-    .. py:attribute:: log_file_time_to_roll
-
-        Time for the info log file to roll (in seconds).
-        If specified with non-zero value, log file will be rolled
-        if it has been active longer than `log_file_time_to_roll`.
-        A value of ``0`` means disabled.
-
-        | *Type:* ``int``
-        | *Default:* ``0``
-
-    .. py:attribute:: keep_log_file_num
-
-        Maximal info log files to be kept.
-
-        | *Type:* ``int``
-        | *Default:* ``1000``
-
-    .. py:attribute:: soft_rate_limit
-
-        Puts are delayed 0-1 ms when any level has a compaction score that exceeds
-        soft_rate_limit. This is ignored when == 0.0.
-        CONSTRAINT: soft_rate_limit <= hard_rate_limit. If this constraint does not
-        hold, RocksDB will set soft_rate_limit = hard_rate_limit.
-        A value of ``0`` means disabled.
-
-        | *Type:* ``float``
-        | *Default:* ``0``
-
-    .. py:attribute:: hard_rate_limit
-
-        Puts are delayed 1ms at a time when any level has a compaction score that
-        exceeds hard_rate_limit. This is ignored when <= 1.0.
-        A value fo ``0`` means disabled.
-
-        | *Type:* ``float``
-        | *Default:* ``0``
-
-    .. py:attribute:: rate_limit_delay_max_milliseconds
-
-        Max time a put will be stalled when hard_rate_limit is enforced. If 0, then
-        there is no limit.
-
-        | *Type:* ``int``
-        | *Default:* ``1000``
-
-    .. py:attribute:: max_manifest_file_size
-
-        manifest file is rolled over on reaching this limit.
-        The older manifest file be deleted.
-        The default value is MAX_INT so that roll-over does not take place.
-
-        | *Type:* ``int``
-        | *Default:* ``(2**64) - 1``
-
-    .. py:attribute:: table_cache_numshardbits
-
-        Number of shards used for table cache.
-
-        | *Type:* ``int``
-        | *Default:* ``4``
-
     .. py:attribute:: arena_block_size
 
         size of one block in arena memory allocation.
         If <= 0, a proper value is automatically calculated (usually 1/10 of
         writer_buffer_size).
-         
+
         | *Type:* ``int``
         | *Default:* ``0``
 
@@ -374,110 +289,9 @@ Options object
 
         Disable automatic compactions. Manual compactions can still
         be issued on this database.
-         
-        | *Type:* ``bool``
-        | *Default:* ``False``
-
-    .. py:attribute:: wal_ttl_seconds, wal_size_limit_mb
-
-        The following two fields affect how archived logs will be deleted.
-
-        1. If both set to 0, logs will be deleted asap and will not get into
-           the archive.
-        2. If wal_ttl_seconds is 0 and wal_size_limit_mb is not 0,
-           WAL files will be checked every 10 min and if total size is greater
-           then wal_size_limit_mb, they will be deleted starting with the
-           earliest until size_limit is met. All empty files will be deleted.
-        3. If wal_ttl_seconds is not 0 and wal_size_limit_mb is 0, then
-           WAL files will be checked every wal_ttl_secondsi / 2 and those that
-           are older than wal_ttl_seconds will be deleted.
-        4. If both are not 0, WAL files will be checked every 10 min and both
-           checks will be performed with ttl being first.
-
-        | *Type:* ``int``
-        | *Default:* ``0``
-
-    .. py:attribute:: manifest_preallocation_size
-
-        Number of bytes to preallocate (via fallocate) the manifest
-        files.  Default is 4mb, which is reasonable to reduce random IO
-        as well as prevent overallocation for mounts that preallocate
-        large amounts of data (such as xfs's allocsize option).
-
-        | *Type:* ``int``
-        | *Default:* ``4194304``
-
-    .. py:attribute:: purge_redundant_kvs_while_flush
-
-        Purge duplicate/deleted keys when a memtable is flushed to storage.
-
-        | *Type:* ``bool``
-        | *Default:* ``True``
-
-
-    .. py:attribute:: allow_mmap_reads
-
-        Allow the OS to mmap file for reading sst tables
-
-        | *Type:* ``bool``
-        | *Default:* ``True``
-
-    .. py:attribute:: allow_mmap_writes
-
-        Allow the OS to mmap file for writing
 
         | *Type:* ``bool``
         | *Default:* ``False``
-
-    .. py:attribute:: is_fd_close_on_exec
-
-        Disable child process inherit open files
-
-        | *Type:* ``bool``
-        | *Default:* ``True``
-
-    .. py:attribute:: skip_log_error_on_recovery
-
-        Skip log corruption error on recovery
-        (If client is ok with losing most recent changes)
-         
-        | *Type:* ``bool``
-        | *Default:* ``False``
-
-    .. py:attribute:: stats_dump_period_sec
-
-        If not zero, dump rocksdb.stats to LOG every stats_dump_period_sec
-
-        | *Type:* ``int``
-        | *Default:* ``3600``
-
-    .. py:attribute:: advise_random_on_open
-
-        If set true, will hint the underlying file system that the file
-        access pattern is random, when a sst file is opened.
-
-        | *Type:* ``bool``
-        | *Default:* ``True``
-
-    .. py:attribute:: use_adaptive_mutex
-
-        Use adaptive mutex, which spins in the user space before resorting
-        to kernel. This could reduce context switch when the mutex is not
-        heavily contended. However, if the mutex is hot, we could end up
-        wasting spin time.
-         
-        | *Type:* ``bool``
-        | *Default:* ``False``
-
-    .. py:attribute:: bytes_per_sync
-
-        Allows OS to incrementally sync files to disk while they are being
-        written, asynchronously, in the background.
-        Issue one request for every bytes_per_sync written. 0 turns it off.
-         
-        | *Type:* ``int``
-        | *Default:* ``0``
-
 
     .. py:attribute:: compaction_style
 
@@ -487,14 +301,6 @@ Options object
 
         | *Type:* ``string``
         | *Default:* ``level``
-
-    .. py:attribute:: compaction_pri
-
-        If level compaction_style = kCompactionStyleLevel, for each level,
-        which files are prioritized to be picked to compact.
-
-        | *Type:* Member of :py:class:`rocksdb.CompactionPri`
-        | *Default:* :py:attr:`rocksdb.CompactionPri.kByCompensatedSize`
 
     .. py:attribute:: compaction_options_universal
 
@@ -566,28 +372,34 @@ Options object
             opts = rocksdb.Options()
             opts.compaction_options_universal = {'stop_style': 'similar_size'}
 
-
     .. py:attribute:: max_sequential_skip_in_iterations
 
         An iteration->Next() sequentially skips over keys with the same
         user-key unless this option is set. This number specifies the number
         of keys (with the same userkey) that will be sequentially
         skipped before a reseek is issued.
-         
+
         | *Type:* ``int``
         | *Default:* ``8``
 
-    .. py:attribute:: memtable_factory
+    .. py:attribute:: inplace_update_support
 
-        This is a factory that provides MemTableRep objects.
-        Right now you can assing instances of the following classes.
+        Allows thread-safe inplace updates. Requires Updates if
 
-        * :py:class:`rocksdb.VectorMemtableFactory`
-        * :py:class:`rocksdb.SkipListMemtableFactory`
-        * :py:class:`rocksdb.HashSkipListMemtableFactory`
-        * :py:class:`rocksdb.HashLinkListMemtableFactory`
+        * key exists in current memtable
+        * new sizeof(new_value) <= sizeof(old_value)
+        * old_value for that key is a put i.e. kTypeValue
 
-        *Default:* :py:class:`rocksdb.SkipListMemtableFactory`
+        | *Type:* ``bool``
+        | *Default:* ``False``
+
+    .. py:attribute:: inplace_update_num_locks
+
+        | Number of locks used for inplace update.
+        | Default: 10000, if :py:attr:`inplace_update_support` = True, else 0.
+
+        | *Type:* ``int``
+        | *Default:* ``10000``
 
     .. py:attribute:: table_factory
 
@@ -601,24 +413,17 @@ Options object
 
         *Default:* :py:class:`rocksdb.BlockBasedTableFactory`
 
-    .. py:attribute:: inplace_update_support
+    .. py:attribute:: memtable_factory
 
-        Allows thread-safe inplace updates. Requires Updates if
+        This is a factory that provides MemTableRep objects.
+        Right now you can assing instances of the following classes.
 
-        * key exists in current memtable
-        * new sizeof(new_value) <= sizeof(old_value)
-        * old_value for that key is a put i.e. kTypeValue
- 
-        | *Type:* ``bool``
-        | *Default:* ``False``
+        * :py:class:`rocksdb.VectorMemtableFactory`
+        * :py:class:`rocksdb.SkipListMemtableFactory`
+        * :py:class:`rocksdb.HashSkipListMemtableFactory`
+        * :py:class:`rocksdb.HashLinkListMemtableFactory`
 
-    .. py:attribute:: inplace_update_num_locks
-
-        | Number of locks used for inplace update.
-        | Default: 10000, if inplace_update_support = true, else 0.
-
-        | *Type:* ``int``
-        | *Default:* ``10000``
+        *Default:* :py:class:`rocksdb.SkipListMemtableFactory`
 
     .. py:attribute:: comparator
 
@@ -648,7 +453,7 @@ Options object
         :py:class:`rocksdb.interfaces.MergeOperator` or
         :py:class:`rocksdb.interfaces.AssociativeMergeOperator`
         interface.
-        
+
         *Default:* ``None``
 
     .. py:attribute:: prefix_extractor
@@ -672,6 +477,332 @@ Options object
 
         *Default:* ``None``
 
+    .. py:attribute:: optimize_filters_for_hits
+
+        This flag specifies that the implementation should optimize the filters
+        mainly for cases where keys are found rather than also optimize for keys
+        missed. This would be used in cases where the application knows that
+        there are very few misses or the performance in the case of misses is not
+        important.
+
+        For now, this flag allows us to not store filters for the last level i.e
+        the largest level which contains data of the LSM store. For keys which
+        are hits, the filters in this level are not useful because we will search
+        for the data anyway. NOTE: the filters in other levels are still useful
+        even for key hit because they tell us whether to look in that level or go
+        to the higher level.
+
+        | *Type:* ``bool``
+        | *Default:* ``False``
+
+    .. py:attribute:: paranoid_file_checks
+
+        After writing every SST file, reopen it and read all the keys.
+        Checks the hash of all of the keys and values written versus the
+        keys in the file and signals a corruption if they do not match
+
+        | *Type:* ``bool``
+        | *Default:* ``False``
+
+
+
+.. py:class:: rocksdb.Options
+
+    .. py:method:: __init__(**kwargs)
+
+        Inherits all attributes from :py:class:`ColumnFamilyOptions`.
+
+        All options mentioned below can also be passed as keyword-arguments in
+        the constructor. For example::
+
+            import rocksdb
+
+            opts = rocksdb.Options(create_if_missing=True)
+            # is the same as
+            opts = rocksdb.Options()
+            opts.create_if_missing = True
+
+
+    .. py:attribute:: create_if_missing
+
+        If ``True``, the database will be created if it is missing.
+
+        | *Type:* ``bool``
+        | *Default:* ``False``
+
+    .. py:attribute:: create_missing_column_families
+
+        If ``True``, missing column families will be automatically created.
+
+        | *Type:* ``bool``
+        | *Default:* ``False``
+
+    .. py:attribute:: error_if_exists
+
+        If ``True``, an error is raised if the database already exists.
+
+        | *Type:* ``bool``
+        | *Default:* ``False``
+
+    .. py:attribute:: paranoid_checks
+
+        If ``True``, the implementation will do aggressive checking of the
+        data it is processing and will stop early if it detects any
+        errors.  This may have unforeseen ramifications: for example, a
+        corruption of one DB entry may cause a large number of entries to
+        become unreadable or for the entire DB to become unopenable.
+        If any of the  writes to the database fails (Put, Delete, Merge, Write),
+        the database will switch to read-only mode and fail all other
+        Write operations.
+
+        | *Type:* ``bool``
+        | *Default:* ``True``
+
+    .. py:attribute:: max_open_files
+
+        Number of open files that can be used by the DB.  You may need to
+        increase this if your database has a large working set. Value -1 means
+        files opened are always kept open. You can estimate number of
+        files based on target_file_size_base and target_file_size_multiplier
+        for level-based compaction.
+        For universal-style compaction, you can usually set it to -1.
+
+        | *Type:* ``int``
+        | *Default:* ``5000``
+
+    .. py:attribute:: use_fsync
+
+        If true, then every store to stable storage will issue a fsync.
+        If false, then every store to stable storage will issue a fdatasync.
+        This parameter should be set to true while storing data to
+        filesystem like ext3 that can lose files after a reboot.
+
+        | *Type:* ``bool``
+        | *Default:* ``False``
+
+    .. py:attribute:: db_log_dir
+
+        This specifies the info LOG dir.
+        If it is empty, the log files will be in the same dir as data.
+        If it is non empty, the log files will be in the specified dir,
+        and the db data dir's absolute path will be used as the log file
+        name's prefix.
+
+        | *Type:* ``unicode``
+        | *Default:* ``""``
+
+    .. py:attribute:: wal_dir
+
+        This specifies the absolute dir path for write-ahead logs (WAL).
+        If it is empty, the log files will be in the same dir as data,
+        dbname is used as the data dir by default.
+        If it is non empty, the log files will be in kept the specified dir.
+        When destroying the db, all log files in wal_dir and the dir itself is deleted
+
+        | *Type:* ``unicode``
+        | *Default:* ``""``
+
+    .. py:attribute:: delete_obsolete_files_period_micros
+
+        The periodicity when obsolete files get deleted. The default
+        value is 6 hours. The files that get out of scope by compaction
+        process will still get automatically delete on every compaction,
+        regardless of this setting
+
+        | *Type:* ``int``
+        | *Default:* ``21600000000``
+
+    .. py:attribute:: max_background_compactions
+
+        Maximum number of concurrent background jobs, submitted to
+        the default LOW priority thread pool
+
+        | *Type:* ``int``
+        | *Default:* ``1``
+
+    .. py:attribute:: stats_history_buffer_size
+
+        if not zero, periodically take stats snapshots and store in memory, the
+        memory size for stats snapshots is capped at stats_history_buffer_size
+
+        | *Type:* ``int``
+        | *Default:* ``1048576``
+
+    .. py:attribute:: max_background_jobs
+
+        Maximum number of concurrent background jobs (compactions and flushes).
+
+        | *Type:* ``int``
+        | *Default:* ``2``
+
+    .. py:attribute:: max_background_flushes
+
+        Maximum number of concurrent background memtable flush jobs, submitted to
+        the HIGH priority thread pool.
+        By default, all background jobs (major compaction and memtable flush) go
+        to the LOW priority pool. If this option is set to a positive number,
+        memtable flush jobs will be submitted to the HIGH priority pool.
+        It is important when the same Env is shared by multiple db instances.
+        Without a separate pool, long running major compaction jobs could
+        potentially block memtable flush jobs of other db instances, leading to
+        unnecessary Put stalls.
+
+        | *Type:* ``int``
+        | *Default:* ``1``
+
+    .. py:attribute:: max_log_file_size
+
+        Specify the maximal size of the info log file. If the log file
+        is larger than `max_log_file_size`, a new info log file will
+        be created.
+        If max_log_file_size == 0, all logs will be written to one
+        log file.
+
+        | *Type:* ``int``
+        | *Default:* ``0``
+
+    .. py:attribute:: log_file_time_to_roll
+
+        Time for the info log file to roll (in seconds).
+        If specified with non-zero value, log file will be rolled
+        if it has been active longer than `log_file_time_to_roll`.
+        A value of ``0`` means disabled.
+
+        | *Type:* ``int``
+        | *Default:* ``0``
+
+    .. py:attribute:: keep_log_file_num
+
+        Maximal info log files to be kept.
+
+        | *Type:* ``int``
+        | *Default:* ``1000``
+
+    .. py:attribute:: max_manifest_file_size
+
+        manifest file is rolled over on reaching this limit.
+        The older manifest file be deleted.
+        The default value is MAX_INT so that roll-over does not take place.
+
+        | *Type:* ``int``
+        | *Default:* ``(2**64) - 1``
+
+    .. py:attribute:: table_cache_numshardbits
+
+        Number of shards used for table cache.
+
+        | *Type:* ``int``
+        | *Default:* ``4``
+
+    .. py:attribute:: wal_ttl_seconds, wal_size_limit_mb
+
+        The following two fields affect how archived logs will be deleted.
+
+        1. If both set to 0, logs will be deleted asap and will not get into
+           the archive.
+        2. If wal_ttl_seconds is 0 and wal_size_limit_mb is not 0,
+           WAL files will be checked every 10 min and if total size is greater
+           then wal_size_limit_mb, they will be deleted starting with the
+           earliest until size_limit is met. All empty files will be deleted.
+        3. If wal_ttl_seconds is not 0 and wal_size_limit_mb is 0, then
+           WAL files will be checked every wal_ttl_secondsi / 2 and those that
+           are older than wal_ttl_seconds will be deleted.
+        4. If both are not 0, WAL files will be checked every 10 min and both
+           checks will be performed with ttl being first.
+
+        | *Type:* ``int``
+        | *Default:* ``0``
+
+    .. py:attribute:: manifest_preallocation_size
+
+        Number of bytes to preallocate (via fallocate) the manifest
+        files.  Default is 4mb, which is reasonable to reduce random IO
+        as well as prevent overallocation for mounts that preallocate
+        large amounts of data (such as xfs's allocsize option).
+
+        | *Type:* ``int``
+        | *Default:* ``4194304``
+
+    .. py:attribute:: enable_write_thread_adaptive_yield
+
+        If ``True``, threads synchronizing with the write batch group leader will
+        wait for up to :py:attr:`write_thread_max_yield_usec` before blocking
+        on a mutex.  This can substantially improve throughput for concurrent
+        workloads, regardless of whether allow_concurrent_memtable_write is
+        enabled.
+
+        | *Type:* ``bool``
+        | *Default:* ``True``
+
+    .. py:attribute:: allow_concurrent_memtable_write
+
+        If ``True``, allow multi-writers to update mem tables in parallel.
+        Only some memtable_factory-s support concurrent writes; currently it is
+        implemented only for SkipListFactory. Concurrent memtable writes are
+        not compatible with :py:attr:`inplace_update_support` or
+        filter_deletes.  It is strongly recommended to set
+        :py:attr:`enable_write_thread_adaptive_yield` if you are going to use
+        this feature.
+
+        | *Type:* ``bool``
+        | *Default:* ``True``
+
+    .. py:attribute:: allow_mmap_reads
+
+        Allow the OS to mmap file for reading sst tables
+
+        | *Type:* ``bool``
+        | *Default:* ``True``
+
+    .. py:attribute:: allow_mmap_writes
+
+        Allow the OS to mmap file for writing
+
+        | *Type:* ``bool``
+        | *Default:* ``False``
+
+    .. py:attribute:: is_fd_close_on_exec
+
+        Disable child process inherit open files
+
+        | *Type:* ``bool``
+        | *Default:* ``True``
+
+    .. py:attribute:: stats_dump_period_sec
+
+        If not zero, dump rocksdb.stats to LOG every stats_dump_period_sec
+
+        | *Type:* ``int``
+        | *Default:* ``3600``
+
+    .. py:attribute:: advise_random_on_open
+
+        If set true, will hint the underlying file system that the file
+        access pattern is random, when a sst file is opened.
+
+        | *Type:* ``bool``
+        | *Default:* ``True``
+
+    .. py:attribute:: use_adaptive_mutex
+
+        Use adaptive mutex, which spins in the user space before resorting
+        to kernel. This could reduce context switch when the mutex is not
+        heavily contended. However, if the mutex is hot, we could end up
+        wasting spin time.
+
+        | *Type:* ``bool``
+        | *Default:* ``False``
+
+    .. py:attribute:: bytes_per_sync
+
+        Allows OS to incrementally sync files to disk while they are being
+        written, asynchronously, in the background.
+        Issue one request for every bytes_per_sync written. 0 turns it off.
+
+        | *Type:* ``int``
+        | *Default:* ``0``
+
+
     .. py:attribute:: row_cache
 
         A global cache for table-level rows. If ``None`` this cache is not used.
@@ -679,9 +810,17 @@ Options object
 
         *Default:* ``None``
 
+    .. py:method:: IncreaseParallelism(total_threads=16)
+
+        By default, RocksDB uses only one background thread for flush and
+        compaction. Calling this function will set it up such that total of
+        `total_threads` is used. A good value for `total_threads` is the number
+        of cores. You almost definitely want to call this function if your
+        system is bottlenecked by RocksDB.
+
 
 CompactionPri
-================
+=============
 
 .. py:class:: rocksdb.CompactionPri
 
@@ -710,6 +849,7 @@ CompressionTypes
     .. py:attribute:: zstdnotfinal_compression
     .. py:attribute:: disable_compression
 
+
 BytewiseComparator
 ==================
 
@@ -717,6 +857,7 @@ BytewiseComparator
 
     Wraps the rocksdb Bytewise Comparator, it uses lexicographic byte-wise
     ordering
+
 
 BloomFilterPolicy
 =================
@@ -748,6 +889,7 @@ LRUCache
 
 .. _table_factories_label:
 
+
 TableFactories
 ==============
 
@@ -767,8 +909,7 @@ https://github.com/facebook/rocksdb/wiki/A-Tutorial-of-RocksDB-SST-formats
 
     Wraps BlockBasedTableFactory of RocksDB.
 
-    .. py:method:: __init__(index_type='binary_search', hash_index_allow_collision=True, checksum='crc32', block_cache, block_cache_compressed, filter_policy=None, no_block_cache=False, block_size=None, block_size_deviation=None, block_restart_interval=None, whole_key_filtering=None):
-
+    .. py:method:: __init__(index_type='binary_search', hash_index_allow_collision=True, checksum='crc32', block_cache, block_cache_compressed, filter_policy=None, no_block_cache=False, block_size=None, block_size_deviation=None, block_restart_interval=None, whole_key_filtering=None, enable_index_compression=None, cache_index_and_filter_blocks=None, format_version=None)
 
     :param string index_type:
         * ``binary_search`` a space efficient index block that is optimized
@@ -837,6 +978,64 @@ https://github.com/facebook/rocksdb/wiki/A-Tutorial-of-RocksDB-SST-formats
         If set to ``None`` the rocksdb default of ``True`` is used.
         If ``True``, place whole keys in the filter (not just prefixes).
         This must generally be true for gets to be efficient.
+
+    :param bool enable_index_compression:
+        If set to ``None`` the rocksdb default of ``True`` is used.
+        Store index blocks on disk in compressed format. Setting this option to
+        ``False`` will avoid the overhead of decompression if index blocks are
+        evicted and read back.
+
+    :param boot cache_index_and_filter_blocks:
+        If set to ``None`` the rocksdb default of ``False`` is used.
+        Indicates if we'd put index/filter blocks to the block cache.
+        If ``False``, each "table reader" object will pre-load index/filter
+        block during table initialization.
+
+    :param int format_version:
+        If set to ``None`` the rocksdb default of ``4`` is used.
+        There are currently 6 versions:
+
+        0
+          This version is currently written out by all RocksDB's versions by
+          default.  Can be read by really old RocksDB's. Doesn't support changing
+          checksum (default is CRC32).
+
+
+        1
+          Can be read by RocksDB's versions since 3.0. Supports non-default
+          checksum, like xxHash. It is written by RocksDB when
+          BlockBasedTableOptions::checksum is something other than kCRC32c. (version
+          0 is silently upconverted)
+
+
+        2
+          Can be read by RocksDB's versions since 3.10. Changes the way we
+          encode compressed blocks with LZ4, BZip2 and Zlib compression. If you
+          don't plan to run RocksDB before version 3.10, you should probably use
+          this.
+
+
+        3
+          Can be read by RocksDB's versions since 5.15. Changes the way we
+          encode the keys in index blocks. If you don't plan to run RocksDB before
+          version 5.15, you should probably use this.
+          This option only affects newly written tables. When reading existing
+          tables, the information about version is read from the footer.
+
+
+        4
+          Can be read by RocksDB's versions since 5.16. Changes the way we
+          encode the values in index blocks. If you don't plan to run RocksDB before
+          version 5.16 and you are using index_block_restart_interval > 1, you should
+          probably use this as it would reduce the index size.
+          This option only affects newly written tables. When reading existing
+          tables, the information about version is read from the footer.
+
+
+        5
+          Can be read by RocksDB's versions since 6.6.0. Full and partitioned
+          filters use a generally faster and more accurate Bloom filter
+          implementation, with a different schema.
 
 .. py:class:: rocksdb.PlainTableFactory
 

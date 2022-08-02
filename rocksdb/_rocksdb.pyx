@@ -1,3 +1,4 @@
+#cython: language_level=3
 import cython
 from libcpp.string cimport string
 from libcpp.deque cimport deque
@@ -12,45 +13,55 @@ from cpython.bytes cimport PyBytes_FromString
 from cpython.bytes cimport PyBytes_FromStringAndSize
 from cpython.unicode cimport PyUnicode_Decode
 
-from std_memory cimport shared_ptr
-cimport options
-cimport merge_operator
-cimport filter_policy
-cimport comparator
-cimport slice_transform
-cimport cache
-cimport logger
-cimport snapshot
-cimport db
-cimport iterator
-cimport backup
-cimport checkpoint
-cimport env
-cimport table_factory
-cimport memtablerep
-cimport universal_compaction
+from .std_memory cimport shared_ptr
+from . cimport options
+from . cimport merge_operator
+from . cimport filter_policy
+from . cimport comparator
+from . cimport slice_transform
+from . cimport cache
+from . cimport logger
+from . cimport snapshot
+from . cimport db
+from . cimport iterator
+from . cimport backup
+from . cimport checkpoint
+from . cimport env
+from . cimport table_factory
+from . cimport memtablerep
+from . cimport universal_compaction
+from . cimport transaction_db
 
 # Enums are the only exception for direct imports
 # Their name als already unique enough
-from universal_compaction cimport kCompactionStopStyleSimilarSize
-from universal_compaction cimport kCompactionStopStyleTotalSize
+from .universal_compaction cimport kCompactionStopStyleSimilarSize
+from .universal_compaction cimport kCompactionStopStyleTotalSize
 
-from options cimport kCompactionStyleLevel
-from options cimport kCompactionStyleUniversal
-from options cimport kCompactionStyleFIFO
-from options cimport kCompactionStyleNone
+from .advanced_options cimport kCompactionStyleLevel
+from .advanced_options cimport kCompactionStyleUniversal
+from .advanced_options cimport kCompactionStyleFIFO
+from .advanced_options cimport kCompactionStyleNone
 
-from slice_ cimport Slice
-from status cimport Status
+from .slice_ cimport Slice
+from .status cimport Status
 
 import sys
-from interfaces import MergeOperator as IMergeOperator
-from interfaces import AssociativeMergeOperator as IAssociativeMergeOperator
-from interfaces import FilterPolicy as IFilterPolicy
-from interfaces import Comparator as IComparator
-from interfaces import SliceTransform as ISliceTransform
+from .interfaces import MergeOperator as IMergeOperator
+from .interfaces import AssociativeMergeOperator as IAssociativeMergeOperator
+from .interfaces import FilterPolicy as IFilterPolicy
+from .interfaces import Comparator as IComparator
+from .interfaces import SliceTransform as ISliceTransform
+
 import traceback
-import errors
+from .errors import Error
+from .errors import NotFound
+from .errors import Corruption
+from .errors import NotSupported
+from .errors import InvalidArgument
+from .errors import RocksIOError
+from .errors import MergeInProgress
+from .errors import Incomplete
+
 import weakref
 
 ctypedef const filter_policy.FilterPolicy ConstFilterPolicy
@@ -71,25 +82,25 @@ cdef check_status(const Status& st):
         return
 
     if st.IsNotFound():
-        raise errors.NotFound(st.ToString())
+        raise NotFound(st.ToString())
 
     if st.IsCorruption():
-        raise errors.Corruption(st.ToString())
+        raise Corruption(st.ToString())
 
     if st.IsNotSupported():
-        raise errors.NotSupported(st.ToString())
+        raise NotSupported(st.ToString())
 
     if st.IsInvalidArgument():
-        raise errors.InvalidArgument(st.ToString())
+        raise InvalidArgument(st.ToString())
 
     if st.IsIOError():
-        raise errors.RocksIOError(st.ToString())
+        raise RocksIOError(st.ToString())
 
     if st.IsMergeInProgress():
-        raise errors.MergeInProgress(st.ToString())
+        raise MergeInProgress(st.ToString())
 
     if st.IsIncomplete():
-        raise errors.Incomplete(st.ToString())
+        raise Incomplete(st.ToString())
 
     raise Exception("Unknown error: %s" % st.ToString())
 ######################################################
@@ -103,6 +114,9 @@ cdef string_to_bytes(string ob):
 
 cdef Slice bytes_to_slice(ob) except *:
     return Slice(PyBytes_AsString(ob), PyBytes_Size(ob))
+
+cdef Slice* bytes_to_new_slice(ob) except *:
+    return new Slice(PyBytes_AsString(ob), PyBytes_Size(ob))
 
 cdef slice_to_bytes(Slice sl):
     return PyBytes_FromStringAndSize(sl.data(), sl.size())
@@ -526,7 +540,7 @@ cdef Slice slice_transform_callback(
         return Slice(src.data() + offset, size)
     except BaseException as error:
         tb = traceback.format_exc()
-        logger.Log(log, "Error in slice transfrom callback: %s", <bytes>tb)
+        logger.Log(log, "Error in slice transform callback: %s", <bytes>tb)
         error_msg.assign(<bytes>str(error))
 
 cdef cpp_bool slice_in_domain_callback(
@@ -539,7 +553,7 @@ cdef cpp_bool slice_in_domain_callback(
         return (<object>ctx).in_domain(slice_to_bytes(src))
     except BaseException as error:
         tb = traceback.format_exc()
-        logger.Log(log, "Error in slice transfrom callback: %s", <bytes>tb)
+        logger.Log(log, "Error in slice transform callback: %s", <bytes>tb)
         error_msg.assign(<bytes>str(error))
 
 cdef cpp_bool slice_in_range_callback(
@@ -552,7 +566,7 @@ cdef cpp_bool slice_in_range_callback(
         return (<object>ctx).in_range(slice_to_bytes(src))
     except BaseException as error:
         tb = traceback.format_exc()
-        logger.Log(log, "Error in slice transfrom callback: %s", <bytes>tb)
+        logger.Log(log, "Error in slice transform callback: %s", <bytes>tb)
         error_msg.assign(<bytes>str(error))
 ###########################################
 
@@ -581,7 +595,10 @@ cdef class BlockBasedTableFactory(PyTableFactory):
             block_size=None,
             block_size_deviation=None,
             block_restart_interval=None,
-            whole_key_filtering=None):
+            whole_key_filtering=None,
+            cache_index_and_filter_blocks=None,
+            format_version=None,
+        ):
 
         cdef table_factory.BlockBasedTableOptions table_options
 
@@ -604,6 +621,12 @@ cdef class BlockBasedTableFactory(PyTableFactory):
         else:
             raise ValueError("Unknown checksum: %s" % checksum)
 
+        if block_cache is not None:
+            table_options.block_cache = block_cache.get_cache()
+
+        if block_cache_compressed is not None:
+            table_options.block_cache_compressed = block_cache_compressed.get_cache()
+
         if no_block_cache:
             table_options.no_block_cache = True
         else:
@@ -625,11 +648,14 @@ cdef class BlockBasedTableFactory(PyTableFactory):
             else:
                 table_options.whole_key_filtering = False
 
-        if block_cache is not None:
-            table_options.block_cache = block_cache.get_cache()
+        if cache_index_and_filter_blocks is not None:
+            if cache_index_and_filter_blocks:
+                table_options.cache_index_and_filter_blocks = True
+            else:
+                table_options.cache_index_and_filter_blocks = False
 
-        if block_cache_compressed is not None:
-            table_options.block_cache_compressed = block_cache_compressed.get_cache()
+        if format_version is not None:
+            table_options.format_version = format_version
 
         # Set the filter_policy
         self.py_filter_policy = None
@@ -892,6 +918,9 @@ cdef class ColumnFamilyOptions(object):
             ret_ob['level'] = self.copts.compression_opts.level
             ret_ob['strategy'] = self.copts.compression_opts.strategy
             ret_ob['max_dict_bytes'] = self.copts.compression_opts.max_dict_bytes
+            ret_ob['zstd_max_train_bytes'] = self.copts.compression_opts.zstd_max_train_bytes
+            ret_ob['parallel_threads'] = self.copts.compression_opts.parallel_threads
+            ret_ob['enabled'] = self.copts.compression_opts.enabled
 
             return ret_ob
 
@@ -907,26 +936,65 @@ cdef class ColumnFamilyOptions(object):
                 copts.strategy = value['strategy']
             if 'max_dict_bytes' in value:
                 copts.max_dict_bytes = value['max_dict_bytes']
+            if 'zstd_max_train_bytes' in value:
+                copts.zstd_max_train_bytes = value['zstd_max_train_bytes']
+            if 'parallel_threads' in value:
+                copts.parallel_threads = value['parallel_threads']
+            if 'enabled' in value:
+                copts.enabled = value['enabled']
+
+    property bottommost_compression_opts:
+        def __get__(self):
+            cdef dict ret_ob = {}
+
+            ret_ob['window_bits'] = self.copts.bottommost_compression_opts.window_bits
+            ret_ob['level'] = self.copts.bottommost_compression_opts.level
+            ret_ob['strategy'] = self.copts.bottommost_compression_opts.strategy
+            ret_ob['max_dict_bytes'] = self.copts.bottommost_compression_opts.max_dict_bytes
+            ret_ob['zstd_max_train_bytes'] = self.copts.bottommost_compression_opts.zstd_max_train_bytes
+            ret_ob['parallel_threads'] = self.copts.bottommost_compression_opts.parallel_threads
+            ret_ob['enabled'] = self.copts.bottommost_compression_opts.enabled
+
+            return ret_ob
+
+        def __set__(self, dict value):
+            cdef options.CompressionOptions* copts
+            copts = cython.address(self.copts.bottommost_compression_opts)
+            #  CompressionOptions(int wbits, int _lev, int _strategy, int _max_dict_bytes)
+            if 'window_bits' in value:
+                copts.window_bits  = value['window_bits']
+            if 'level' in value:
+                copts.level = value['level']
+            if 'strategy' in value:
+                copts.strategy = value['strategy']
+            if 'max_dict_bytes' in value:
+                copts.max_dict_bytes = value['max_dict_bytes']
+            if 'zstd_max_train_bytes' in value:
+                copts.zstd_max_train_bytes = value['zstd_max_train_bytes']
+            if 'parallel_threads' in value:
+                copts.parallel_threads = value['parallel_threads']
+            if 'enabled' in value:
+                copts.enabled = value['enabled']
 
     property compaction_pri:
         def __get__(self):
-            if self.copts.compaction_pri == options.kByCompensatedSize:
+            if self.copts.compaction_pri == options.advanced_options.kByCompensatedSize:
                 return CompactionPri.by_compensated_size
-            if self.copts.compaction_pri == options.kOldestLargestSeqFirst:
+            if self.copts.compaction_pri == options.advanced_options.kOldestLargestSeqFirst:
                 return CompactionPri.oldest_largest_seq_first
-            if self.copts.compaction_pri == options.kOldestSmallestSeqFirst:
+            if self.copts.compaction_pri == options.advanced_options.kOldestSmallestSeqFirst:
                 return CompactionPri.oldest_smallest_seq_first
-            if self.copts.compaction_pri == options.kMinOverlappingRatio:
+            if self.copts.compaction_pri == options.advanced_options.kMinOverlappingRatio:
                 return CompactionPri.min_overlapping_ratio
         def __set__(self, value):
             if value == CompactionPri.by_compensated_size:
-                self.copts.compaction_pri = options.kByCompensatedSize
+                self.copts.compaction_pri = options.advanced_options.kByCompensatedSize
             elif value == CompactionPri.oldest_largest_seq_first:
-                self.copts.compaction_pri = options.kOldestLargestSeqFirst
+                self.copts.compaction_pri = options.advanced_options.kOldestLargestSeqFirst
             elif value == CompactionPri.oldest_smallest_seq_first:
-                self.copts.compaction_pri = options.kOldestSmallestSeqFirst
+                self.copts.compaction_pri = options.advanced_options.kOldestSmallestSeqFirst
             elif value == CompactionPri.min_overlapping_ratio:
-                self.copts.compaction_pri = options.kMinOverlappingRatio
+                self.copts.compaction_pri = options.advanced_options.kMinOverlappingRatio
             else:
                 raise TypeError("Unknown compaction pri: %s" % value)
 
@@ -953,7 +1021,7 @@ cdef class ColumnFamilyOptions(object):
             elif self.copts.compression == options.kDisableCompressionOption:
                 return CompressionType.disable_compression
             else:
-                raise Exception("Unknonw type: %s" % self.opts.compression)
+                raise Exception("Unknown type: %s" % self.opts.compression)
 
         def __set__(self, value):
             if value == CompressionType.no_compression:
@@ -976,6 +1044,8 @@ cdef class ColumnFamilyOptions(object):
                 self.copts.compression = options.kDisableCompressionOption
             else:
                 raise TypeError("Unknown compression: %s" % value)
+
+    # FIXME: add bottommost_compression
 
     property max_compaction_bytes:
         def __get__(self):
@@ -1043,24 +1113,6 @@ cdef class ColumnFamilyOptions(object):
         def __set__(self, value):
             self.copts.max_bytes_for_level_multiplier_additional = value
 
-    property soft_rate_limit:
-        def __get__(self):
-            return self.copts.soft_rate_limit
-        def __set__(self, value):
-            self.copts.soft_rate_limit = value
-
-    property hard_rate_limit:
-        def __get__(self):
-            return self.copts.hard_rate_limit
-        def __set__(self, value):
-            self.copts.hard_rate_limit = value
-
-    property rate_limit_delay_max_milliseconds:
-        def __get__(self):
-            return self.copts.rate_limit_delay_max_milliseconds
-        def __set__(self, value):
-            self.copts.rate_limit_delay_max_milliseconds = value
-
     property arena_block_size:
         def __get__(self):
             return self.copts.arena_block_size
@@ -1072,12 +1124,6 @@ cdef class ColumnFamilyOptions(object):
             return self.copts.disable_auto_compactions
         def __set__(self, value):
             self.copts.disable_auto_compactions = value
-
-    property purge_redundant_kvs_while_flush:
-        def __get__(self):
-            return self.copts.purge_redundant_kvs_while_flush
-        def __set__(self, value):
-            self.copts.purge_redundant_kvs_while_flush = value
 
     # FIXME: remove to util/options_helper.h
     #  property allow_os_buffer:
@@ -1232,9 +1278,23 @@ cdef class ColumnFamilyOptions(object):
             return self.py_prefix_extractor.get_ob()
 
         def __set__(self, value):
-            self.py_prefix_extractor = PySliceTransform(value)
-            self.copts.prefix_extractor = self.py_prefix_extractor.get_transformer()
+            if isinstance(value, int):
+                self.copts.prefix_extractor.reset(slice_transform.ST_NewFixedPrefixTransform(value))
+            else:
+                self.py_prefix_extractor = PySliceTransform(value)
+                self.copts.prefix_extractor = self.py_prefix_extractor.get_transformer()
 
+    property optimize_filters_for_hits:
+        def __get__(self):
+            return self.copts.optimize_filters_for_hits
+        def __set__(self, value):
+            self.copts.optimize_filters_for_hits = value
+
+    property paranoid_file_checks:
+        def __get__(self):
+            return self.copts.paranoid_file_checks
+        def __set__(self, value):
+            self.copts.paranoid_file_checks = value
 
 cdef class Options(ColumnFamilyOptions):
     cdef options.Options* opts
@@ -1259,11 +1319,20 @@ cdef class Options(ColumnFamilyOptions):
         for key, value in kwargs.items():
             setattr(self, key, value)
 
+    def IncreaseParallelism(self, int total_threads=16):
+        self.opts.IncreaseParallelism(total_threads)
+
     property create_if_missing:
         def __get__(self):
             return self.opts.create_if_missing
         def __set__(self, value):
             self.opts.create_if_missing = value
+
+    property create_missing_column_families:
+        def __get__(self):
+            return self.opts.create_missing_column_families
+        def __set__(self, value):
+            self.opts.create_missing_column_families = value
 
     property error_if_exists:
         def __get__(self):
@@ -1282,6 +1351,18 @@ cdef class Options(ColumnFamilyOptions):
             return self.opts.max_open_files
         def __set__(self, value):
             self.opts.max_open_files = value
+
+    property max_file_opening_threads:
+        def __get__(self):
+            return self.opts.max_file_opening_threads
+        def __set__(self, value):
+            self.opts.max_file_opening_threads = value
+
+    property max_total_wal_size:
+        def __get__(self):
+            return self.opts.max_total_wal_size
+        def __set__(self, value):
+            self.opts.max_total_wal_size = value
 
     property use_fsync:
         def __get__(self):
@@ -1307,11 +1388,29 @@ cdef class Options(ColumnFamilyOptions):
         def __set__(self, value):
             self.opts.delete_obsolete_files_period_micros = value
 
+    property max_background_jobs:
+        def __get__(self):
+            return self.opts.max_background_jobs
+        def __set__(self, value):
+            self.opts.max_background_jobs = value
+
+    property base_background_compactions:
+        def __get__(self):
+            return self.opts.base_background_compactions
+        def __set__(self, value):
+            self.opts.base_background_compactions = value
+
     property max_background_compactions:
         def __get__(self):
             return self.opts.max_background_compactions
         def __set__(self, value):
             self.opts.max_background_compactions = value
+
+    property max_subcompactions:
+        def __get__(self):
+            return self.opts.max_subcompactions
+        def __set__(self, value):
+            self.opts.max_subcompactions = value
 
     property max_background_flushes:
         def __get__(self):
@@ -1336,6 +1435,12 @@ cdef class Options(ColumnFamilyOptions):
             return self.opts.keep_log_file_num
         def __set__(self, value):
             self.opts.keep_log_file_num = value
+
+    property recycle_log_file_num:
+        def __get__(self):
+            return self.opts.recycle_log_file_num
+        def __set__(self, value):
+            self.opts.recycle_log_file_num = value
 
     property max_manifest_file_size:
         def __get__(self):
@@ -1367,18 +1472,6 @@ cdef class Options(ColumnFamilyOptions):
         def __set__(self, value):
             self.opts.manifest_preallocation_size = value
 
-    property enable_write_thread_adaptive_yield:
-        def __get__(self):
-            return self.opts.enable_write_thread_adaptive_yield
-        def __set__(self, value):
-            self.opts.enable_write_thread_adaptive_yield = value
-
-    property allow_concurrent_memtable_write:
-        def __get__(self):
-            return self.opts.allow_concurrent_memtable_write
-        def __set__(self, value):
-            self.opts.allow_concurrent_memtable_write = value
-
     property allow_mmap_reads:
         def __get__(self):
             return self.opts.allow_mmap_reads
@@ -1391,17 +1484,29 @@ cdef class Options(ColumnFamilyOptions):
         def __set__(self, value):
             self.opts.allow_mmap_writes = value
 
+    property use_direct_reads:
+        def __get__(self):
+            return self.opts.use_direct_reads
+        def __set__(self, value):
+            self.opts.use_direct_reads = value
+
+    property use_direct_io_for_flush_and_compaction:
+        def __get__(self):
+            return self.opts.use_direct_io_for_flush_and_compaction
+        def __set__(self, value):
+            self.opts.use_direct_io_for_flush_and_compaction = value
+
+    property allow_fallocate:
+        def __get__(self):
+            return self.opts.allow_fallocate
+        def __set__(self, value):
+            self.opts.allow_fallocate = value
+
     property is_fd_close_on_exec:
         def __get__(self):
             return self.opts.is_fd_close_on_exec
         def __set__(self, value):
             self.opts.is_fd_close_on_exec = value
-
-    property skip_log_error_on_recovery:
-        def __get__(self):
-            return self.opts.skip_log_error_on_recovery
-        def __set__(self, value):
-            self.opts.skip_log_error_on_recovery = value
 
     property stats_dump_period_sec:
         def __get__(self):
@@ -1409,11 +1514,35 @@ cdef class Options(ColumnFamilyOptions):
         def __set__(self, value):
             self.opts.stats_dump_period_sec = value
 
+    property stats_persist_period_sec:
+        def __get__(self):
+            return self.opts.stats_persist_period_sec
+        def __set__(self, value):
+            self.opts.stats_persist_period_sec = value
+
+    property persist_stats_to_disk:
+        def __get__(self):
+            return self.opts.persist_stats_to_disk
+        def __set__(self, value):
+            self.opts.persist_stats_to_disk = value
+
+    property stats_history_buffer_size:
+        def __get__(self):
+            return self.opts.stats_history_buffer_size
+        def __set__(self, value):
+            self.opts.stats_history_buffer_size = value
+
     property advise_random_on_open:
         def __get__(self):
             return self.opts.advise_random_on_open
         def __set__(self, value):
             self.opts.advise_random_on_open = value
+
+    property db_write_buffer_size:
+        def __get__(self):
+            return self.opts.db_write_buffer_size
+        def __set__(self, value):
+            self.opts.db_write_buffer_size = value
 
   # TODO: need to remove -Wconversion to make this work
   # property access_hint_on_compaction_start:
@@ -1421,6 +1550,30 @@ cdef class Options(ColumnFamilyOptions):
   #         return self.opts.access_hint_on_compaction_start
   #     def __set__(self, AccessHint value):
   #         self.opts.access_hint_on_compaction_start = value
+
+    property new_table_reader_for_compaction_inputs:
+        def __get__(self):
+            return self.opts.new_table_reader_for_compaction_inputs
+        def __set__(self, value):
+            self.opts.new_table_reader_for_compaction_inputs = value
+
+    property compaction_readahead_size:
+        def __get__(self):
+            return self.opts.compaction_readahead_size
+        def __set__(self, value):
+            self.opts.compaction_readahead_size = value
+
+    property random_access_max_buffer_size:
+        def __get__(self):
+            return self.opts.random_access_max_buffer_size
+        def __set__(self, value):
+            self.opts.random_access_max_buffer_size = value
+
+    property writable_file_max_buffer_size:
+        def __get__(self):
+            return self.opts.writable_file_max_buffer_size
+        def __set__(self, value):
+            self.opts.writable_file_max_buffer_size = value
 
     property use_adaptive_mutex:
         def __get__(self):
@@ -1433,6 +1586,90 @@ cdef class Options(ColumnFamilyOptions):
             return self.opts.bytes_per_sync
         def __set__(self, value):
             self.opts.bytes_per_sync = value
+
+    property wal_bytes_per_sync:
+        def __get__(self):
+            return self.opts.wal_bytes_per_sync
+        def __set__(self, value):
+            self.opts.wal_bytes_per_sync = value
+
+    property strict_bytes_per_sync:
+        def __get__(self):
+            return self.opts.strict_bytes_per_sync
+        def __set__(self, value):
+            self.opts.strict_bytes_per_sync = value
+
+    property enable_thread_tracking:
+        def __get__(self):
+            return self.opts.enable_thread_tracking
+        def __set__(self, value):
+            self.opts.enable_thread_tracking = value
+
+    property delayed_write_rate:
+        def __get__(self):
+            return self.opts.delayed_write_rate
+        def __set__(self, value):
+            self.opts.delayed_write_rate = value
+
+    property enable_pipelined_write:
+        def __get__(self):
+            return self.opts.enable_pipelined_write
+        def __set__(self, value):
+            self.opts.enable_pipelined_write = value
+
+    property unordered_write:
+        def __get__(self):
+            return self.opts.unordered_write
+        def __set__(self, value):
+            self.opts.unordered_write = value
+
+    property allow_concurrent_memtable_write:
+        def __get__(self):
+            return self.opts.allow_concurrent_memtable_write
+        def __set__(self, value):
+            self.opts.allow_concurrent_memtable_write = value
+
+    property enable_write_thread_adaptive_yield:
+        def __get__(self):
+            return self.opts.enable_write_thread_adaptive_yield
+        def __set__(self, value):
+            self.opts.enable_write_thread_adaptive_yield = value
+
+    property max_write_batch_group_size_bytes:
+        def __get__(self):
+            return self.opts.max_write_batch_group_size_bytes
+        def __set__(self, value):
+            self.opts.max_write_batch_group_size_bytes = value
+
+    property write_thread_max_yield_usec:
+        def __get__(self):
+            return self.opts.write_thread_max_yield_usec
+        def __set__(self, value):
+            self.opts.write_thread_max_yield_usec = value
+
+    property write_thread_slow_yield_usec:
+        def __get__(self):
+            return self.opts.write_thread_slow_yield_usec
+        def __set__(self, value):
+            self.opts.write_thread_slow_yield_usec = value
+
+    property skip_stats_update_on_db_open:
+        def __get__(self):
+            return self.opts.skip_stats_update_on_db_open
+        def __set__(self, value):
+            self.opts.skip_stats_update_on_db_open = value
+
+    property skip_checking_sst_file_sizes_on_db_open:
+        def __get__(self):
+            return self.opts.skip_checking_sst_file_sizes_on_db_open
+        def __set__(self, value):
+            self.opts.skip_checking_sst_file_sizes_on_db_open = value
+
+    property allow_2pc:
+        def __get__(self):
+            return self.opts.allow_2pc
+        def __set__(self, value):
+            self.opts.allow_2pc = value
 
     property row_cache:
         def __get__(self):
@@ -1448,6 +1685,168 @@ cdef class Options(ColumnFamilyOptions):
                 self.py_row_cache = value
                 self.opts.row_cache = self.py_row_cache.get_cache()
 
+    property fail_if_options_file_error:
+        def __get__(self):
+            return self.opts.fail_if_options_file_error
+        def __set__(self, value):
+            self.opts.fail_if_options_file_error = value
+
+    property dump_malloc_stats:
+        def __get__(self):
+            return self.opts.dump_malloc_stats
+        def __set__(self, value):
+            self.opts.dump_malloc_stats = value
+
+    property avoid_flush_during_recovery:
+        def __get__(self):
+            return self.opts.avoid_flush_during_recovery
+        def __set__(self, value):
+            self.opts.avoid_flush_during_recovery = value
+
+    property avoid_flush_during_shutdown:
+        def __get__(self):
+            return self.opts.avoid_flush_during_shutdown
+        def __set__(self, value):
+            self.opts.avoid_flush_during_shutdown = value
+
+    property allow_ingest_behind:
+        def __get__(self):
+            return self.opts.allow_ingest_behind
+        def __set__(self, value):
+            self.opts.allow_ingest_behind = value
+
+    property preserve_deletes:
+        def __get__(self):
+            return self.opts.preserve_deletes
+        def __set__(self, value):
+            self.opts.preserve_deletes = value
+
+    property two_write_queues:
+        def __get__(self):
+            return self.opts.two_write_queues
+        def __set__(self, value):
+            self.opts.two_write_queues = value
+
+    property manual_wal_flush:
+        def __get__(self):
+            return self.opts.manual_wal_flush
+        def __set__(self, value):
+            self.opts.manual_wal_flush = value
+
+    property atomic_flush:
+        def __get__(self):
+            return self.opts.atomic_flush
+        def __set__(self, value):
+            self.opts.atomic_flush = value
+
+    property avoid_unnecessary_blocking_io:
+        def __get__(self):
+            return self.opts.avoid_unnecessary_blocking_io
+        def __set__(self, value):
+            self.opts.avoid_unnecessary_blocking_io = value
+
+    property write_dbid_to_manifest:
+        def __get__(self):
+            return self.opts.write_dbid_to_manifest
+        def __set__(self, value):
+            self.opts.write_dbid_to_manifest = value
+
+    property log_readahead_size:
+        def __get__(self):
+            return self.opts.log_readahead_size
+        def __set__(self, value):
+            self.opts.log_readahead_size = value
+
+    property best_efforts_recovery:
+        def __get__(self):
+            return self.opts.best_efforts_recovery
+        def __set__(self, value):
+            self.opts.best_efforts_recovery = value
+
+cdef class TransactionDBOptions(object):
+    cdef transaction_db.TransactionDBOptions* opts
+    cdef cpp_bool in_use
+
+    def __cinit__(self):
+        self.opts = new transaction_db.TransactionDBOptions()
+        self.in_use = False
+
+    def __dealloc__(self):
+        if not self.opts == NULL:
+            del self.opts
+
+    def __init__(self, **kwargs):
+        for key, value in kwargs.items():
+            setattr(self, key, value)
+
+    property max_num_locks:
+        def __get__(self):
+            return self.opts.max_num_locks
+        def __set__(self, value):
+            self.opts.max_num_locks = value
+
+    property max_num_deadlocks:
+        def __get__(self):
+            return self.opts.max_num_deadlocks
+        def __set__(self, value):
+            self.opts.max_num_deadlocks = value
+
+    property num_stripes:
+        def __get__(self):
+            return self.opts.num_stripes
+        def __set__(self, value):
+            self.opts.num_stripes = value
+
+    property transaction_lock_timeout:
+        def __get__(self):
+            return self.opts.transaction_lock_timeout
+        def __set__(self, value):
+            self.opts.transaction_lock_timeout = value
+
+    property default_lock_timeout:
+        def __get__(self):
+            return self.opts.default_lock_timeout
+        def __set__(self, value):
+            self.opts.default_lock_timeout = value
+
+    # TODO property custom_mutex_factory
+    property write_policy:
+        def __get__(self):
+            if self.opts.write_policy == transaction_db.WRITE_COMMITTED:
+                return 'write_committed'
+            if self.opts.write_policy == transaction_db.WRITE_PREPARED:
+                return 'write_prepared'
+            if self.opts.write_policy == transaction_db.WRITE_UNPREPARED:
+                return 'write_unprepared'
+            raise InvalidArgument("Unknown write policy")
+
+        def __set__(self, str value):
+            if value == 'write_committed':
+                self.opts.write_policy = transaction_db.WRITE_COMMITTED
+            elif value == 'write_prepared':
+                self.opts.write_policy = transaction_db.WRITE_PREPARED
+            elif value == 'write_unprepared':
+                self.opts.write_policy = transaction_db.WRITE_UNPREPARED
+            else:
+                raise InvalidArgument("Unknown write policy")
+
+    property rollback_merge_operands:
+        def __get__(self):
+            return self.opts.rollback_merge_operands
+        def __set__(self, value):
+            self.opts.rollback_merge_operands = value
+
+    property skip_concurrency_control:
+        def __get__(self):
+            return self.opts.skip_concurrency_control
+        def __set__(self, value):
+            self.opts.skip_concurrency_control = value
+
+    property default_write_batch_flush_threshold:
+        def __get__(self):
+            return self.opts.default_write_batch_flush_threshold
+        def __set__(self, value):
+            self.opts.default_write_batch_flush_threshold = value
 
 # Forward declaration
 cdef class Snapshot
@@ -1565,28 +1964,29 @@ cdef class WriteBatchIterator(object):
 @cython.no_gc_clear
 cdef class DB(object):
     cdef Options opts
-    cdef db.DB* db
+    cdef db.DB* wrapped_db
     cdef list cf_handles
     cdef list cf_options
+    cdef vector[db.ColumnFamilyDescriptor] column_family_descriptors
+    cdef vector[db.ColumnFamilyHandle*] column_family_handles
+    cdef string db_path
 
-    def __cinit__(self, db_name, Options opts, dict column_families=None, read_only=False):
+    def __cinit__(self, db_name, Options opts, dict column_families=None,
+                  read_only=False, *args, **kwargs):
         cdef Status st
-        cdef string db_path
-        cdef vector[db.ColumnFamilyDescriptor] column_family_descriptors
-        cdef vector[db.ColumnFamilyHandle*] column_family_handles
         cdef bytes default_cf_name = db.kDefaultColumnFamilyName
-        self.db = NULL
+        self.wrapped_db = NULL
         self.opts = None
         self.cf_handles = []
         self.cf_options = []
 
         if opts.in_use:
-            raise Exception("Options object is already used by another DB")
+            raise InvalidArgument(
+                "Options object is already used by another DB")
 
-        db_path = path_to_string(db_name)
         if not column_families or default_cf_name not in column_families:
             # Always add the default column family
-            column_family_descriptors.push_back(
+            self.column_family_descriptors.push_back(
                 db.ColumnFamilyDescriptor(
                     db.kDefaultColumnFamilyName,
                     options.ColumnFamilyOptions(deref(opts.opts))
@@ -1610,39 +2010,49 @@ cdef class DB(object):
                         "used by another Column Family"
                     )
                 (<ColumnFamilyOptions>cf_options).in_use = True
-                column_family_descriptors.push_back(
+                self.column_family_descriptors.push_back(
                     db.ColumnFamilyDescriptor(
                         cf_name,
                         deref((<ColumnFamilyOptions>cf_options).copts)
                     )
                 )
                 self.cf_options.append(cf_options)
+        if type(self) != DB:
+            return
+        db_path = path_to_string(db_name)
         if read_only:
             with nogil:
                 st = db.DB_OpenForReadOnly_ColumnFamilies(
                     deref(opts.opts),
                     db_path,
-                    column_family_descriptors,
-                    &column_family_handles,
-                    &self.db,
+                    self.column_family_descriptors,
+                    &self.column_family_handles,
+                    &self.wrapped_db,
                     False)
         else:
             with nogil:
                 st = db.DB_Open_ColumnFamilies(
                     deref(opts.opts),
                     db_path,
-                    column_family_descriptors,
-                    &column_family_handles,
-                    &self.db)
-        check_status(st)
+                    self.column_family_descriptors,
+                    &self.column_family_handles,
+                    &self.wrapped_db)
+        self.post_init_steps(st, opts)
 
-        for handle in column_family_handles:
+    cdef post_init_steps(self, Status st, Options opts):
+        check_status(st)
+        self.setup_handles()
+        self.inject_loggers(opts)
+
+    cdef setup_handles(self):
+        for handle in self.column_family_handles:
             wrapper = _ColumnFamilyHandle.from_handle_ptr(handle)
             self.cf_handles.append(wrapper)
 
+    cdef inject_loggers(self, Options opts):
         # Inject the loggers into the python callbacks
-        cdef shared_ptr[logger.Logger] info_log = self.db.GetOptions(
-            self.db.DefaultColumnFamily()).info_log
+        cdef shared_ptr[logger.Logger] info_log = self.wrapped_db.GetOptions(
+            self.wrapped_db.DefaultColumnFamily()).info_log
         if opts.py_comparator is not None:
             opts.py_comparator.set_info_log(info_log)
 
@@ -1651,13 +2061,13 @@ cdef class DB(object):
 
         if opts.prefix_extractor is not None:
             opts.py_prefix_extractor.set_info_log(info_log)
-
         cdef ColumnFamilyOptions copts
         for idx, copts in enumerate(self.cf_options):
             if not copts:
                 continue
 
-            info_log = self.db.GetOptions(column_family_handles[idx]).info_log
+            info_log = self.wrapped_db.GetOptions(
+                self.column_family_handles[idx]).info_log
 
             if copts.py_comparator is not None:
                 copts.py_comparator.set_info_log(info_log)
@@ -1671,25 +2081,34 @@ cdef class DB(object):
         self.opts = opts
         self.opts.in_use = True
 
-    def __dealloc__(self):
-        self.close()
-        
-    def close(self):
+    def close(self, safe=True):
         cdef ColumnFamilyOptions copts
-        if not self.db == NULL:
+        cdef cpp_bool c_safe = safe
+        cdef Status st
+        if self.wrapped_db != NULL:
+            # We need stop backround compactions
+            with nogil:
+                db.CancelAllBackgroundWork(self.wrapped_db, c_safe)
             # We have to make sure we delete the handles so rocksdb doesn't
             # assert when we delete the db
-            self.cf_handles.clear()
+            del self.cf_handles[:]
+            for cfhandle in self.column_family_handles:
+                cfhandle = NULL
             for copts in self.cf_options:
                 if copts:
                     copts.in_use = False
-            self.cf_options.clear()
-
+            del self.cf_options[:]
             with nogil:
-                del self.db
+                st = self.wrapped_db.Close()
+                self.wrapped_db = NULL
+            if self.opts is not None:
+                self.opts.in_use = False
 
-        if self.opts is not None:
-            self.opts.in_use = False
+    def __dealloc__(self):
+        if type(self) != DB:
+            self.wrapped_db = NULL
+            return
+        self.close()
 
     @property
     def column_families(self):
@@ -1700,11 +2119,14 @@ cdef class DB(object):
             if handle.name == name:
                 return handle.weakref
 
-    def put(self, key, value, sync=False, disable_wal=False):
+    def put(self, key, value, sync=False, disable_wal=False, ignore_missing_column_families=False, no_slowdown=False, low_pri=False):
         cdef Status st
         cdef options.WriteOptions opts
         opts.sync = sync
         opts.disableWAL = disable_wal
+        opts.ignore_missing_column_families = ignore_missing_column_families
+        opts.no_slowdown = no_slowdown
+        opts.low_pri = low_pri
 
         if isinstance(key, tuple):
             column_family, key = key
@@ -1713,19 +2135,22 @@ cdef class DB(object):
 
         cdef Slice c_key = bytes_to_slice(key)
         cdef Slice c_value = bytes_to_slice(value)
-        cdef db.ColumnFamilyHandle* cf_handle = self.db.DefaultColumnFamily()
+        cdef db.ColumnFamilyHandle* cf_handle = self.wrapped_db.DefaultColumnFamily()
         if column_family:
             cf_handle = (<ColumnFamilyHandle?>column_family).get_handle()
 
         with nogil:
-            st = self.db.Put(opts, cf_handle, c_key, c_value)
+            st = self.wrapped_db.Put(opts, cf_handle, c_key, c_value)
         check_status(st)
 
-    def delete(self, key, sync=False, disable_wal=False):
+    def delete(self, key, sync=False, disable_wal=False, ignore_missing_column_families=False, no_slowdown=False, low_pri=False):
         cdef Status st
         cdef options.WriteOptions opts
         opts.sync = sync
         opts.disableWAL = disable_wal
+        opts.ignore_missing_column_families = ignore_missing_column_families
+        opts.no_slowdown = no_slowdown
+        opts.low_pri = low_pri
 
         if isinstance(key, tuple):
             column_family, key = key
@@ -1733,19 +2158,22 @@ cdef class DB(object):
             column_family = None
 
         cdef Slice c_key = bytes_to_slice(key)
-        cdef db.ColumnFamilyHandle* cf_handle = self.db.DefaultColumnFamily()
+        cdef db.ColumnFamilyHandle* cf_handle = self.wrapped_db.DefaultColumnFamily()
         if column_family:
             cf_handle = (<ColumnFamilyHandle?>column_family).get_handle()
 
         with nogil:
-            st = self.db.Delete(opts, cf_handle, c_key)
+            st = self.wrapped_db.Delete(opts, cf_handle, c_key)
         check_status(st)
 
-    def merge(self, key, value, sync=False, disable_wal=False):
+    def merge(self, key, value, sync=False, disable_wal=False, ignore_missing_column_families=False, no_slowdown=False, low_pri=False):
         cdef Status st
         cdef options.WriteOptions opts
         opts.sync = sync
         opts.disableWAL = disable_wal
+        opts.ignore_missing_column_families = ignore_missing_column_families
+        opts.no_slowdown = no_slowdown
+        opts.low_pri = low_pri
 
         if isinstance(key, tuple):
             column_family, key = key
@@ -1754,22 +2182,25 @@ cdef class DB(object):
 
         cdef Slice c_key = bytes_to_slice(key)
         cdef Slice c_value = bytes_to_slice(value)
-        cdef db.ColumnFamilyHandle* cf_handle = self.db.DefaultColumnFamily()
+        cdef db.ColumnFamilyHandle* cf_handle = self.wrapped_db.DefaultColumnFamily()
         if column_family:
             cf_handle = (<ColumnFamilyHandle?>column_family).get_handle()
 
         with nogil:
-            st = self.db.Merge(opts, cf_handle, c_key, c_value)
+            st = self.wrapped_db.Merge(opts, cf_handle, c_key, c_value)
         check_status(st)
 
-    def write(self, WriteBatch batch, sync=False, disable_wal=False):
+    def write(self, WriteBatch batch, sync=False, disable_wal=False, ignore_missing_column_families=False, no_slowdown=False, low_pri=False):
         cdef Status st
         cdef options.WriteOptions opts
         opts.sync = sync
         opts.disableWAL = disable_wal
+        opts.ignore_missing_column_families = ignore_missing_column_families
+        opts.no_slowdown = no_slowdown
+        opts.low_pri = low_pri
 
         with nogil:
-            st = self.db.Write(opts, batch.batch)
+            st = self.wrapped_db.Write(opts, batch.batch)
         check_status(st)
 
     def get(self, key, *args, **kwargs):
@@ -1785,12 +2216,12 @@ cdef class DB(object):
             column_family = None
 
         cdef Slice c_key = bytes_to_slice(key)
-        cdef db.ColumnFamilyHandle* cf_handle = self.db.DefaultColumnFamily()
+        cdef db.ColumnFamilyHandle* cf_handle = self.wrapped_db.DefaultColumnFamily()
         if column_family:
             cf_handle = (<ColumnFamilyHandle?>column_family).get_handle()
 
         with nogil:
-            st = self.db.Get(opts, cf_handle, c_key, cython.address(res))
+            st = self.wrapped_db.Get(opts, cf_handle, c_key, cython.address(res))
 
         if st.ok():
             return string_to_bytes(res)
@@ -1799,7 +2230,11 @@ cdef class DB(object):
         else:
             check_status(st)
 
-    def multi_get(self, keys, *args, **kwargs):
+    def multi_get(self, keys, *args, as_dict=True, **kwargs):
+        if as_dict:
+            # Remove duplicate keys
+            keys = list(dict.fromkeys(keys))
+
         cdef vector[string] values
         values.resize(len(keys))
 
@@ -1811,7 +2246,7 @@ cdef class DB(object):
                 py_handle, key = key
                 cf_handle = (<ColumnFamilyHandle?>py_handle).get_handle()
             else:
-                cf_handle = self.db.DefaultColumnFamily()
+                cf_handle = self.wrapped_db.DefaultColumnFamily()
             c_keys.push_back(bytes_to_slice(key))
             cf_handles.push_back(cf_handle)
 
@@ -1820,22 +2255,34 @@ cdef class DB(object):
 
         cdef vector[Status] res
         with nogil:
-            res = self.db.MultiGet(
+            res = self.wrapped_db.MultiGet(
                 opts,
                 cf_handles,
                 c_keys,
                 cython.address(values))
 
         cdef dict ret_dict = {}
-        for index in range(len(keys)):
-            if res[index].ok():
-                ret_dict[keys[index]] = string_to_bytes(values[index])
-            elif res[index].IsNotFound():
-                ret_dict[keys[index]] = None
-            else:
-                check_status(res[index])
+        cdef list ret_list = []
+        if as_dict:
+            for index in range(len(keys)):
+                if res[index].ok():
+                    ret_dict[keys[index]] = string_to_bytes(values[index])
+                elif res[index].IsNotFound():
+                    ret_dict[keys[index]] = None
+                else:
+                    check_status(res[index])
 
-        return ret_dict
+            return ret_dict
+        else:
+            for index in range(len(keys)):
+                if res[index].ok():
+                    ret_list.append(string_to_bytes(values[index]))
+                elif res[index].IsNotFound():
+                    ret_list.append(None)
+                else:
+                    check_status(res[index])
+
+            return ret_list
 
     def key_may_exist(self, key, fetch=False, *args, **kwargs):
         cdef string value
@@ -1843,7 +2290,7 @@ cdef class DB(object):
         cdef cpp_bool exists
         cdef options.ReadOptions opts
         cdef Slice c_key
-        cdef db.ColumnFamilyHandle* cf_handle = self.db.DefaultColumnFamily()
+        cdef db.ColumnFamilyHandle* cf_handle = self.wrapped_db.DefaultColumnFamily()
 
         opts = self.build_read_opts(self.__parse_read_opts(*args, **kwargs))
         if isinstance(key, tuple):
@@ -1856,7 +2303,7 @@ cdef class DB(object):
         if fetch:
             value_found = False
             with nogil:
-                exists = self.db.KeyMayExist(
+                exists = self.wrapped_db.KeyMayExist(
                     opts,
                     cf_handle,
                     c_key,
@@ -1872,7 +2319,7 @@ cdef class DB(object):
                 return (False, None)
         else:
             with nogil:
-                exists = self.db.KeyMayExist(
+                exists = self.wrapped_db.KeyMayExist(
                     opts,
                     cf_handle,
                     c_key,
@@ -1883,7 +2330,7 @@ cdef class DB(object):
     def iterkeys(self, ColumnFamilyHandle column_family=None, *args, **kwargs):
         cdef options.ReadOptions opts
         cdef KeysIterator it
-        cdef db.ColumnFamilyHandle* cf_handle = self.db.DefaultColumnFamily()
+        cdef db.ColumnFamilyHandle* cf_handle = self.wrapped_db.DefaultColumnFamily()
         if column_family:
             cf_handle = column_family.get_handle()
 
@@ -1891,13 +2338,13 @@ cdef class DB(object):
         it = KeysIterator(self, column_family)
 
         with nogil:
-            it.ptr = self.db.NewIterator(opts, cf_handle)
+            it.ptr = self.wrapped_db.NewIterator(opts, cf_handle)
         return it
 
     def itervalues(self, ColumnFamilyHandle column_family=None, *args, **kwargs):
         cdef options.ReadOptions opts
         cdef ValuesIterator it
-        cdef db.ColumnFamilyHandle* cf_handle = self.db.DefaultColumnFamily()
+        cdef db.ColumnFamilyHandle* cf_handle = self.wrapped_db.DefaultColumnFamily()
         if column_family:
             cf_handle = column_family.get_handle()
 
@@ -1906,13 +2353,13 @@ cdef class DB(object):
         it = ValuesIterator(self)
 
         with nogil:
-            it.ptr = self.db.NewIterator(opts, cf_handle)
+            it.ptr = self.wrapped_db.NewIterator(opts, cf_handle)
         return it
 
     def iteritems(self, ColumnFamilyHandle column_family=None, *args, **kwargs):
         cdef options.ReadOptions opts
         cdef ItemsIterator it
-        cdef db.ColumnFamilyHandle* cf_handle = self.db.DefaultColumnFamily()
+        cdef db.ColumnFamilyHandle* cf_handle = self.wrapped_db.DefaultColumnFamily()
         if column_family:
             cf_handle = column_family.get_handle()
         opts = self.build_read_opts(self.__parse_read_opts(*args, **kwargs))
@@ -1920,7 +2367,7 @@ cdef class DB(object):
         it = ItemsIterator(self, column_family)
 
         with nogil:
-            it.ptr = self.db.NewIterator(opts, cf_handle)
+            it.ptr = self.wrapped_db.NewIterator(opts, cf_handle)
         return it
 
     def iterskeys(self, column_families, *args, **kwargs):
@@ -1938,7 +2385,7 @@ cdef class DB(object):
 
         opts = self.build_read_opts(self.__parse_read_opts(*args, **kwargs))
         with nogil:
-            self.db.NewIterators(opts, cf_handles, &iters)
+            self.wrapped_db.NewIterators(opts, cf_handles, &iters)
 
         cf_iter = iter(column_families)
         cdef list ret = []
@@ -1963,7 +2410,7 @@ cdef class DB(object):
 
         opts = self.build_read_opts(self.__parse_read_opts(*args, **kwargs))
         with nogil:
-            self.db.NewIterators(opts, cf_handles, &iters)
+            self.wrapped_db.NewIterators(opts, cf_handles, &iters)
 
         cdef list ret = []
         for it_ptr in iters:
@@ -1987,7 +2434,7 @@ cdef class DB(object):
 
         opts = self.build_read_opts(self.__parse_read_opts(*args, **kwargs))
         with nogil:
-            self.db.NewIterators(opts, cf_handles, &iters)
+            self.wrapped_db.NewIterators(opts, cf_handles, &iters)
 
 
         cf_iter = iter(column_families)
@@ -2005,12 +2452,12 @@ cdef class DB(object):
         cdef string value
         cdef Slice c_prop = bytes_to_slice(prop)
         cdef cpp_bool ret = False
-        cdef db.ColumnFamilyHandle* cf_handle = self.db.DefaultColumnFamily()
+        cdef db.ColumnFamilyHandle* cf_handle = self.wrapped_db.DefaultColumnFamily()
         if column_family:
             cf_handle = column_family.get_handle()
 
         with nogil:
-            ret = self.db.GetProperty(cf_handle, c_prop, cython.address(value))
+            ret = self.wrapped_db.GetProperty(cf_handle, c_prop, cython.address(value))
 
         if ret:
             return string_to_bytes(value)
@@ -2021,7 +2468,7 @@ cdef class DB(object):
         cdef vector[db.LiveFileMetaData] metadata
 
         with nogil:
-            self.db.GetLiveFilesMetaData(cython.address(metadata))
+            self.wrapped_db.GetLiveFilesMetaData(cython.address(metadata))
 
         ret = []
         for ob in metadata:
@@ -2037,6 +2484,21 @@ cdef class DB(object):
             ret.append(t)
 
         return ret
+
+    def get_column_family_meta_data(self, ColumnFamilyHandle column_family=None):
+        cdef db.ColumnFamilyMetaData metadata
+
+        cdef db.ColumnFamilyHandle* cf_handle = self.wrapped_db.DefaultColumnFamily()
+        if column_family:
+            cf_handle = (<ColumnFamilyHandle?>column_family).get_handle()
+
+        with nogil:
+            self.wrapped_db.GetColumnFamilyMetaData(cf_handle, cython.address(metadata))
+
+        return {
+            "size":metadata.size,
+            "file_count":metadata.file_count,
+        }
 
     def compact_range(self, begin=None, end=None, ColumnFamilyHandle column_family=None, **py_options):
         cdef options.CompactRangeOptions c_options
@@ -2072,23 +2534,26 @@ cdef class DB(object):
             end_val = bytes_to_slice(end)
             end_ptr = cython.address(end_val)
 
-        cdef db.ColumnFamilyHandle* cf_handle = self.db.DefaultColumnFamily()
+        cdef db.ColumnFamilyHandle* cf_handle = self.wrapped_db.DefaultColumnFamily()
         if column_family:
             cf_handle = (<ColumnFamilyHandle?>column_family).get_handle()
 
-        st = self.db.CompactRange(c_options, cf_handle, begin_ptr, end_ptr)
+        st = self.wrapped_db.CompactRange(c_options, cf_handle, begin_ptr, end_ptr)
         check_status(st)
 
     @staticmethod
     def __parse_read_opts(
-        verify_checksums=False,
-        fill_cache=True,
-        snapshot=None,
-        read_tier="all"):
+            verify_checksums=False,
+            fill_cache=True,
+            snapshot=None,
+            read_tier="all",
+            total_order_seek=False,
+            iterate_lower_bound=None,
+            iterate_upper_bound=None
+    ):
 
         # TODO: Is this really effiencet ?
         return locals()
-
     cdef options.ReadOptions build_read_opts(self, dict py_opts):
         cdef options.ReadOptions opts
         opts.verify_checksums = py_opts['verify_checksums']
@@ -2096,12 +2561,31 @@ cdef class DB(object):
         if py_opts['snapshot'] is not None:
             opts.snapshot = (<Snapshot?>(py_opts['snapshot'])).ptr
 
+        if py_opts['total_order_seek'] is not None:
+            opts.total_order_seek = py_opts['total_order_seek']
+
         if py_opts['read_tier'] == "all":
             opts.read_tier = options.kReadAllTier
         elif py_opts['read_tier'] == 'cache':
             opts.read_tier = options.kBlockCacheTier
         else:
             raise ValueError("Invalid read_tier")
+
+        def make_bytes(iterate_bound):
+            if isinstance(iterate_bound, bytes):
+                return iterate_bound
+            elif isinstance(iterate_bound, str):
+                return str.encode(iterate_bound)
+            elif isinstance(iterate_bound, int):
+                return str.encode(str(iterate_bound))
+            else:
+                return None
+        if py_opts['iterate_lower_bound'] is not None:
+            # Calling this new without corresponding delete causes a memory leak.
+            # TODO: Figure out where the object should be destroyed without causing segfaults
+            opts.iterate_lower_bound = bytes_to_new_slice(make_bytes(py_opts['iterate_lower_bound']))
+        if py_opts['iterate_upper_bound'] is not None:
+            opts.iterate_upper_bound = bytes_to_new_slice(make_bytes(py_opts['iterate_upper_bound']))
 
         return opts
 
@@ -2123,7 +2607,7 @@ cdef class DB(object):
 
         copts.in_use = True
         with nogil:
-            st = self.db.CreateColumnFamily(deref(copts.copts), c_name, &cf_handle)
+            st = self.wrapped_db.CreateColumnFamily(deref(copts.copts), c_name, &cf_handle)
         check_status(st)
 
         handle = _ColumnFamilyHandle.from_handle_ptr(cf_handle)
@@ -2140,7 +2624,7 @@ cdef class DB(object):
         cf_handle = weak_handle.get_handle()
 
         with nogil:
-            st = self.db.DropColumnFamily(cf_handle)
+            st = self.wrapped_db.DropColumnFamily(cf_handle)
         check_status(st)
 
         py_handle = weak_handle._ref()
@@ -2173,6 +2657,62 @@ def list_column_families(db_name, Options opts):
 
     return column_families
 
+@cython.no_gc_clear
+cdef class TransactionDB(DB):
+    cdef TransactionDBOptions tdb_opts
+
+    def __cinit__(self, db_name, Options opts,
+                  dict column_families=None,
+                  TransactionDBOptions tdb_opts=None,
+                  *args, **kwargs):
+        self.tdb_opts = None
+        db_path = path_to_string(db_name)
+        if tdb_opts.in_use:
+            raise InvalidArgument(
+                "Transaction Options object is already used by another DB")
+
+        with nogil:
+            st = transaction_db.TransactionDB_Open_ColumnFamilies(
+                deref(opts.opts),
+                deref(tdb_opts.opts),
+                db_path,
+                self.column_family_descriptors,
+                &self.column_family_handles,
+                <transaction_db.TransactionDB **>&self.wrapped_db)
+        self.post_init_steps(st, opts)
+        self.tdb_opts = tdb_opts
+        self.tdb_opts.in_use = True
+
+    property transaction_options:
+        def __get__(self):
+            return self.tdb_opts
+
+    def close(self, safe=True):
+        cdef ColumnFamilyOptions copts
+        cdef cpp_bool c_safe = safe
+        cdef Status st
+        if self.wrapped_db != NULL:
+            # We need stop backround compactions
+            with nogil:
+                db.CancelAllBackgroundWork(self.wrapped_db, c_safe)
+            # We have to make sure we delete the handles so rocksdb doesn't
+            # assert when we delete the db
+            del self.cf_handles[:]
+            for cfhandle in self.column_family_handles:
+                cfhandle = NULL
+            for copts in self.cf_options:
+                if copts:
+                    copts.in_use = False
+            del self.cf_options[:]
+            with nogil:
+                st = (<transaction_db.TransactionDB *>(self.wrapped_db)).Close()
+            if self.opts is not None:
+                self.opts.in_use = False
+            if self.tdb_opts is not None:
+                self.tdb_opts.in_use = False
+
+    def __dealloc__(self):
+        self.close()
 
 @cython.no_gc_clear
 @cython.internal
@@ -2183,13 +2723,12 @@ cdef class Snapshot(object):
     def __cinit__(self, DB db):
         self.db = db
         self.ptr = NULL
-        with nogil:
-            self.ptr = db.db.GetSnapshot()
+        with nogil: self.ptr = db.wrapped_db.GetSnapshot()
 
     def __dealloc__(self):
         if not self.ptr == NULL:
             with nogil:
-                self.db.db.ReleaseSnapshot(self.ptr)
+                self.db.wrapped_db.ReleaseSnapshot(self.ptr)
 
 
 @cython.internal
@@ -2379,7 +2918,7 @@ cdef class BackupEngine(object):
         c_flush_before_backup = flush_before_backup
 
         with nogil:
-            st = self.engine.CreateNewBackup(db.db, c_flush_before_backup)
+            st = self.engine.CreateNewBackup(db.wrapped_db, c_flush_before_backup)
         check_status(st)
 
     def restore_backup(self, backup_id, db_dir, wal_dir):
