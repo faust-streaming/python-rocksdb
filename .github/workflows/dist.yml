@@ -54,8 +54,7 @@ jobs:
             yum install -y bzip2-devel lz4-devel snappy-devel zlib-devel
             python3-Cython && (
               test -d ${{ env.LIBROCKSDB_PATH }} || (
-              git clone https://github.com/facebook/rocksdb --depth 1
-              --branch ${{ matrix.rocksdb_ver }} ${{ env.LIBROCKSDB_PATH }} &&
+              git clone https://github.com/facebook/rocksdb --depth 1 --branch ${{ matrix.rocksdb_ver }} ${{ env.LIBROCKSDB_PATH }} &&
               cd ${{ env.LIBROCKSDB_PATH }} &&
               CXXFLAGS='-flto -Os -s' PORTABLE=1 make shared_lib -j 4
             )) &&
@@ -63,7 +62,6 @@ jobs:
             make install-shared &&
             ldconfig &&
             popd
-
       - uses: actions/upload-artifact@v2
         name: 'Upload build artifacts'
         with:
@@ -76,19 +74,21 @@ jobs:
       - uses: actions/checkout@v2
         name: 'Checkout source repository'
 
-      - uses: actions/setup-python@v2
+      - uses: actions/setup-python@v4
         name: 'Set up Python 3.9'
         with:
           python-version: '3.9'
 
       - name: 'Build sdist'
-        run: |
+        run: >
+          pip3 install pkgconfig cython --upgrade &&
           python3 setup.py sdist
 
       - uses: actions/upload-artifact@v2
         name: 'Upload build artifacts'
         with:
           path: 'dist/*.tar.gz'
+
 
 
   upload_pypi:
