@@ -16,7 +16,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        dist: [bullseye, bookworm]
+#        dist: [bullseye, bookworm]
+        dist: [bullseye]
     steps:
       - uses: actions/checkout@v2
 
