@@ -91,20 +91,20 @@ jobs:
           path: 'dist/*.tar.gz'
 
 
-#  upload_pypi:
-#    name: 'Upload packages'
-#    needs: ['build_wheels', 'build_sdist']
-#    runs-on: 'ubuntu-latest'
-#    if: github.event_name == 'push' && startsWith(github.event.ref, 'refs/tags/v')
-#    steps:
-#      - uses: actions/download-artifact@v2
-#        name: 'Download artifacts'
-#        with:
-#          name: 'artifact'
-#          path: 'dist'
-#
-#      - uses: pypa/gh-action-pypi-publish@master
-#        name: 'Publish built packages'
-#        with:
-#          user: '__token__'
-#          password: '${{ secrets.PYPI_API_TOKEN }}'
+  upload_pypi:
+    name: 'Upload packages'
+    needs: ['build_wheels', 'build_sdist']
+    runs-on: 'ubuntu-latest'
+    if: github.event_name == 'push' && startsWith(github.event.ref, 'refs/tags/v')
+    steps:
+      - uses: actions/download-artifact@v2
+        name: 'Download artifacts'
+        with:
+          name: 'artifact'
+          path: 'dist'
+
+      - uses: pypa/gh-action-pypi-publish@master
+        name: 'Publish built packages'
+        with:
+          user: '__token__'
+          password: '${{ secrets.PYPI_API_TOKEN }}'
