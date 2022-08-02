@@ -103,8 +103,8 @@ jobs:
           name: 'artifact'
           path: 'dist'
 
-      - uses: pypa/gh-action-pypi-publish@master
-        name: 'Publish built packages'
-        with:
-          user: '__token__'
-          password: '${{ secrets.PYPI_API_TOKEN }}'
+#      - uses: pypa/gh-action-pypi-publish@master
+#        name: 'Publish built packages'
+#        with:
+#          user: '__token__'
+#          password: '${{ secrets.PYPI_API_TOKEN }}'
