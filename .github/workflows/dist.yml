@@ -25,13 +25,13 @@ jobs:
         name: 'Checkout source repository'
 
       - uses: actions/setup-python@v2
-        name: 'Set up Python 3.9'
+        name: 'Set up Python 3.10'
         with:
-          python-version: '3.9'
+          python-version: '3.10'
 
       - name: 'Install cibuildwheel'
         run: |
-          python3 -m pip install cibuildwheel==1.7.1
+          python3 -m pip install cibuildwheel==2.0.0
 
       - name: 'Build wheels'
         run: |
@@ -75,9 +75,9 @@ jobs:
         name: 'Checkout source repository'
 
       - uses: actions/setup-python@v4
-        name: 'Set up Python 3.9'
+        name: 'Set up Python 3.10'
         with:
-          python-version: '3.9'
+          python-version: '3.10'
 
       - name: 'Build sdist'
         run: >
@@ -103,8 +103,8 @@ jobs:
           name: 'artifact'
           path: 'dist'
 
-      - uses: pypa/gh-action-pypi-publish@master
-        name: 'Publish built packages'
+      - uses: pypa/gh-action-pypi-publish@release/v1
+        name: "Publish package to PyPI"
         with:
           user: '__token__'
           password: '${{ secrets.PYPI_API_TOKEN }}'
