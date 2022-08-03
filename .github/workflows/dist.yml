@@ -2,12 +2,11 @@
 name: 'Build distribution'
 
 on:
-  # Only run when pushing to main/merging PRs.
-  push:
+  # Only run when release is created in the master branch
+  release:
+    types: [created]
     branches:
       - 'master'
-      - 'force_ci/all/**'     # For development, forcing all workflows to run.
-      - 'force_ci/dist/**'    # For debugging and/or only forcing this workflow.
 
 jobs:
   build_wheels:
@@ -96,7 +95,7 @@ jobs:
     name: 'Upload packages'
     needs: ['build_wheels', 'build_sdist']
     runs-on: 'ubuntu-latest'
-    if: github.event_name == 'push' && startsWith(github.event.ref, 'refs/tags/v')
+    if: github.event_name == 'release' && github.event.action == 'created'
     steps:
       - uses: actions/download-artifact@v2
         name: 'Download artifacts'
