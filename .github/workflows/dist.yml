@@ -5,7 +5,7 @@ on:
   # Only run when pushing to main/merging PRs.
   push:
     branches:
-      - main
+      - 'master'
       - 'force_ci/all/**'     # For development, forcing all workflows to run.
       - 'force_ci/dist/**'    # For debugging and/or only forcing this workflow.
 
@@ -25,21 +25,22 @@ jobs:
         name: 'Checkout source repository'
 
       - uses: actions/setup-python@v2
-        name: 'Set up Python 3.9'
+        name: 'Set up Python 3.10'
         with:
-          python-version: '3.9'
+          python-version: '3.10'
 
       - name: 'Install cibuildwheel'
         run: |
-          python3 -m pip install cibuildwheel==1.7.1
+          python3 -m pip install cibuildwheel
 
       - name: 'Build wheels'
         run: |
           python3 -m cibuildwheel --output-dir dist
         env:
           CIBW_MANYLINUX_X86_64_IMAGE: 'manylinux2014'
+          CIBW_ARCHS: auto64
           CIBW_BUILD: 'cp3*'
-          CIBW_SKIP: '*-manylinux_i686'
+          CIBW_SKIP: '*-musllinux_*'
           # Install python package and test-deps.
           CIBW_TEST_REQUIRES: '.[test] pytest'
           # Use `--pyargs` to interpret parameter as module to import, not as a
@@ -54,8 +55,7 @@ jobs:
             yum install -y bzip2-devel lz4-devel snappy-devel zlib-devel
             python3-Cython && (
               test -d ${{ env.LIBROCKSDB_PATH }} || (
-              git clone https://github.com/facebook/rocksdb --depth 1
-              --branch ${{ matrix.rocksdb_ver }} ${{ env.LIBROCKSDB_PATH }} &&
+              git clone https://github.com/facebook/rocksdb --depth 1 --branch ${{ matrix.rocksdb_ver }} ${{ env.LIBROCKSDB_PATH }} &&
               cd ${{ env.LIBROCKSDB_PATH }} &&
               CXXFLAGS='-flto -Os -s' PORTABLE=1 make shared_lib -j 4
             )) &&
@@ -63,7 +63,6 @@ jobs:
             make install-shared &&
             ldconfig &&
             popd
-
       - uses: actions/upload-artifact@v2
         name: 'Upload build artifacts'
         with:
@@ -76,13 +75,14 @@ jobs:
       - uses: actions/checkout@v2
         name: 'Checkout source repository'
 
-      - uses: actions/setup-python@v2
-        name: 'Set up Python 3.9'
+      - uses: actions/setup-python@v4
+        name: 'Set up Python 3.10'
         with:
-          python-version: '3.9'
+          python-version: '3.10'
 
       - name: 'Build sdist'
-        run: |
+        run: >
+          pip3 install pkgconfig cython --upgrade &&
           python3 setup.py sdist
 
       - uses: actions/upload-artifact@v2
@@ -91,20 +91,21 @@ jobs:
           path: 'dist/*.tar.gz'
 
 
-#  upload_pypi:
-#    name: 'Upload packages'
-#    needs: ['build_wheels', 'build_sdist']
-#    runs-on: 'ubuntu-latest'
-#    if: github.event_name == 'push' && startsWith(github.event.ref, 'refs/tags/v')
-#    steps:
-#      - uses: actions/download-artifact@v2
-#        name: 'Download artifacts'
-#        with:
-#          name: 'artifact'
-#          path: 'dist'
-#
-#      - uses: pypa/gh-action-pypi-publish@master
-#        name: 'Publish built packages'
-#        with:
-#          user: '__token__'
-#          password: '${{ secrets.PYPI_API_TOKEN }}'
+
+  upload_pypi:
+    name: 'Upload packages'
+    needs: ['build_wheels', 'build_sdist']
+    runs-on: 'ubuntu-latest'
+    if: github.event_name == 'push' && startsWith(github.event.ref, 'refs/tags/v')
+    steps:
+      - uses: actions/download-artifact@v2
+        name: 'Download artifacts'
+        with:
+          name: 'artifact'
+          path: 'dist'
+
+      - uses: pypa/gh-action-pypi-publish@release/v1
+        name: "Publish package to PyPI"
+        with:
+          user: '__token__'
+          password: '${{ secrets.PYPI_API_TOKEN }}'

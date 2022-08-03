@@ -5,7 +5,7 @@ on:
   pull_request:
   push:
     branches:
-      - 'main'
+      - 'master'
       - 'force_ci/all/**'    # For development, forcing all workflows to run.
       - 'force_ci/build/**'  # For debugging and/or only forcing this workflow.
 
@@ -52,7 +52,7 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest]
-        py_ver: ['3.7', '3.8', '3.9']
+        py_ver: ['3.7', '3.8', '3.9', '3.10']
         rocksdb_ver: ['v6.29.3', 'v6.25.3', 'v6.11.4']
 
     steps:

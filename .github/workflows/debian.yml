@@ -4,7 +4,7 @@ on:
   pull_request:
   push:
     branches:
-      - 'main'
+      - 'master'
       - 'force_ci/all/**'     # For development, forcing all workflows to run.
       - 'force_ci/debian/**'  # For debugging and/or only forcing this workflow.
 
@@ -16,7 +16,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        dist: [bullseye, bookworm]
+#        dist: [bullseye, bookworm]
+        dist: [bullseye]
     steps:
       - uses: actions/checkout@v2
 
