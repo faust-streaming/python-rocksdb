@@ -2870,7 +2870,7 @@ cdef class Checkpoint(object):
         cdef Status st
         self.checkpoint = NULL
         st = checkpoint.Checkpoint_Create(
-            db.db,
+            db.wrapped_db,
             cython.address(self.checkpoint))
 
         check_status(st)
