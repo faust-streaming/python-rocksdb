@@ -25,6 +25,7 @@ from . cimport snapshot
 from . cimport db
 from . cimport iterator
 from . cimport backup
+from . cimport checkpoint
 from . cimport env
 from . cimport table_factory
 from . cimport memtablerep
@@ -2860,6 +2861,34 @@ cdef class ReversedIterator(object):
             self.it.ptr.Prev()
         check_status(self.it.ptr.status())
         return ret
+
+
+cdef class Checkpoint(object):
+    cdef checkpoint.Checkpoint* checkpoint
+
+    def  __cinit__(self, DB db):
+        cdef Status st
+        self.checkpoint = NULL
+        st = checkpoint.Checkpoint_Create(
+            db.wrapped_db,
+            cython.address(self.checkpoint))
+
+        check_status(st)
+
+    def __dealloc__(self):
+        if not self.checkpoint == NULL:
+            with nogil:
+                del self.checkpoint
+
+    def create_checkpoint(self, checkpoint_dir):
+        cdef Status st
+        cdef string c_checkpoint_dir
+        c_checkpoint_dir = path_to_string(checkpoint_dir)
+
+        with nogil:
+            st = self.checkpoint.CreateCheckpoint(c_checkpoint_dir)
+        check_status(st)
+
 
 cdef class BackupEngine(object):
     cdef backup.BackupEngine* engine
