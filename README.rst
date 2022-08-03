@@ -1,5 +1,5 @@
-pyrocksdb
-=========
+faust-streaming-rocksdb
+=======================
 
 Python bindings for RocksDB.
 
