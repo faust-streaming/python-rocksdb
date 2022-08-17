@@ -13,7 +13,7 @@ This library is built for Debian + Ubuntu Distributions.
 
 .. code-block:: bash
 
-    $ pip3 install faust-streaming-rocksdb
+    pip3 install faust-streaming-rocksdb
 
 
 
