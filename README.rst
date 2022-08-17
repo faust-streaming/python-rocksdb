@@ -13,7 +13,6 @@ This library is built for Debian + Ubuntu Distributions.
 
 .. code-block:: bash
 
-    $ apt-get install build-essential libsnappy-dev zlib1g-dev libbz2-dev libgflags-dev liblz4-dev librocksdb-dev
     $ pip3 install faust-streaming-rocksdb
 
 
