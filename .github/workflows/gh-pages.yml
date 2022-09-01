@@ -16,8 +16,8 @@ jobs:
         fetch-depth: 0 # otherwise, you will failed to push refs to dest repo
     - name: "Install deps and build with Sphinx"
       run: >
-        cd docs
         pip3 install -r ./docs/docs.txt
+        cd docs
         make html
     - name: "Upload artifacts"
       uses: actions/upload-pages-artifact@v1
