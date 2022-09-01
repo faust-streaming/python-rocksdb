@@ -1,4 +1,3 @@
--r requirements.txt
 sphinx<6.0.0
 sphinx-celery
 sphinx-autodoc-typehints

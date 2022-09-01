@@ -4,6 +4,7 @@ on:
   push:
     branches:
     - master
+    - create-gh-pages
 
 jobs:
   build:
@@ -11,13 +12,17 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/setup-python@v4
+      name: 'Set up Python 3.10'
+      with:
+        python-version: '3.10'
     - uses: actions/checkout@v3
       with:
         fetch-depth: 0 # otherwise, you will failed to push refs to dest repo
     - name: "Install deps and build with Sphinx"
       run: >
-        pip3 install -r ./docs/docs.txt
-        cd docs
+        pip install setuptools --upgrade &&
+        pip install -r ./docs/docs.txt &&
+        cd docs &&
         make html
     - name: "Upload artifacts"
       uses: actions/upload-pages-artifact@v1
