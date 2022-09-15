@@ -1,6 +1,17 @@
 Changelog
 *********
 
+Version 0.9
+-----------
+
+Pulled in changes from`Martina Ferrari`_'s fork, as well as some from the
+`Hipacloud`_ fork.
+
+* `Hipacloud`_
+
+  * Add support for checkpoints.
+
+
 Version 0.8
 -----------
 
@@ -244,6 +255,7 @@ Version 0.1
 
 Initial version. Works with rocksdb version 2.7.fb.
 
+ .. _`Hipacloud`: https://github.com/hipacloud/python-rocksdb
  .. _`Martina Ferrari`: https://github.com/NightTsarina/
  .. _`Andrey Martyanov`: https://github.com/martyanov/
  .. _`@iFA88`: https://github.com/iFA88/
