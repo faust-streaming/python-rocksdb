@@ -4,7 +4,7 @@ Changelog
 Version 0.9
 -----------
 
-Pulled in changes from`Martina Ferrari`_'s fork, as well as some from the
+Pulled in changes from `Martina Ferrari`_'s fork, as well as some from the
 `Hipacloud`_ fork.
 
 * `Hipacloud`_
