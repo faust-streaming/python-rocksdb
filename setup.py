@@ -13,9 +13,16 @@ extra_compile_args = [
     '-fno-strict-aliasing',
     '-fno-rtti',
 ]
+libraries = ['rocksdb', 'snappy', 'bz2', 'z', 'lz4']
 
 if platform.system() == 'Darwin':
     extra_compile_args += ['-mmacosx-version-min=10.7', '-stdlib=libc++']
+
+if platform.system() == 'Windows':
+    extra_compile_args.remove('-Wextra')
+    extra_compile_args.remove('-Wconversion')
+    libraries.remove('z')
+    libraries.append('zlib')
 
 
 setup(
@@ -33,10 +40,10 @@ setup(
     packages=find_packages('.'),
     ext_modules=[Extension(
         'rocksdb._rocksdb',
-        ['rocksdb/_rocksdb.pyx'],
+        sources=['rocksdb/_rocksdb.cpp'],
         extra_compile_args=extra_compile_args,
         language='c++',
-        libraries=['rocksdb', 'snappy', 'bz2', 'z', 'lz4'],
+        libraries=libraries,
     )],
     extras_require={
         "doc": ['sphinx_rtd_theme', 'sphinx'],

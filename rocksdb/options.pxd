@@ -3,17 +3,17 @@ from libcpp.string cimport string
 from libcpp.vector cimport vector
 from libc.stdint cimport uint64_t
 from libc.stdint cimport uint32_t
-from std_memory cimport shared_ptr
-from comparator cimport Comparator
-from merge_operator cimport MergeOperator
-from logger cimport Logger
-from slice_ cimport Slice
-from snapshot cimport Snapshot
-from slice_transform cimport SliceTransform
-from table_factory cimport TableFactory
-from memtablerep cimport MemTableRepFactory
-from universal_compaction cimport CompactionOptionsUniversal
-from cache cimport Cache
+from .std_memory cimport shared_ptr
+from .comparator cimport Comparator
+from .merge_operator cimport MergeOperator
+from .logger cimport Logger
+from .slice_ cimport Slice
+from .snapshot cimport Snapshot
+from .slice_transform cimport SliceTransform
+from .table_factory cimport TableFactory
+from .memtablerep cimport MemTableRepFactory
+from .universal_compaction cimport CompactionOptionsUniversal
+from .cache cimport Cache
 
 cdef extern from "rocksdb/options.h" namespace "rocksdb":
     cdef cppclass CompressionOptions:

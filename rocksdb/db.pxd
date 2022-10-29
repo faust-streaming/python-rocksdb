@@ -1,12 +1,12 @@
-cimport options
+from . cimport options
 from libc.stdint cimport uint64_t, uint32_t
-from status cimport Status
+from .status cimport Status
 from libcpp cimport bool as cpp_bool
 from libcpp.string cimport string
 from libcpp.vector cimport vector
-from slice_ cimport Slice
-from snapshot cimport Snapshot
-from iterator cimport Iterator
+from .slice_ cimport Slice
+from .snapshot cimport Snapshot
+from .iterator cimport Iterator
 
 cdef extern from "rocksdb/write_batch.h" namespace "rocksdb":
     cdef cppclass WriteBatch:

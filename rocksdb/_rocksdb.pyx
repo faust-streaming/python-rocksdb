@@ -12,42 +12,42 @@ from cpython.bytes cimport PyBytes_FromString
 from cpython.bytes cimport PyBytes_FromStringAndSize
 from cpython.unicode cimport PyUnicode_Decode
 
-from std_memory cimport shared_ptr
-cimport options
-cimport merge_operator
-cimport filter_policy
-cimport comparator
-cimport slice_transform
-cimport cache
-cimport logger
-cimport snapshot
-cimport db
-cimport iterator
-cimport backup
-cimport env
-cimport table_factory
-cimport memtablerep
-cimport universal_compaction
+from .std_memory cimport shared_ptr
+from . cimport options
+from . cimport merge_operator
+from . cimport filter_policy
+from . cimport comparator
+from . cimport slice_transform
+from . cimport cache
+from . cimport logger
+from . cimport snapshot
+from . cimport db
+from . cimport iterator
+from . cimport backup
+from . cimport env
+from . cimport table_factory
+from . cimport memtablerep
+from . cimport universal_compaction
 
 # Enums are the only exception for direct imports
 # Their name als already unique enough
-from universal_compaction cimport kCompactionStopStyleSimilarSize
-from universal_compaction cimport kCompactionStopStyleTotalSize
+from .universal_compaction cimport kCompactionStopStyleSimilarSize
+from .universal_compaction cimport kCompactionStopStyleTotalSize
 
-from options cimport kCompactionStyleLevel
-from options cimport kCompactionStyleUniversal
-from options cimport kCompactionStyleFIFO
-from options cimport kCompactionStyleNone
+from .options cimport kCompactionStyleLevel
+from .options cimport kCompactionStyleUniversal
+from .options cimport kCompactionStyleFIFO
+from .options cimport kCompactionStyleNone
 
-from slice_ cimport Slice
-from status cimport Status
+from .slice_ cimport Slice
+from .status cimport Status
 
 import sys
-from interfaces import MergeOperator as IMergeOperator
-from interfaces import AssociativeMergeOperator as IAssociativeMergeOperator
-from interfaces import FilterPolicy as IFilterPolicy
-from interfaces import Comparator as IComparator
-from interfaces import SliceTransform as ISliceTransform
+from .interfaces import MergeOperator as IMergeOperator
+from .interfaces import AssociativeMergeOperator as IAssociativeMergeOperator
+from .interfaces import FilterPolicy as IFilterPolicy
+from .interfaces import Comparator as IComparator
+from .interfaces import SliceTransform as ISliceTransform
 import traceback
 import errors
 import weakref
