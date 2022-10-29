@@ -36,10 +36,11 @@ jobs:
 
     - pwsh: |
         vcpkg install zlib:x64-windows
-        vcpkg install bz2:x64-windows
+        vcpkg install bzip2:x64-windows
         vcpkg install lz4:x64-windows
         vcpkg install snappy:x64-windows
-        vcpkg install rocksdb:x64-windows
+        vcpkg install zstd:x64-windows
+        vcpkg install rocksdb[bzip2,zlib,lz4,snappy,zstd]:x64-windows --recurse
       displayName: Install rocksdb:x64-windows & compression libraries
 
     - pwsh: |
@@ -51,10 +52,7 @@ jobs:
       displayName: Prepare python (cython, wheel, delocate)
 
     - bash: |
-        CIBW_BEFORE_BUILD='echo $(python --version) && python -m pip install cython && python -m \
-        cython -3 --cplus --fast-fail --annotate rocksdb/_rocksdb.pyx && python ./setup.py
-        build_ext --include-dirs=$(VCPKG_ROCKSDB_INCLUDE_PATH) --library-dirs=$(VCPKG_ROCKSDB_LIB_PATH) \
-        --libraries"=shlwapi rpcrt4"' \
+        CIBW_BEFORE_BUILD='echo $(python --version) && python -m pip install cython && python -m cython -3 --cplus --fast-fail --annotate rocksdb/_rocksdb.pyx && python ./setup.py build_ext --include-dirs=$(VCPKG_ROCKSDB_INCLUDE_PATH) --library-dirs=$(VCPKG_ROCKSDB_LIB_PATH) --libraries"=shlwapi rpcrt4"' \
         CIBW_BUILD='cp3*-win_amd64' \
         CIBW_PLATFORM=windows cibuildwheel --output-dir wheelhouse .
       displayName: Build rocksdb wheel (cibuildwheel)
