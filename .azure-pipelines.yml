@@ -39,8 +39,7 @@ jobs:
         vcpkg install bzip2:x64-windows
         vcpkg install lz4:x64-windows
         vcpkg install snappy:x64-windows
-        vcpkg install zstd:x64-windows
-        vcpkg install rocksdb[bzip2,zlib,lz4,snappy,zstd]:x64-windows --recurse
+        vcpkg install rocksdb[bzip2,zlib,lz4,snappy]:x64-windows --recurse
       displayName: Install rocksdb:x64-windows & compression libraries
 
     - pwsh: |
