@@ -59,9 +59,8 @@ jobs:
     # NOTE: removal of the local plyvel directory is so that it doesn't interfere with import paths
     # from site-packages when running tests
     - script: |
-        py -3.10 -m pip install -U wheelhouse/python-rocksdb-cp310-cp310-win_amd64.whl
-        rm -r rocksdb
-        pytest
+        py -3.10 -m pip install -U wheelhouse/python_rocksdb-0.7.0-cp310-cp310-win_amd64.whl
+        pytest ./rocksdb/tests
       displayName: Install from wheel and test
       continueOnError: true
 

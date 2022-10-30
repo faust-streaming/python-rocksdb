@@ -40,7 +40,7 @@ setup(
     packages=find_packages('.'),
     ext_modules=[Extension(
         'rocksdb._rocksdb',
-        sources=['rocksdb/_rocksdb.cpp'],
+        sources=['rocksdb/_rocksdb.pyx'],
         extra_compile_args=extra_compile_args,
         language='c++',
         libraries=libraries,
