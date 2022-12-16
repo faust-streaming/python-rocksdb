@@ -12,11 +12,13 @@ test-command = ['pytest --pyargs rocksdb']
 
 manylinux-x86_64-image = "manylinux2014"
 
+environment = {ROCKSDB_VER="v6.14.6", LIBROCKSDB_PATH="/opt/rocksdb-$ROCKSDB_VER"}
+
 [tool.cibuildwheel.macos]
 
 [tool.cibuildwheel.linux]
 # Avoid re-building the C library in every iteration by testing for the build directory.
-before-build = "yum install -y bzip2-devel lz4-devel snappy-devel zlib-devel python3-Cython && (    test -d ${{ env.LIBROCKSDB_PATH }} || (    git clone https://github.com/facebook/rocksdb --depth 1 --branch ${{ matrix.rocksdb_ver }} ${{ env.LIBROCKSDB_PATH }} &&  cd ${{ env.LIBROCKSDB_PATH }} &&  CXXFLAGS='-flto -Os -s' PORTABLE=1 make shared_lib -j 4  )) && pushd ${{ env.LIBROCKSDB_PATH }} && make install-shared &&  ldconfig && popd"
+before-build = "yum install -y bzip2-devel lz4-devel snappy-devel zlib-devel python3-Cython && (test -d $LIBROCKSDB_PATH || (  git clone https://github.com/facebook/rocksdb --depth 1 --branch $ROCKSDB_VER $LIBROCKSDB_PATH &&  cd $LIBROCKSDB_PATH &&  CXXFLAGS='-flto -Os -s' PORTABLE=1 make shared_lib -j 4  )) && pushd $LIBROCKSDB_PATH && make install-shared &&  ldconfig && popd"
 
 [tool.cibuildwheel.windows]
 before-build = "pip install delvewheel"
