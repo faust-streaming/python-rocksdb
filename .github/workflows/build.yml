@@ -52,12 +52,13 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest]
-        py_ver: ['3.7', '3.8', '3.9', '3.10']
+        py_ver: ['3.7', '3.8', '3.9', '3.10', '3.11']
         rocksdb_ver: ['v6.29.3', 'v6.25.3', 'v6.11.4']
 
     steps:
-      - uses: actions/checkout@v2
-        name: 'Checkout source repository'
+      - uses: actions/checkout@v3
+        with:
+            fetch-depth: 0
 
       - uses: actions/setup-python@v2
         name: 'Set up Python ${{ matrix.py_ver }}'
