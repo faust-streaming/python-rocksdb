@@ -34,7 +34,7 @@ except pkgconfig.PackageNotFoundError:
     }
 
 if platform.system() == 'Darwin':
-    extra_compile_args += ['-mmacosx-version-min=10.7', '-stdlib=libc++']
+    extra_compile_args += ['-mmacosx-version-min=11.0', '-stdlib=libc++']
 
 if platform.system() == 'Windows':
     extra_compile_args.remove('-Wextra')
