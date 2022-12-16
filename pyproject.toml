@@ -27,6 +27,10 @@ before-build = [
     'export PKG_CONFIG_PATH="/opt/homebrew/opt/rocksdb@6/lib/pkgconfig"',
     "(test -d $LIBROCKSDB_PATH || (  git clone https://github.com/facebook/rocksdb --depth 1 --branch $ROCKSDB_VER $LIBROCKSDB_PATH &&  cd $LIBROCKSDB_PATH &&  CXXFLAGS='-flto -Os' PORTABLE=1 make shared_lib -j 4  )) && pushd $LIBROCKSDB_PATH && make install-shared &&  update_dyld_shared_cache && popd"
 ]
+repair-wheel-command = """\
+DYLD_LIBRARY_PATH=$REPAIR_LIBRARY_PATH delocate-wheel \
+--require-archs {delocate_archs} -w {dest_dir} -v {wheel}\
+"""
 
 [tool.cibuildwheel.windows]
 before-build = [
