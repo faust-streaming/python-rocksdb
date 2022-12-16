@@ -15,7 +15,7 @@ on:
 
 jobs:
   build_wheels:
-    name: 'Build wheels'
+    name: 'Build and test wheels'
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
