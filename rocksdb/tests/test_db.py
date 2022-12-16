@@ -19,7 +19,8 @@ class TestHelper(unittest.TestCase):
         self.addCleanup(self._close_db)
 
     def _close_db(self):
-        del self.db
+        if hasattr(self, 'db'):
+            del self.db
         gc.collect()
         if os.path.exists(self.db_loc):
             shutil.rmtree(self.db_loc)
@@ -274,6 +275,14 @@ class TestDB(TestHelper):
 
         self.db.compact_range()
 
+    def test_write_ignore_missing_column_families(self):
+        self.db.put(b"a", b"1", ignore_missing_column_families=True)
+
+    def test_write_no_slowdown(self):
+        self.db.put(b"a", b"1", no_slowdown=True)
+
+    def test_write_low_pri(self):
+        self.db.put(b"a", b"1", low_pri=True)
 
 class AssocCounter(rocksdb.interfaces.AssociativeMergeOperator):
     def merge(self, key, existing_value, value):
@@ -457,6 +466,44 @@ class TestPrefixExtractor(TestHelper):
             self.db.put(keyy, b'y')
             self.db.put(keyz, b'z')
 
+
+    def test_prefix_iterkeys(self):
+        self._fill_db()
+        self.assertEqual(b'x', self.db.get(b'00001.x'))
+        self.assertEqual(b'y', self.db.get(b'00001.y'))
+        self.assertEqual(b'z', self.db.get(b'00001.z'))
+
+        it = self.db.iterkeys()
+        it.seek(b'00002')
+
+        ref = [b'00002.x', b'00002.y', b'00002.z']
+        ret = takewhile(lambda key: key.startswith(b'00002'), it)
+        self.assertEqual(ref, list(ret))
+
+    def test_prefix_iteritems(self):
+        self._fill_db()
+
+        it = self.db.iteritems()
+        it.seek(b'00002')
+
+        ref = {b'00002.z': b'z', b'00002.y': b'y', b'00002.x': b'x'}
+        ret = takewhile(lambda item: item[0].startswith(b'00002'), it)
+        self.assertEqual(ref, dict(ret))
+
+class TestFixedPrefixExtractor(TestHelper):
+    def setUp(self):
+        TestHelper.setUp(self)
+        opts = rocksdb.Options(create_if_missing=True, prefix_extractor=4)
+        self.db = rocksdb.DB(os.path.join(self.db_loc, 'test'), opts)
+
+    def _fill_db(self):
+        for x in range(3000):
+            keyx = b'%05x.%b' % (x, b'x')
+            keyy = b'%05x.%b' % (x, b'y')
+            keyz = b'%05x.%b' % (x, b'z')
+            self.db.put(keyx, b'x')
+            self.db.put(keyy, b'y')
+            self.db.put(keyz, b'z')
 
     def test_prefix_iterkeys(self):
         self._fill_db()

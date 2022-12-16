@@ -3,15 +3,15 @@ Welcome to python-rocksdb's documentation!
 
 Overview
 --------
+
 Python bindings to the C++ interface of http://rocksdb.org/ using cython::
 
     import rocksdb
     db = rocksdb.DB("test.db", rocksdb.Options(create_if_missing=True))
     db.put(b"a", b"b")
-    print db.get(b"a")
+    print(db.get(b"a"))
 
-
-Tested with python2.7 and python3.4 and RocksDB version 5.3.0
+Tested with python3.8, python3.9, python3.10, and RocksDB version 6.11.4.
 
 .. toctree::
     :maxdepth: 2
@@ -25,9 +25,9 @@ Tested with python2.7 and python3.4 and RocksDB version 5.3.0
 Contributing
 ------------
 
-Source can be found on `github <https://github.com/stephan-hof/pyrocksdb>`_.
+Source can be found on `github <https://github.com/faust-streaming/python-rocksdb>`_.
 Feel free to fork and send pull-requests or create issues on the
-`github issue tracker <https://github.com/stephan-hof/pyrocksdb/issues>`_
+`github issue tracker <https://github.com/faust-streaming/python-rocksdb/issues>`_
 
 RoadMap/TODO
 ------------

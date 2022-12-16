@@ -9,9 +9,11 @@ from .status cimport Status
 from .db cimport DB
 from .env cimport Env
 
+# TODO: For rocksdb >= 6.21.0, change to `rocksdb/utilities/backup_engine.h`.
 cdef extern from "rocksdb/utilities/backupable_db.h" namespace "rocksdb":
     ctypedef uint32_t BackupID
 
+    # TODO: For rocksdb >= 6.21.0, rename to `BackupEngineOptions`.
     cdef cppclass BackupableDBOptions:
         BackupableDBOptions(const string& backup_dir)
 
@@ -29,6 +31,7 @@ cdef extern from "rocksdb/utilities/backupable_db.h" namespace "rocksdb":
         Status RestoreDBFromBackup(BackupID, string&, string&) nogil except+
         Status RestoreDBFromLatestBackup(string&, string&) nogil except+
 
+    # TODO: For rocksdb >= 6.21.0, swap order of first two parameters.
     cdef Status BackupEngine_Open "rocksdb::BackupEngine::Open"(
             Env*,
             BackupableDBOptions&,
