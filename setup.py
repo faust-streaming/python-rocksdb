@@ -45,7 +45,7 @@ if platform.system() == 'Windows':
 rocksdb_extension = Extension(
     'rocksdb._rocksdb',
     [
-        'rocksdb/_rocksdb.pyx',
+        os.path.join('rocksdb','_rocksdb.pyx'),
     ],
     extra_compile_args=extra_compile_args,
     language='c++',
