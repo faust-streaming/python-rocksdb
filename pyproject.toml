@@ -24,7 +24,7 @@ before-build = [
     "brew install bzip2 lz4 snappy zlib cython git",
     'export LDFLAGS="-L/usr/local/opt/bzip2/lib"',
     'export CPPFLAGS="-I/usr/local/opt/bzip2/include"',
-    'brew install https://raw.githubusercontent.com/Homebrew/homebrew-core/2b3603b0101cba160f54418d81594a98b382b3fc/Formula/rocksdb.rb'  # skip building RocksDB 6.11.4 and install from here, for now
+    'brew install rocksdb@6.11.4',  # Just install from Brew for now
 #    "(test -d $LIBROCKSDB_PATH || (  git clone https://github.com/facebook/rocksdb --depth 1 --branch $ROCKSDB_VER $LIBROCKSDB_PATH &&  cd $LIBROCKSDB_PATH &&  CXXFLAGS='-flto -Os' PORTABLE=1 make shared_lib -j 4  )) && pushd $LIBROCKSDB_PATH && make install-shared &&  update_dyld_shared_cache && popd"
 ]
 repair-wheel-command = """\
