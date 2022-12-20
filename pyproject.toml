@@ -19,7 +19,7 @@ environment = {ROCKSDB_VER="v6.14.6", LIBROCKSDB_PATH="/opt/rocksdb-$ROCKSDB_VER
 before-build = "yum install -y bzip2-devel lz4-devel snappy-devel zlib-devel python3-Cython && (test -d $LIBROCKSDB_PATH || (  git clone https://github.com/facebook/rocksdb --depth 1 --branch $ROCKSDB_VER $LIBROCKSDB_PATH &&  cd $LIBROCKSDB_PATH &&  CXXFLAGS='-flto -Os -s' PORTABLE=1 make shared_lib -j 4  )) && pushd $LIBROCKSDB_PATH && make install-shared &&  ldconfig && popd"
 
 [tool.cibuildwheel.macos]
-environment = {ROCKSDB_VER="v6.14.6", LIBROCKSDB_PATH="/usr/local/opt/rocksdb-$ROCKSDB_VER", REPAIR_LIBRARY_PATH="/usr/local/lib/"}
+environment = {ROCKSDB_VER="v6.14.6", LIBROCKSDB_PATH="/usr/local/opt/rocksdb-$ROCKSDB_VER", REPAIR_LIBRARY_PATH="$LIBROCKS_DB_PATH"}
 before-build = [
     "brew install bzip2 lz4 snappy zlib cython git",
     'export LDFLAGS="-L/usr/local/opt/bzip2/lib"',
@@ -28,7 +28,7 @@ before-build = [
     "(test -d $LIBROCKSDB_PATH || (  git clone https://github.com/facebook/rocksdb --depth 1 --branch $ROCKSDB_VER $LIBROCKSDB_PATH &&  cd $LIBROCKSDB_PATH &&  CXXFLAGS='-flto -Os' PORTABLE=1 make shared_lib -j 4  )) && pushd $LIBROCKSDB_PATH && make install-shared &&  update_dyld_shared_cache && popd"
 ]
 repair-wheel-command = """\
-delocate-listdeps {wheel} &&
+DYLD_LIBRARY_PATH=$LD_LIBRARY_PATH delocate-listdeps {wheel} &&
 DYLD_LIBRARY_PATH=$LD_LIBRARY_PATH delocate-wheel \
 --require-archs {delocate_archs} -w {dest_dir} -v {wheel}\
 """
