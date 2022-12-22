@@ -19,7 +19,7 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest]
-        rocksdb_ver: ['v6.29.3', 'v6.25.3', 'v6.11.4']
+        rocksdb_ver: ['v6.11.4', '6.14.6']
 
     steps:
       - uses: actions/cache@v2
