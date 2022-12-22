@@ -83,12 +83,6 @@ cdef extern from "rocksdb/db.h" namespace "rocksdb":
     #     string largestkey
     #     LiveFileMetaData files
 
-    cdef struct ColumnFamilyMetaData:
-        uint64_t size
-        uint64_t file_count
-        # string largestkey
-        # LevelMetaData levels
-
     cdef cppclass Range:
         Range(const Slice&, const Slice&)
 
