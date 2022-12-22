@@ -56,10 +56,12 @@ jobs:
         rocksdb_ver: ['v6.29.3', 'v6.25.3', 'v6.11.4']
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
         name: 'Checkout source repository'
+        with:
+            fetch-depth: 0
 
-      - uses: actions/setup-python@v2
+      - uses: actions/setup-python@v4
         name: 'Set up Python ${{ matrix.py_ver }}'
         with:
           python-version: ${{ matrix.py_ver }}
