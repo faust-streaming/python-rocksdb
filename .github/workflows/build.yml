@@ -19,7 +19,7 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest]
-        rocksdb_ver: ['v6.29.3', 'v6.25.3', 'v6.11.4']
+        rocksdb_ver: ['v6.29.3', 'v6.25.3', 'v6.14.6']
 
     steps:
       - uses: actions/cache@v2
@@ -52,14 +52,16 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest]
-        py_ver: ['3.7', '3.8', '3.9', '3.10']
-        rocksdb_ver: ['v6.29.3', 'v6.25.3', 'v6.11.4']
+        py_ver: ['3.7', '3.8', '3.9', '3.10', '3.11']
+        rocksdb_ver: ['v6.29.3', 'v6.25.3', 'v6.14.6']
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
         name: 'Checkout source repository'
+        with:
+            fetch-depth: 0
 
-      - uses: actions/setup-python@v2
+      - uses: actions/setup-python@v4
         name: 'Set up Python ${{ matrix.py_ver }}'
         with:
           python-version: ${{ matrix.py_ver }}

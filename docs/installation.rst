@@ -2,7 +2,6 @@ Installing
 ==========
 .. highlight:: bash
 
-
 With distro package and pypi
 ****************************
 

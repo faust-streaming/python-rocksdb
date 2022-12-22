@@ -1,4 +1,4 @@
-FROM ubuntu:20.04
+FROM ubuntu:22.04
 ENV SRC /home/tester/src
 ENV DEBIAN_FRONTEND noninteractive
 

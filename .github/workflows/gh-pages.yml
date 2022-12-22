@@ -1,10 +1,10 @@
 name: Pages
 
 on:
-  push:
+  release:
+    types: [created]
     branches:
-    - master
-    - create-gh-pages
+      - 'master'
 
 jobs:
   build:
