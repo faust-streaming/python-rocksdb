@@ -16,10 +16,12 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-#        dist: [bullseye, bookworm]
         dist: [bullseye]
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
+        name: 'Checkout source repository'
+        with:
+            fetch-depth: 0
 
       - name: Install build-dependencies
         # TODO(dato): find out why setup.py links to compression libraries

@@ -18,9 +18,6 @@ extra_compile_args = [
     '-fno-rtti',
 ]
 
-if platform.system() == 'Darwin':
-    extra_compile_args += ['-mmacosx-version-min=10.7', '-stdlib=libc++']
-
 if sys.version_info < (3 , 0):
     raise Exception('python-rocksdb requires Python 3.x')
 
@@ -36,10 +33,19 @@ except pkgconfig.PackageNotFoundError:
         'libraries': ['rocksdb', 'snappy', 'bz2', 'z', 'lz4'],
     }
 
+if platform.system() == 'Darwin':
+    extra_compile_args += ['-mmacosx-version-min=10.9', '-stdlib=libc++']
+
+if platform.system() == 'Windows':
+    extra_compile_args.remove('-Wextra')
+    extra_compile_args.remove('-Wconversion')
+    ext_args['libraries'].remove('z')
+    ext_args['libraries'].append('zlib')
+
 rocksdb_extension = Extension(
     'rocksdb._rocksdb',
     [
-        'rocksdb/_rocksdb.pyx',
+        os.path.join('rocksdb','_rocksdb.pyx'),
     ],
     extra_compile_args=extra_compile_args,
     language='c++',
@@ -48,14 +54,14 @@ rocksdb_extension = Extension(
 
 setup(
     name="faust-streaming-rocksdb",
-    version='0.9.1',
-    description="Python bindings for RocksDB",
+    use_scm_version=True,
+    description="Python bindings for RocksDB, primarily for use with Faust",
     keywords='rocksdb',
-    author='Ming Hsuan Tu',
-    author_email="qrnnis2623891@gmail.com",
+    author='William Barnhart',
+    author_email="williambbarnhart@gmail.com",
     url="https://github.com/faust-streaming/python-rocksdb",
     license='BSD License',
-    setup_requires=['setuptools>=25', 'Cython>=0.20'],
+    setup_requires=['setuptools>=25', 'Cython>=0.20', 'setuptools_scm'],
     install_requires=['setuptools>=25'],
     package_dir={'rocksdb': 'rocksdb'},
     packages=find_packages('.'),
