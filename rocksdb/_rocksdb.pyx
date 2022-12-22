@@ -3,6 +3,7 @@ import cython
 from libcpp.string cimport string
 from libcpp.deque cimport deque
 from libcpp.vector cimport vector
+from libcpp.map cimport map
 from cpython cimport bool as py_bool
 from libcpp cimport bool as cpp_bool
 from libc.stdint cimport uint32_t
@@ -31,6 +32,7 @@ from . cimport table_factory
 from . cimport memtablerep
 from . cimport universal_compaction
 from . cimport transaction_db
+from . cimport metadata
 
 # Enums are the only exception for direct imports
 # Their name als already unique enough
@@ -1113,6 +1115,24 @@ cdef class ColumnFamilyOptions(object):
         def __set__(self, value):
             self.copts.max_bytes_for_level_multiplier_additional = value
 
+    property soft_rate_limit:
+        def __get__(self):
+            return self.copts.soft_rate_limit
+        def __set__(self, value):
+            self.copts.soft_rate_limit = value
+
+    property hard_rate_limit:
+        def __get__(self):
+            return self.copts.hard_rate_limit
+        def __set__(self, value):
+            self.copts.hard_rate_limit = value
+
+    property rate_limit_delay_max_milliseconds:
+        def __get__(self):
+            return self.copts.rate_limit_delay_max_milliseconds
+        def __set__(self, value):
+            self.copts.rate_limit_delay_max_milliseconds = value
+
     property arena_block_size:
         def __get__(self):
             return self.copts.arena_block_size
@@ -1124,6 +1144,12 @@ cdef class ColumnFamilyOptions(object):
             return self.copts.disable_auto_compactions
         def __set__(self, value):
             self.copts.disable_auto_compactions = value
+
+    property purge_redundant_kvs_while_flush:
+        def __get__(self):
+            return self.copts.purge_redundant_kvs_while_flush
+        def __set__(self, value):
+            self.copts.purge_redundant_kvs_while_flush = value
 
     # FIXME: remove to util/options_helper.h
     #  property allow_os_buffer:
@@ -1400,12 +1426,6 @@ cdef class Options(ColumnFamilyOptions):
         def __set__(self, value):
             self.opts.base_background_compactions = value
 
-    property max_background_compactions:
-        def __get__(self):
-            return self.opts.max_background_compactions
-        def __set__(self, value):
-            self.opts.max_background_compactions = value
-
     property max_subcompactions:
         def __get__(self):
             return self.opts.max_subcompactions
@@ -1472,6 +1492,18 @@ cdef class Options(ColumnFamilyOptions):
         def __set__(self, value):
             self.opts.manifest_preallocation_size = value
 
+    property enable_write_thread_adaptive_yield:
+        def __get__(self):
+            return self.opts.enable_write_thread_adaptive_yield
+        def __set__(self, value):
+            self.opts.enable_write_thread_adaptive_yield = value
+
+    property allow_concurrent_memtable_write:
+        def __get__(self):
+            return self.opts.allow_concurrent_memtable_write
+        def __set__(self, value):
+            self.opts.allow_concurrent_memtable_write = value
+
     property allow_mmap_reads:
         def __get__(self):
             return self.opts.allow_mmap_reads
@@ -1507,6 +1539,12 @@ cdef class Options(ColumnFamilyOptions):
             return self.opts.is_fd_close_on_exec
         def __set__(self, value):
             self.opts.is_fd_close_on_exec = value
+
+    property skip_log_error_on_recovery:
+        def __get__(self):
+            return self.opts.skip_log_error_on_recovery
+        def __set__(self, value):
+            self.opts.skip_log_error_on_recovery = value
 
     property stats_dump_period_sec:
         def __get__(self):
@@ -2464,8 +2502,26 @@ cdef class DB(object):
         else:
             return None
 
+    # def get_map_property(self, prop, ColumnFamilyHandle column_family=None):
+    #     cdef map[string, string] value
+    #     cdef Slice c_prop = bytes_to_slice(prop)
+    #     cdef cpp_bool ret = False
+    #     cdef db.ColumnFamilyHandle* cf_handle = NULL
+    #     if column_family:
+    #         cf_handle = column_family.get_handle()
+    #     else:
+    #         cf_handle = self.db.DefaultColumnFamily()
+
+    #     with nogil:
+    #         ret = self.db.GetMapProperty(cf_handle, c_prop, cython.address(value))
+
+    #     if ret:
+    #         return value
+    #     else:
+    #         return None
+
     def get_live_files_metadata(self):
-        cdef vector[db.LiveFileMetaData] metadata
+        cdef vector[metadata.LiveFileMetaData] metadata
 
         with nogil:
             self.wrapped_db.GetLiveFilesMetaData(cython.address(metadata))
@@ -2486,7 +2542,7 @@ cdef class DB(object):
         return ret
 
     def get_column_family_meta_data(self, ColumnFamilyHandle column_family=None):
-        cdef db.ColumnFamilyMetaData metadata
+        cdef metadata.ColumnFamilyMetaData metadata
 
         cdef db.ColumnFamilyHandle* cf_handle = self.wrapped_db.DefaultColumnFamily()
         if column_family:
@@ -2644,6 +2700,18 @@ def repair_db(db_name, Options opts):
     st = db.RepairDB(db_path, deref(opts.opts))
     check_status(st)
 
+# TODO Figure out API to add descriptors. See constructor which deals with vector of ColumnFamilyDescriptor
+# def repair_db(db_name, Options opts, descriptors):
+#     cdef Status st
+#     cdef string db_path
+#     cdef vector[db.ColumnFamilyDescriptor] c_descriptors
+
+#     for d in descriptors:
+#         c_descriptors.push_back(<db.ColumnFamilyDescriptor>(d))
+
+#     db_path = path_to_string(db_name)
+#     st = db.RepairDB(db_path, deref(opts.opts), c_descriptors)
+#     check_status(st)
 
 def list_column_families(db_name, Options opts):
     cdef Status st
