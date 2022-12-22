@@ -504,57 +504,6 @@ Options objects
         | *Type:* ``bool``
         | *Default:* ``False``
 
-    .. py:attribute:: soft_rate_limit
-
-        .. IMPORTANT::
-
-            NOT SUPPORTED ANYMORE -- this option is no longer used
-
-        Puts are delayed 0-1 ms when any level has a compaction score that exceeds
-        soft_rate_limit. This is ignored when == 0.0.
-        CONSTRAINT: soft_rate_limit <= hard_rate_limit. If this constraint does not
-        hold, RocksDB will set soft_rate_limit = hard_rate_limit.
-        A value of ``0`` means disabled.
-
-        | *Type:* ``float``
-        | *Default:* ``0``
-
-    .. py:attribute:: hard_rate_limit
-
-        .. IMPORTANT::
-
-            NOT SUPPORTED ANYMORE -- this option is no longer used
-
-        Puts are delayed 1ms at a time when any level has a compaction score that
-        exceeds hard_rate_limit. This is ignored when <= 1.0.
-        A value fo ``0`` means disabled.
-
-        | *Type:* ``float``
-        | *Default:* ``0``
-
-    .. py:attribute:: rate_limit_delay_max_milliseconds
-
-        .. IMPORTANT::
-
-            NOT SUPPORTED ANYMORE -- this option is no longer used
-
-        Max time a put will be stalled when hard_rate_limit is enforced. If 0, then
-        there is no limit.
-
-        | *Type:* ``int``
-        | *Default:* ``1000``
-
-    .. py:attribute:: purge_redundant_kvs_while_flush
-
-        .. IMPORTANT::
-
-            NOT SUPPORTED ANYMORE -- this option is no longer used
-
-        Purge duplicate/deleted keys when a memtable is flushed to storage.
-
-        | *Type:* ``bool``
-        | *Default:* ``True``
-
 
 
 .. py:class:: rocksdb.Options
@@ -818,14 +767,6 @@ Options objects
 
         | *Type:* ``bool``
         | *Default:* ``True``
-
-    .. py:attribute:: skip_log_error_on_recovery
-
-        Skip log corruption error on recovery
-        (If client is ok with losing most recent changes)
-
-        | *Type:* ``bool``
-        | *Default:* ``False``
 
     .. py:attribute:: stats_dump_period_sec
 

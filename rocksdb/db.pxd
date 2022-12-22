@@ -4,6 +4,7 @@ from .status cimport Status
 from libcpp cimport bool as cpp_bool
 from libcpp.string cimport string
 from libcpp.vector cimport vector
+from .types cimport SequenceNumber
 from libcpp.map cimport map
 from libcpp.unordered_map cimport unordered_map
 from libcpp.memory cimport shared_ptr
@@ -48,13 +49,45 @@ cdef extern from "cpp/write_batch_iter_helper.hpp" namespace "py_rocks":
 
 
 cdef extern from "rocksdb/db.h" namespace "rocksdb":
+    ctypedef uint64_t SequenceNumber
     string kDefaultColumnFamilyName
 
-    # todo TableProperties
+    #todo TableProperties
     ctypedef unordered_map[string, shared_ptr[const TableProperties]] TablePropertiesCollection
-                           
+
     cdef struct GetMergeOperandsOptions:
         uint64_t expected_max_number_of_operands
+
+    cdef struct LiveFileMetaData:
+        string name
+        int level
+        uint64_t size
+        string smallestkey
+        string largestkey
+        SequenceNumber smallest_seqno
+        SequenceNumber largest_seqno
+
+    # cdef struct SstFileMetaData:
+    #     uint64_t size
+    #     string name
+    #     uint64_t file_number
+    #     string db_path
+    #     string smallestkey
+    #     string largestkey
+    #     SequenceNumber smallest_seqno
+    #     SequenceNumber largest_seqno
+
+    # cdef struct LevelMetaData:
+    #     int level
+    #     uint64_t size
+    #     string largestkey
+    #     LiveFileMetaData files
+
+    cdef struct ColumnFamilyMetaData:
+        uint64_t size
+        uint64_t file_count
+        # string largestkey
+        # LevelMetaData levels
 
     cdef cppclass Range:
         Range(const Slice&, const Slice&)
@@ -198,7 +231,7 @@ cdef extern from "rocksdb/db.h" namespace "rocksdb":
 
         Status DestroyColumnFamilyHandle(
             ColumnFamilyHandle*) nogil except+
-        
+
         int NumberLevels(ColumnFamilyHandle*) nogil except+
         int MaxMemCompactionLevel(ColumnFamilyHandle*) nogil except+
         int Level0StopWriteTrigger(ColumnFamilyHandle*) nogil except+

@@ -2,7 +2,12 @@
 name: 'Build'
 
 on:
+  pull_request:
   push:
+    branches:
+      - 'master'
+      - 'force_ci/all/**'    # For development, forcing all workflows to run.
+      - 'force_ci/build/**'  # For debugging and/or only forcing this workflow.
 
 jobs:
   # Build the RocksDB C library and cache the result.
@@ -14,7 +19,7 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest]
-        rocksdb_ver: ['v6.14.6', 'v6.11.4']
+        rocksdb_ver: ['v6.29.3', 'v6.25.3', 'v6.11.4']
 
     steps:
       - uses: actions/cache@v2
@@ -47,8 +52,8 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest]
-        py_ver: ['3.7', '3.8', '3.9']
-        rocksdb_ver: ['v6.14.6', 'v6.11.4']
+        py_ver: ['3.7', '3.8', '3.9', '3.10']
+        rocksdb_ver: ['v6.29.3', 'v6.25.3', 'v6.11.4']
 
     steps:
       - uses: actions/checkout@v2

@@ -64,4 +64,4 @@ Building python-rocksdb
     apt-get install python-virtualenv python-dev
     virtualenv venv
     source venv/bin/activate
-    pip install git+git://github.com/NightTsarina/python-rocksdb.git#egg=python-rocksdb
+    pip install git+git://github.com/faust-streaming/python-rocksdb.git#egg=python-rocksdb

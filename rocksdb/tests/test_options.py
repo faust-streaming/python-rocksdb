@@ -1,6 +1,8 @@
-import unittest
 import sys
+import unittest
+
 import rocksdb
+
 
 class TestFilterPolicy(rocksdb.interfaces.FilterPolicy):
     def create_filter(self, keys):
@@ -76,6 +78,48 @@ class TestOptions(unittest.TestCase):
         with self.assertRaises(TypeError):
             opts.compression_opts = list(1, 2)
 
+        new_opts = {
+            'window_bits': 1,
+            'level': 2,
+            'strategy': 3,
+            'max_dict_bytes': 4,
+            'zstd_max_train_bytes': 15,
+            'parallel_threads': 4,
+            'enabled': True}
+        opts.compression_opts = new_opts
+        self.assertIsNot(new_opts, opts.compression_opts)
+        for key, value in new_opts.items():
+            self.assertEqual(opts.compression_opts[key], value)
+
+    def test_bottommost_compression_opts(self):
+        opts = rocksdb.Options()
+        bottommost_compression_opts = opts.bottommost_compression_opts
+        # default value
+        self.assertEqual(isinstance(bottommost_compression_opts, dict), True)
+        self.assertEqual(bottommost_compression_opts['window_bits'], -14)
+        self.assertEqual(bottommost_compression_opts['level'], 2**15 - 1)
+        self.assertEqual(bottommost_compression_opts['strategy'], 0)
+        self.assertEqual(bottommost_compression_opts['max_dict_bytes'], 0)
+        self.assertEqual(bottommost_compression_opts['zstd_max_train_bytes'], 0)
+        self.assertEqual(bottommost_compression_opts['parallel_threads'], 1)
+        self.assertEqual(bottommost_compression_opts['enabled'], False)
+
+        with self.assertRaises(TypeError):
+            opts.compression_opts = list(1, 2)
+
+        new_opts = {
+            'window_bits': 1,
+            'level': 2,
+            'strategy': 3,
+            'max_dict_bytes': 4,
+            'zstd_max_train_bytes': 15,
+            'parallel_threads': 4,
+            'enabled': True,
+        }
+        opts.bottommost_compression_opts = new_opts
+        self.assertIsNot(new_opts, opts.bottommost_compression_opts)
+        for key, value in new_opts.items():
+            self.assertEqual(opts.bottommost_compression_opts[key], value)
         opts.compression_opts = {'window_bits': 1, 'level': 2, 'strategy': 3, 'max_dict_bytes': 4, 'zstd_max_train_bytes': 15, 'parallel_threads': 4, 'enabled': True}
         compression_opts = opts.compression_opts
         self.assertEqual(compression_opts['window_bits'], 1)
@@ -195,11 +239,86 @@ class TestOptions(unittest.TestCase):
         self.assertEqual(2, uopts['min_merge_width'])
         self.assertEqual(30, uopts['max_merge_width'])
 
-    def test_row_cache(self):
-        opts = rocksdb.Options()
-        self.assertIsNone(opts.row_cache)
-        opts.row_cache = cache = rocksdb.LRUCache(2*1024*1024)
-        self.assertEqual(cache, opts.row_cache)
+    def test_rocksdb_options(self):
+        NOTNONE = object()
+        UNSETTABLE = object()
+        for option, def_value, new_value in (
+                ('max_open_files', NOTNONE, 10),
+                ('row_cache', None, rocksdb.LRUCache(2*1024*1024)),
+                ('max_file_opening_threads', NOTNONE, 10),
+                ('max_total_wal_size', NOTNONE, 10),
+                ('max_background_jobs', NOTNONE, 10),
+                ('base_background_compactions', NOTNONE, 10),
+                ('max_background_compactions', NOTNONE, 10),
+                ('max_subcompactions', NOTNONE, 10),
+                ('max_background_flushes', NOTNONE, 10),
+                ('max_log_file_size', NOTNONE, 10),
+                ('log_file_time_to_roll', NOTNONE, 10),
+                ('keep_log_file_num', 1000, 10),
+                ('recycle_log_file_num', NOTNONE, 10),
+                ('max_manifest_file_size', NOTNONE, 10),
+                ('table_cache_numshardbits', NOTNONE, 10),
+                ('wal_ttl_seconds', NOTNONE, 10),
+                ('wal_size_limit_mb', NOTNONE, 10),
+                ('manifest_preallocation_size', NOTNONE, 10),
+                ('allow_mmap_reads', False, True),
+                ('allow_mmap_writes', False, True),
+                ('use_direct_reads', False, True),
+                ('use_direct_io_for_flush_and_compaction', False, True),
+                ('allow_fallocate', True, False),
+                ('is_fd_close_on_exec', True, False),
+                ('stats_dump_period_sec', 600, 3600),
+                ('stats_persist_period_sec', 600, 3600),
+                ('persist_stats_to_disk', False, True),
+                ('stats_history_buffer_size', 1024*1024, 1024),
+                ('advise_random_on_open', True, False),
+                ('db_write_buffer_size', 0, 100),
+                ('new_table_reader_for_compaction_inputs', False, True),
+                ('compaction_readahead_size', 0, 10),
+                ('random_access_max_buffer_size', 1024*1024, 100),
+                ('writable_file_max_buffer_size', 1024*1024, 100),
+                ('use_adaptive_mutex', False, True),
+                ('bytes_per_sync', 0, 10),
+                ('wal_bytes_per_sync', 0, 10),
+                ('strict_bytes_per_sync', False, True),
+                ('enable_thread_tracking', False, True),
+                ('delayed_write_rate', 0, 10),
+                ('enable_pipelined_write', False, True),
+                ('unordered_write', False, True),
+                ('allow_concurrent_memtable_write', True, False),
+                ('enable_write_thread_adaptive_yield', True, False),
+                ('max_write_batch_group_size_bytes', 1 << 20, 10),
+                ('write_thread_max_yield_usec', 100, 200),
+                ('write_thread_slow_yield_usec', 3, 2000),
+                ('skip_stats_update_on_db_open', False, True),
+                ('skip_checking_sst_file_sizes_on_db_open', False, True),
+                ('allow_2pc', False, True),
+                ('fail_if_options_file_error', False, True),
+                ('dump_malloc_stats', False, True),
+                ('avoid_flush_during_recovery', False, True),
+                ('avoid_flush_during_shutdown', False, True),
+                ('allow_ingest_behind', False, True),
+                ('preserve_deletes', False, True),
+                ('two_write_queues', False, True),
+                ('manual_wal_flush', False, True),
+                ('atomic_flush', False, True),
+                ('avoid_unnecessary_blocking_io', False, True),
+                ('write_dbid_to_manifest', False, True),
+                ('log_readahead_size', 0, 10),
+                ('best_efforts_recovery', False, True),
+        ):
+            with self.subTest(option=option):
+                opts = rocksdb.Options()
+                if def_value is NOTNONE:
+                    self.assertIsNotNone(getattr(opts, option))
+                else:
+                    self.assertEqual(def_value, getattr(opts, option))
+                if new_value is UNSETTABLE:
+                    self.assertRaises(
+                        Exception, setattr, opts, option, new_value)
+                else:
+                    setattr(opts, option, new_value)
+                    self.assertEqual(getattr(opts, option), new_value)
 
     def test_max_open_files(self):
         opts = rocksdb.Options()
@@ -264,7 +383,7 @@ class TestOptions(unittest.TestCase):
     def test_recycle_log_file_num(self):
         opts = rocksdb.Options()
         self.assertIsNotNone(opts.recycle_log_file_num)
-        opts.recycle_log_file_num = 10        
+        opts.recycle_log_file_num = 10
         self.assertEqual(opts.recycle_log_file_num, 10)
 
     def test_stats_history_buffer_size(self):

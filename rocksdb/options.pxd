@@ -15,18 +15,36 @@ from .statistics cimport Statistics
 from .memtablerep cimport MemTableRepFactory
 from .universal_compaction cimport CompactionOptionsUniversal
 from .cache cimport Cache
-from . cimport advanced_options
+from .cimport advanced_options
 from .advanced_options cimport CompressionOptions
 from .advanced_options cimport AdvancedColumnFamilyOptions
 from .env cimport Env
 from .types cimport SequenceNumber
+from .compaction_filter cimport CompactionFilter, CompactionFilterFactory
+from .concurrent_task_limiter cimport ConcurrentTaskLimiter
 
 cdef extern from "rocksdb/options.h" namespace "rocksdb":
     ctypedef enum CpuPriority:
         kIdle
-        kLow
-        kNormal
+        KLow
+        KNormal
         kHigh
+
+    cdef cppclass CompressionOptions:
+        int window_bits;
+        int level;
+        int strategy;
+        uint32_t max_dict_bytes
+        # FIXME: add missing fields: max_dict_bytes, zstd_max_train_bytes,
+        # parallel_threads, enabled
+        CompressionOptions() except +
+        CompressionOptions(int, int, int, int) except +
+
+    ctypedef enum CompactionStyle:
+        kCompactionStyleLevel
+        kCompactionStyleUniversal
+        kCompactionStyleFIFO
+        kCompactionStyleNone
 
     ctypedef enum CompressionType:
         kNoCompression
@@ -48,8 +66,8 @@ cdef extern from "rocksdb/options.h" namespace "rocksdb":
         ColumnFamilyOptions* OptimizeUniversalStyleCompaction(uint64_t)
         const Comparator* comparator
         shared_ptr[MergeOperator] merge_operator
-        # TODO: compaction_filter
-        # TODO: compaction_filter_factory
+        CompactionFilter* compaction_filter
+        shared_ptr[CompactionFilterFactory] compaction_filter_factory
         size_t write_buffer_size
         advanced_options.CompressionType compression
         advanced_options.CompressionType bottommost_compression
@@ -69,6 +87,12 @@ cdef extern from "rocksdb/options.h" namespace "rocksdb":
         ColumnFamilyOptions()
         ColumnFamilyOptions(const Options& options)
         void Dump(Logger*)
+
+    ctypedef enum CompactionPri:
+        kByCompensatedSize
+        kOldestLargestSeqFirst
+        kOldestSmallestSeqFirst
+        kMinOverlappingRatio
 
     # This needs to be in _rocksdb.pxd so it will export into python
     cpdef enum AccessHint "rocksdb::DBOptions::AccessHint":
@@ -232,9 +256,15 @@ cdef extern from "rocksdb/options.h" namespace "rocksdb":
         cpp_bool ignore_missing_column_families
         cpp_bool no_slowdown
         cpp_bool low_pri
-        cpp_bool memtable_insert_hint_per_batch
+        cpp_bool memtable_insert_hint_per_back
         const Slice* timestamp
         WriteOptions() nogil except+
+
+    cdef cppclass ReadOptions:
+        cpp_bool verify_checksums
+        cpp_bool fill_cache
+        const Snapshot* snapshot
+        ReadTier read_tier
 
     cdef cppclass FlushOptions:
         cpp_bool wait
