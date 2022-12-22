@@ -1,13 +1,7 @@
 # vim:ts=2:sw=2:et:ai:sts=2
-name: 'Build and test distribution'
+name: 'Build and test wheels for release'
 
 on:
-  pull_request:
-    branches:
-      - 'master'
-  push:
-    branches:
-      - 'master'
   release:
     types: [created]
     branches:
