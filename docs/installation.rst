@@ -2,13 +2,6 @@ Installing
 ==========
 .. highlight:: bash
 
-With conda
-**********
-
-.. code-block:: bash
-
-    conda install -c conda-forge python-rocksdb
-
 With distro package and pypi
 ****************************
 
