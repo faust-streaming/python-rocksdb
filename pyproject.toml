@@ -16,7 +16,7 @@ environment = {ROCKSDB_VER="v6.14.6", LIBROCKSDB_PATH="/opt/rocksdb-$ROCKSDB_VER
 
 [tool.cibuildwheel.linux]
 # Avoid re-building the C library in every iteration by testing for the build directory.
-before-build = "yum install -y bzip2-devel lz4-devel snappy-devel zlib-devel python3-Cython && (test -d $LIBROCKSDB_PATH || (  git clone https://github.com/facebook/rocksdb --depth 1 --branch $ROCKSDB_VER $LIBROCKSDB_PATH &&  cd $LIBROCKSDB_PATH &&  CXXFLAGS='-flto -Os -s' PORTABLE=1 make shared_lib -j 4  )) && pushd $LIBROCKSDB_PATH && make install-shared &&  ldconfig && popd"
+before-build = "yum install -y bzip2-devel lz4-devel snappy-devel zlib-devel python3-Cython && (test -d $LIBROCKSDB_PATH || (  git clone https://github.com/facebook/rocksdb --depth 1 --branch $ROCKSDB_VER $LIBROCKSDB_PATH &&  cd $LIBROCKSDB_PATH &&  CXXFLAGS='-flto -Os -s' PORTABLE=1 make shared_lib -j $(nproc --all)  )) && pushd $LIBROCKSDB_PATH && make install-shared &&  ldconfig && popd"
 
 [tool.cibuildwheel.macos]
 environment = {ROCKSDB_VER="v6.14.6", LIBROCKSDB_PATH="/usr/local/opt/rocksdb-$ROCKSDB_VER", REPAIR_LIBRARY_PATH="$LIBROCKS_DB_PATH"}
@@ -24,7 +24,8 @@ before-build = [
     "brew install bzip2 lz4 snappy zlib cython git",
     'export LDFLAGS="-L/usr/local/opt/bzip2/lib"',
     'export CPPFLAGS="-I/usr/local/opt/bzip2/include"',
-    "(test -d $LIBROCKSDB_PATH || (  git clone https://github.com/facebook/rocksdb --depth 1 --branch $ROCKSDB_VER $LIBROCKSDB_PATH &&  cd $LIBROCKSDB_PATH &&  CXXFLAGS='-flto -Os' PORTABLE=1 make shared_lib -j 4  )) && pushd $LIBROCKSDB_PATH && make install-shared &&  update_dyld_shared_cache && popd",
+    'alias nproc="sysctl -n hw.logicalcpu"',
+    "(test -d $LIBROCKSDB_PATH || (  git clone https://github.com/facebook/rocksdb --depth 1 --branch $ROCKSDB_VER $LIBROCKSDB_PATH &&  cd $LIBROCKSDB_PATH &&  CXXFLAGS='-flto -Os' PORTABLE=1 make shared_lib -j $(nproc --all)  )) && pushd $LIBROCKSDB_PATH && make install-shared &&  update_dyld_shared_cache && popd",
     "otool -L librocksdb.6.14.dylib",
 ]
 repair-wheel-command = """\
