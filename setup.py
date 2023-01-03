@@ -9,7 +9,7 @@ from Cython.Build import cythonize
 from setuptools import Extension, setup, find_packages
 
 extra_compile_args = [
-    '-std=c++11',
+    '-std=c++17',
     '-O3',
     '-Wall',
     '-Wextra',
