@@ -22,8 +22,8 @@ before-build = "yum install -y bzip2-devel lz4-devel snappy-devel zlib-devel pyt
 before-build = [
     "brew install bzip2 lz4 snappy zlib cython git",
     "brew install alexreg/dev/rocksdb@6",
-    'export CPPFLAGS="-I/usr/local/Cellar/rocksdb@6/6.29.5/include"',
-    'export LDFLAGS="-L/usr/local/Cellar/rocksdb@6/6.29.5/lib -L/usr/local/Cellar/snappy/1.1.9/lib -L/usr/local/Cellar/lz4/1.9.4/lib"',
+    'export LDFLAGS="-L/usr/local/opt/rocksdb@6/lib"',
+    'export CPPFLAGS="-I/usr/local/opt/rocksdb@6/include"',
     'export PKG_CONFIG_PATH="/usr/local/opt/rocksdb@6/lib/pkgconfig"',
 ]
 
