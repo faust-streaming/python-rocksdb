@@ -1,0 +1,106 @@
+# vim:ts=2:sw=2:et:ai:sts=2
+name: 'Build'
+
+on:
+  pull_request:
+  push:
+    branches:
+      - 'master'
+      - 'force_ci/all/**'    # For development, forcing all workflows to run.
+      - 'force_ci/build/**'  # For debugging and/or only forcing this workflow.
+
+jobs:
+  # Build the RocksDB C library and cache the result.
+  librocksdb:
+    name: 'Build librocksdb'
+    runs-on: ${{ matrix.os }}
+    env:
+      LIBROCKSDB_PATH: /opt/rocksdb-${{ matrix.rocksdb_ver }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest]
+        rocksdb_ver: ['v6.29.3', 'v6.25.3', 'v6.14.6']
+
+    steps:
+      - uses: actions/cache@v2
+        id: cache-librocksdb
+        with:
+          key: ${{ matrix.os }}-librocksdb-${{ matrix.rocksdb_ver }}
+          path: ${{ env.LIBROCKSDB_PATH }}
+
+      - name: 'Install dependencies'
+        if: steps.cache-librocksdb.outputs.cache-hit != 'true'
+        run: >
+          sudo apt install -y libsnappy-dev libbz2-dev liblz4-dev libz-dev
+          libgflags-dev libzstd-dev
+
+      - name: 'Clone & build RocksDB ${{ matrix.rocksdb_ver }}'
+        if: steps.cache-librocksdb.outputs.cache-hit != 'true'
+        run: >
+          git clone https://github.com/facebook/rocksdb --depth 1
+          --branch ${{ matrix.rocksdb_ver }} ${{ env.LIBROCKSDB_PATH }} &&
+          pushd ${{ env.LIBROCKSDB_PATH }} &&
+          CXXFLAGS='-flto -Os -s' PORTABLE=1 make shared_lib -j 4 &&
+          popd
+
+  test:
+    name: 'Build and test python-rocksdb'
+    needs: librocksdb
+    runs-on: ${{ matrix.os }}
+    env:
+      LIBROCKSDB_PATH: /opt/rocksdb-${{ matrix.rocksdb_ver }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest]
+        py_ver: ['3.7', '3.8', '3.9', '3.10', '3.11']
+        rocksdb_ver: ['v6.29.3', 'v6.25.3', 'v6.14.6']
+
+    steps:
+      - uses: actions/checkout@v3
+        name: 'Checkout source repository'
+        with:
+            fetch-depth: 0
+
+      - uses: actions/setup-python@v4
+        name: 'Set up Python ${{ matrix.py_ver }}'
+        with:
+          python-version: ${{ matrix.py_ver }}
+
+      - name: 'Install C libraries'
+        # XXX(Tina): The non-development versions are sufficient, but package
+        # names are difficult to predict.
+        run: >
+          sudo apt install -y libsnappy-dev libbz2-dev liblz4-dev libz-dev
+          libgflags-dev libzstd-dev
+
+      # Recover the pre-built C library.
+      - uses: actions/cache@v2
+        id: cache-librocksdb
+        with:
+          key: ${{ matrix.os }}-librocksdb-${{ matrix.rocksdb_ver }}
+          path: ${{ env.LIBROCKSDB_PATH }}
+
+      - name: 'Install RocksDB ${{ matrix.rocksdb_ver }}'
+        if: steps.cache-librocksdb.outputs.cache-hit == 'true'
+        # DO NOT FORGET to call `ldconfig`!
+        run: |
+          pushd ${{ env.LIBROCKSDB_PATH }} &&
+          sudo make install-shared &&
+          sudo ldconfig &&
+          popd
+
+      - name: Build and install python-rocksdb
+        # Use `pip install` instead of `setup.py` so build-dependencies from
+        # `pyproject.toml` are installed, in particular `Cython`, without which
+        # the build fails in confusing ways.
+        run: |
+          python3 -m pip install '.[test]'
+
+      - name: Run tests
+        # Use `--pyargs` to interpret parameter as module to import, not as a
+        # path, and do not use `python3 -m pytest`. This way we prevent
+        # importing the module from the current directory instead of the
+        # installed package, and failing when it cannot find the shared
+        # library.
+        run: |
+          pytest --pyargs rocksdb
