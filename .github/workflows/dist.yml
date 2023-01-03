@@ -2,12 +2,10 @@
 name: 'Build and test wheels for release'
 
 on:
-  pull_request:
-  push:
+  release:
+    types: [created]
     branches:
       - 'master'
-      - 'force_ci/all/**'     # For development, forcing all workflows to run.
-      - 'force_ci/debian/**'  # For debugging and/or only forcing this workflow.
 
 jobs:
   build_wheels:
@@ -15,7 +13,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-latest, macos-11]
+        os: [ubuntu-latest]
 
     steps:
       - uses: actions/checkout@v3
