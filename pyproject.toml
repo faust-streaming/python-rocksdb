@@ -25,8 +25,7 @@ before-build = [
     'export LDFLAGS="-L/usr/local/opt/bzip2/lib"',
     'export CPPFLAGS="-I/usr/local/opt/bzip2/include"',
     'alias nproc="sysctl -n hw.logicalcpu"',
-
-    "(test -d $LIBROCKSDB_PATH || (  git clone https://github.com/facebook/rocksdb --depth 1 --branch $ROCKSDB_VER $LIBROCKSDB_PATH &&  cd $LIBROCKSDB_PATH && cmake -DCMAKE_MACOSX_RPATH=1 -DCMAKE_INSTALL_NAME_DIR=$LIBRARY_PATH -DCMAKE_BUILD_RPATH=$LIBRARY_PATH $LIBROCKSDB_PATH &&  CXXFLAGS='-flto -Os' PORTABLE=1 make shared_lib -j $(nproc)  )) && pushd $LIBROCKSDB_PATH && make install-shared &&  update_dyld_shared_cache && popd",
+    "(test -d $LIBROCKSDB_PATH || (  git clone https://github.com/facebook/rocksdb --depth 1 --branch $ROCKSDB_VER $LIBROCKSDB_PATH &&  cd $LIBROCKSDB_PATH &&  CXXFLAGS='-flto -Os' PORTABLE=1 make shared_lib -j $(nproc)  )) && pushd $LIBROCKSDB_PATH && make install-shared &&  update_dyld_shared_cache && popd",
 ]
 
 [tool.cibuildwheel.windows]
