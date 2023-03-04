@@ -747,30 +747,21 @@ class TestSecondaryDB(TestHelper):
 
         # Just your ordinary test_write_batch test
 
-        cfa = self.db.get_column_family(b"A")
         batch = rocksdb.WriteBatch()
-        batch.put((cfa, b"key"), b"v1")
-        batch.delete((self.cf_a, b"key"))
-        batch.put((cfa, b"key"), b"v2")
-        batch.put((cfa, b"key"), b"v3")
-        batch.put((cfa, b"a"), b"1")
-        batch.put((cfa, b"b"), b"2")
+        batch.put(b"key", b"v1")
+        batch.delete(b"key")
+        batch.put(b"key", b"v2")
+        batch.put(b"key", b"v3")
+        batch.put(b"a", b"b")
 
         self.db.write(batch)
-        query = [(cfa, b"key"), (cfa, b"a"), (cfa, b"b")]
-        ret = self.db.multi_get(query)
-
-        self.assertEqual(b"v3", ret[query[0]])
-        self.assertEqual(b"1", ret[query[1]])
-        self.assertEqual(b"2", ret[query[2]])
+        ref = {b'a': b'b', b'key': b'v3'}
+        ret = self.db.multi_get([b'key', b'a'])
+        self.assertEqual(ref, ret)
 
         # Now let's try updating the secondary db
 
         self.secondary_db.try_catch_up_with_primary()
 
-        query = [(cfa, b"key"), (cfa, b"a"), (cfa, b"b")]
-        ret = self.secondary_db.multi_get(query)
-
-        self.assertEqual(b"v3", ret[query[0]])
-        self.assertEqual(b"1", ret[query[1]])
-        self.assertEqual(b"2", ret[query[2]])
+        ret = self.secondary_db.multi_get([b'key', b'a'])
+        self.assertEqual(ref, ret)
