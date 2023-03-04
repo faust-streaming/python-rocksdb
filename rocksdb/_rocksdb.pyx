@@ -106,23 +106,23 @@ cdef check_status(const Status& st):
 ######################################################
 
 
-cdef string bytes_to_string(path) except *:
+cdef string bytes_to_string(path):
     return string(PyBytes_AsString(path), PyBytes_Size(path))
 
 cdef string_to_bytes(string ob):
     return PyBytes_FromStringAndSize(ob.c_str(), ob.size())
 
-cdef Slice bytes_to_slice(ob) except *:
+cdef Slice bytes_to_slice(ob):
     return Slice(PyBytes_AsString(ob), PyBytes_Size(ob))
 
-cdef Slice* bytes_to_new_slice(ob) except *:
+cdef Slice* bytes_to_new_slice(ob):
     return new Slice(PyBytes_AsString(ob), PyBytes_Size(ob))
 
 cdef slice_to_bytes(Slice sl):
     return PyBytes_FromStringAndSize(sl.data(), sl.size())
 
 ## only for filsystem paths
-cdef string path_to_string(object path) except *:
+cdef string path_to_string(object path):
     if isinstance(path, bytes):
         return bytes_to_string(path)
     if isinstance(path, unicode):
@@ -1972,13 +1972,17 @@ cdef class DB(object):
     cdef string db_path
 
     def __cinit__(self, db_name, Options opts, dict column_families=None,
-                  read_only=False, *args, **kwargs):
+                  read_only=False, secondary_path=None, *args, **kwargs):
         cdef Status st
         cdef bytes default_cf_name = db.kDefaultColumnFamilyName
         self.wrapped_db = NULL
         self.opts = None
         self.cf_handles = []
         self.cf_options = []
+        if isinstance(secondary_path, str):
+            self.db_path = path_to_string(secondary_path)
+        else:
+            self.db_path = path_to_string(db_name)
 
         if opts.in_use:
             raise InvalidArgument(
@@ -2019,12 +2023,21 @@ cdef class DB(object):
                 self.cf_options.append(cf_options)
         if type(self) != DB:
             return
-        db_path = path_to_string(db_name)
-        if read_only:
+        if isinstance(secondary_path, str):
+            primary_db = path_to_string(db_name)
+            with nogil:
+                st = db.DB_OpenSecondary_ColumnFamilies(
+                    deref(opts.opts),
+                    primary_db,
+                    self.db_path,
+                    self.column_family_descriptors,
+                    &self.column_family_handles,
+                    &self.wrapped_db)
+        elif read_only:
             with nogil:
                 st = db.DB_OpenForReadOnly_ColumnFamilies(
                     deref(opts.opts),
-                    db_path,
+                    self.db_path,
                     self.column_family_descriptors,
                     &self.column_family_handles,
                     &self.wrapped_db,
@@ -2033,7 +2046,7 @@ cdef class DB(object):
             with nogil:
                 st = db.DB_Open_ColumnFamilies(
                     deref(opts.opts),
-                    db_path,
+                    self.db_path,
                     self.column_family_descriptors,
                     &self.column_family_handles,
                     &self.wrapped_db)
@@ -2634,6 +2647,10 @@ cdef class DB(object):
         del py_handle
         if copts:
             copts.in_use = False
+
+    def try_catch_up_with_primary(self):
+        with nogil:
+            self.wrapped_db.TryCatchUpWithPrimary()
 
 
 def repair_db(db_name, Options opts):
