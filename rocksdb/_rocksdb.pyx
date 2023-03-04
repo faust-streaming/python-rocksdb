@@ -106,23 +106,23 @@ cdef check_status(const Status& st):
 ######################################################
 
 
-cdef string bytes_to_string(path):
+cdef string bytes_to_string(path) except *:
     return string(PyBytes_AsString(path), PyBytes_Size(path))
 
 cdef string_to_bytes(string ob):
     return PyBytes_FromStringAndSize(ob.c_str(), ob.size())
 
-cdef Slice bytes_to_slice(ob):
+cdef Slice bytes_to_slice(ob) except *:
     return Slice(PyBytes_AsString(ob), PyBytes_Size(ob))
 
-cdef Slice* bytes_to_new_slice(ob):
+cdef Slice* bytes_to_new_slice(ob) except *:
     return new Slice(PyBytes_AsString(ob), PyBytes_Size(ob))
 
 cdef slice_to_bytes(Slice sl):
     return PyBytes_FromStringAndSize(sl.data(), sl.size())
 
 ## only for filsystem paths
-cdef string path_to_string(object path):
+cdef string path_to_string(object path) except *:
     if isinstance(path, bytes):
         return bytes_to_string(path)
     if isinstance(path, unicode):
