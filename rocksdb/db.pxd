@@ -170,6 +170,7 @@ cdef extern from "rocksdb/db.h" namespace "rocksdb":
         Status DisableFileDeletions() nogil except+
         Status EnableFileDeletions() nogil except+
         Status Close() nogil except+
+        Status TryCatchUpWithPrimary() nogil except+
 
         # TODO: Status GetSortedWalFiles(VectorLogPtr& files)
         # TODO: SequenceNumber GetLatestSequenceNumber()
@@ -191,6 +192,19 @@ cdef extern from "rocksdb/db.h" namespace "rocksdb":
     cdef Status DB_Open_ColumnFamilies "rocksdb::DB::Open"(
         const options.Options&,
         const string&,
+        const vector[ColumnFamilyDescriptor]&,
+        vector[ColumnFamilyHandle*]*,
+        DB**) nogil except+
+
+    cdef Status DB_OpenSecondary "rocksdb::DB::OpenAsSecondary"(
+        const options.Options&,
+        const string&,
+        cpp_bool) nogil except+
+
+    cdef Status DB_OpenSecondary_ColumnFamilies "rocksdb::DB::OpenAsSecondary"(
+        const options.Options&,
+        const string&,  # primary db path
+        const string&,  # secondary db path
         const vector[ColumnFamilyDescriptor]&,
         vector[ColumnFamilyHandle*]*,
         DB**) nogil except+

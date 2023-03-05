@@ -735,3 +735,33 @@ class TestDBColumnFamilies(TestHelper):
 
         self.db.compact_range(column_family=self.cf_b)
 
+
+class TestSecondaryDB(TestHelper):
+    def setUp(self):
+        TestHelper.setUp(self)
+        self.db = rocksdb.DB(os.path.join(self.db_loc, "test_primary"), rocksdb.Options(create_if_missing=True))
+        self.secondary_db = rocksdb.DB(os.path.join(self.db_loc, "test_primary"), rocksdb.Options(create_if_missing=True),
+            secondary_path=os.path.join(self.db_loc, "test_secondary"))
+
+    def test_catch_up(self):
+
+        # Just your ordinary test_write_batch test
+
+        batch = rocksdb.WriteBatch()
+        batch.put(b"key", b"v1")
+        batch.delete(b"key")
+        batch.put(b"key", b"v2")
+        batch.put(b"key", b"v3")
+        batch.put(b"a", b"b")
+
+        self.db.write(batch)
+        ref = {b'a': b'b', b'key': b'v3'}
+        ret = self.db.multi_get([b'key', b'a'])
+        self.assertEqual(ref, ret)
+
+        # Now let's try updating the secondary db
+
+        self.secondary_db.try_catch_up_with_primary()
+
+        ret = self.secondary_db.multi_get([b'key', b'a'])
+        self.assertEqual(ref, ret)
