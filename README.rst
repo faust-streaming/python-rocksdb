@@ -1,7 +1,9 @@
 faust-streaming-rocksdb
 =======================
 
-Python bindings for RocksDB.
+Python bindings for RocksDB 6.
+
+This project is old and the wheels are excessively large! Go check out https://github.com/Congyuwang/RocksDict!
 
 See https://faust-streaming.github.io/python-rocksdb/ for a more comprehensive install and
 usage description.
