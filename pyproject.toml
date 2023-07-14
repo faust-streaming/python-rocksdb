@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [tool.cibuildwheel]
 build-frontend = "build"
-build = "cp38*"
+build = "cp3*"
 skip = ["*-macosx_universal*", "*-win32", "*-manylinux_i686", "*-musllinux_*"]
 archs = ["auto64"]
 test-requires = ['.[test] pytest']
