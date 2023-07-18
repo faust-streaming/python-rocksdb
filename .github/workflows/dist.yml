@@ -4,8 +4,12 @@ name: 'Build and test wheels for release'
 on:
   release:
     types: [created]
+  pull_request:
+  push:
     branches:
       - 'master'
+      - 'force_ci/all/**'     # For development, forcing all workflows to run.
+      - 'force_ci/debian/**'  # For debugging and/or only forcing this workflow.
 
 jobs:
   build_wheels:
@@ -13,7 +17,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-latest]
+        os: [ubuntu-latest, macos-11]
 
     steps:
       - uses: actions/checkout@v3
@@ -31,6 +35,10 @@ jobs:
           python3 -m pip install cibuildwheel
 
       - name: 'Build and test wheels'
+        env:
+          CIBW_ARCHS_MACOS: "x86_64 universal2 arm64"
+          # GH actions is unable to do aarch64 builds at this time
+          # CIBW_ARCHS_LINUX: auto aarch64 
         run: |
           python3 -m cibuildwheel --output-dir dist
 
