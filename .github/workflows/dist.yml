@@ -25,6 +25,12 @@ jobs:
         with:
             fetch-depth: 0
 
+      - name: Set up QEMU
+        if: runner.os == 'Linux'
+        uses: docker/setup-qemu-action@v2
+        with:
+          platforms: all
+
       - uses: actions/setup-python@v4
         name: 'Set up Python 3.11'
         with:
@@ -37,8 +43,7 @@ jobs:
       - name: 'Build and test wheels'
         env:
           CIBW_ARCHS_MACOS: "x86_64 universal2 arm64"
-          # GH actions is unable to do aarch64 builds at this time
-          # CIBW_ARCHS_LINUX: auto aarch64 
+          CIBW_ARCHS_LINUX: auto aarch64 
         run: |
           python3 -m cibuildwheel --output-dir dist
 
