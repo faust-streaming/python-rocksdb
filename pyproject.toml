@@ -16,7 +16,7 @@ environment = {ROCKSDB_VER="v6.14.6", LIBROCKSDB_PATH="/opt/rocksdb-$ROCKSDB_VER
 
 [tool.cibuildwheel.linux]
 # Avoid re-building the C library in every iteration by testing for the build directory.
-before-build = "yum install -y bzip2-devel lz4-devel snappy-devel zlib-devel python3-Cython && (test -d $LIBROCKSDB_PATH || (  git clone https://github.com/facebook/rocksdb --depth 1 --branch $ROCKSDB_VER $LIBROCKSDB_PATH &&  cd $LIBROCKSDB_PATH &&  CXXFLAGS='-flto -Os -s' PORTABLE=1 make shared_lib -j $(nproc)  )) && pushd $LIBROCKSDB_PATH && make install-shared &&  ldconfig && popd"
+before-build = "pip3 install Cython && yum install -y bzip2-devel lz4-devel snappy-devel zlib-devel && (test -d $LIBROCKSDB_PATH || (  git clone https://github.com/facebook/rocksdb --depth 1 --branch $ROCKSDB_VER $LIBROCKSDB_PATH &&  cd $LIBROCKSDB_PATH &&  CXXFLAGS='-flto -Os -s' PORTABLE=1 make shared_lib -j $(nproc)  )) && pushd $LIBROCKSDB_PATH && make install-shared &&  ldconfig && popd"
 
 [tool.cibuildwheel.macos]
 environment = {ROCKSDB_VER="v6.29.5", LIBROCKSDB_PATH="/usr/local/opt/rocksdb-$ROCKSDB_VER", LIBRARY_PATH="/usr/local/lib/"}
